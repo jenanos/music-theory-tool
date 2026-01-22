@@ -11,7 +11,9 @@
     "check-types": "next typegen && tsc --noEmit"
   },
   "dependencies": {
+    "@repo/theory": "workspace:*",
     "@repo/ui": "workspace:*",
+    "@repo/voicings": "workspace:*",
     "next": "16.0.10",
     "react": "^19.2.0",
     "react-dom": "^19.1.0"

@@ -103,6 +103,16 @@ const INTERVAL_NAMES: Record<number, string> = {
   11: "7",
 };
 
+const FLAT_PREFERRED_TONICS = new Set([
+  "F",
+  "Bb",
+  "Eb",
+  "Ab",
+  "Db",
+  "Gb",
+  "Cb",
+]);
+
 export const SCALES: ScaleDefinition[] = [
   {
     id: "ionian",
@@ -131,7 +141,13 @@ export function parseNoteName(note: string): number {
 }
 
 export function prefersFlats(note: string): boolean {
-  return note.includes("b");
+  if (note.includes("b")) {
+    return true;
+  }
+  if (note.includes("#")) {
+    return false;
+  }
+  return FLAT_PREFERRED_TONICS.has(note);
 }
 
 export function noteName(pc: number, useFlats: boolean): string {
@@ -225,7 +241,7 @@ export function buildDiatonicChords(
   mode: ModeId,
   includeSevenths = false,
 ): DiatonicChord[] {
-  const { pcs, noteNames, useFlats } = getScale(tonic, mode);
+  const { pcs, useFlats } = getScale(tonic, mode);
   return pcs.map((rootPc, index) => {
     const thirdPc = pcs[(index + 2) % 7];
     const fifthPc = pcs[(index + 4) % 7];

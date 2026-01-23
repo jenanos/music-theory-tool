@@ -152,7 +152,7 @@ export function prefersFlats(note: string): boolean {
 
 export function noteName(pc: number, useFlats: boolean): string {
   const nameSet = useFlats ? FLAT_NOTES : SHARP_NOTES;
-  return nameSet[((pc % 12) + 12) % 12];
+  return nameSet[((pc % 12) + 12) % 12]!;
 }
 
 export function getScale(tonic: string, mode: ModeId) {
@@ -200,8 +200,8 @@ function romanNumeral(
   includeSevenths: boolean,
   seventhQuality?: string,
 ): string {
-  const base = ROMANS[degree - 1];
-  let numeral = base;
+  const base = ROMANS[degree - 1]!;
+  let numeral: string = base;
   if (quality === "minor") {
     numeral = base.toLowerCase();
   }
@@ -243,9 +243,9 @@ export function buildDiatonicChords(
 ): DiatonicChord[] {
   const { pcs, useFlats } = getScale(tonic, mode);
   return pcs.map((rootPc, index) => {
-    const thirdPc = pcs[(index + 2) % 7];
-    const fifthPc = pcs[(index + 4) % 7];
-    const seventhPc = pcs[(index + 6) % 7];
+    const thirdPc = pcs[(index + 2) % 7]!;
+    const fifthPc = pcs[(index + 4) % 7]!;
+    const seventhPc = pcs[(index + 6) % 7]!;
     const thirdInterval = (thirdPc - rootPc + 12) % 12;
     const fifthInterval = (fifthPc - rootPc + 12) % 12;
     const seventhInterval = (seventhPc - rootPc + 12) % 12;
@@ -254,7 +254,7 @@ export function buildDiatonicChords(
     const symbol = includeSevenths
       ? `${symbolRoot}${seventhSuffix(quality, seventhInterval)}`
       : `${symbolRoot}${qualitySuffix(quality)}`;
-    const tones = includeSevenths
+    const tones: number[] = includeSevenths
       ? [rootPc, thirdPc, fifthPc, seventhPc]
       : [rootPc, thirdPc, fifthPc];
     const toneNames = tones.map((pc) => noteName(pc, useFlats));
@@ -273,7 +273,7 @@ export function buildDiatonicChords(
       ),
       symbol,
       quality,
-      function: FUNCTION_MAP[index + 1],
+      function: FUNCTION_MAP[index + 1]!,
       tones,
       toneNames,
       intervalNames,

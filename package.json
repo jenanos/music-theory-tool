@@ -1,5 +1,5 @@
 {
-  "name": "with-tailwind",
+  "name": "music-theory-tool",
   "private": true,
   "scripts": {
     "build": "turbo run build",

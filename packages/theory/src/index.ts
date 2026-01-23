@@ -1,4 +1,7 @@
+export * from "./progressions";
+
 export type ModeId = "ionian" | "aeolian" | "dorian";
+
 export type ChordQuality = "major" | "minor" | "diminished" | "augmented";
 export type HarmonicFunction = "tonic" | "predominant" | "dominant";
 

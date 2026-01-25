@@ -34,8 +34,17 @@ export interface SubstitutionSuggestion {
     requirements?: string[];
 }
 
+export type ScaleFamily = "diatonic" | "pentatonic" | "symmetric" | "minor" | "melodic_minor_mode" | "blues" | "dim";
+
 export interface ScaleDefinition {
-    id: ModeId;
+    id: string;
     name: string;
+    family: ScaleFamily;
+    isHarmony: boolean;
     intervals: number[];
+    degree_labels: string[];
+    tags: string[];
+    use_over: string[];
+    avoid_degrees: number[];
+    notes_about_use: string;
 }

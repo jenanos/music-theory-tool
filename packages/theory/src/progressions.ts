@@ -35,6 +35,14 @@ export interface TransposedProgression extends ChordProgression {
     tonic: string;
 }
 
+export interface ProgressionMatch {
+    progression: ChordProgression;
+    matchedIndices: number[]; // Indices in the progression's roman array that matched
+    matchLength: number;
+}
+
+
+
 export interface NextChordSuggestion {
     roman: string;
     chord: string;
@@ -299,14 +307,25 @@ export const CHORD_PROGRESSIONS: ChordProgression[] = [
     // ==================== Major Triads - Common ====================
     {
         id: "maj_tri_01",
-        name: "Axis of Awesome",
+        name: "4 chord",
         mode: "ionian",
         type: "triad",
         weight: 10,
-        tags: ["common", "pop", "loop"],
+        tags: ["common", "pop", "loop", "modern", "ballad"],
         roman: ["I", "V", "vi", "IV"],
-        description: "Svært vanlig fire-akkords progresjon som bruker tonika (I), dominant (V), parallell moll (vi) og subdominant (IV). Den kalles ofte I–V–vi–IV eller «Axis of Awesome»-progresjonen og er utbredt i moderne pop【81920227757805†L19-L27】.",
-        usageExamples: "Ben E. King – Stand by Me, U2 – With or Without You, The Beatles – Let It Be, Journey – Don't Stop Believin'【161001883971269†L332-L341】"
+        description: "Svært vanlig fire-akkords progresjon som bruker tonika (I), dominant (V), parallell moll (vi) og subdominant (IV). Kjent som «Axis of Awesome»-progresjonen og er svært utbredt i moderne pop.",
+        usageExamples: "Ben E. King – Stand by Me, U2 – With or Without You, Journey – Don't Stop Believin', Lady Gaga – Poker Face, Encanto – Colombia, Mi Encanto"
+    },
+    {
+        id: "modal_mixolydian_flat7_iv",
+        name: "I–V–♭VII–IV",
+        mode: "mixolydian",
+        type: "triad",
+        weight: 9,
+        tags: ["rock", "pop", "bluesy", "mixolydian"],
+        roman: ["I", "V", "bVII", "IV"],
+        description: "En variasjon av I–V–vi–IV der submedianten byttes ut med subtonika (bVII). Dette gir en bluesaktig touch og en harmonisk drive gjennom to I–V bevegelser (A–E og G–D).",
+        usageExamples: "Lay Lady Lay, (You Make Me Feel Like) A Natural Woman, Turning Japanese, Waterfalls, Don't Tell Me, Cinnamon Girl, Brown Eyes, Rio, Sugar Hiccup, Sweet Jane, Cop Killer, And She Was, Let's Go Crazy, Like a Rock, Steady, As She Goes, American Idiot"
     },
     {
         id: "maj_tri_02",
@@ -938,17 +957,7 @@ export const CHORD_PROGRESSIONS: ChordProgression[] = [
         description: "Variant av fire‑akkords pop‑progresjonen som starter på subdominanten (IV) og går via dominanten (V) til tonika (I) før den lander i parallell moll (vi). Dette gir et varmt og nostalgisk preg.",
         usageExamples: "Ben E. King – Stand by Me (bro), The Beatles – Let It Be"
     },
-    {
-        id: "user_sensitive_pop",
-        name: "I–V–vi–IV (Sensitiv pop-progresjon)",
-        mode: "ionian",
-        type: "triad",
-        weight: 10,
-        tags: ["pop", "modern", "ballad"],
-        roman: ["I", "V", "vi", "IV"],
-        description: "En av de mest brukte fire-akkords progresjonene i moderne pop.",
-        usageExamples: "Journey – \"Don't Stop Believin'\", Lady Gaga – 'Poker Face'"
-    },
+
     {
         id: "user_mixolydian_rock_ii",
         name: "I–IV–bVII–IV",
@@ -1050,17 +1059,7 @@ export const CHORD_PROGRESSIONS: ChordProgression[] = [
         description: "Backdoor‑progresjonen bruker ii7–bVII7–Imaj7 i stedet for den vanlige ii–V–I. bVII7 fungerer som en dominant‑substitusjon og gir en mykere oppløsning【712155671948666†L50-L54】.",
         usageExamples: "The Beatles – In My Life, Tadd Dameron – Lady Bird, Erroll Garner – Misty【712155671948666†L50-L54】"
     },
-    {
-        id: "user_encanto_columbia",
-        name: "I–V–vi–IV progression (Wikipedia-rad)", // Placeholder name
-        mode: "ionian",
-        type: "triad",
-        weight: 7,
-        tags: ["pop", "alias"],
-        roman: ["I", "V", "vi", "IV"],
-        description: "Samme progresjon som I–V–vi–IV (Axis of Awesome) men referert til i filmen Encanto, hvor den brukes i sangen 'Colombia, Mi Encanto'.",
-        usageExamples: "Encanto – Colombia, Mi Encanto"
-    },
+
     // Skipping duplicate or highly esoteric ones unless specifically requested as separate logic.
     // User list included "Bird changes", "Coltrane Changes", etc. Adding selected impactful ones.
 
@@ -1612,5 +1611,55 @@ export function getStartingChords(
     }
 
     return results.sort((a, b) => b.frequency - a.frequency);
+}
+
+/**
+ * Find progressions that match the current user sequence.
+ * A match is defined as a progression that contains a substring matching 
+ * a suffix of the user's sequence.
+ * 
+ * @param userSequence The sequence of roman numerals built by the user
+ * @param pool The pool of progressions to search in
+ * @param minMatchLength Minimum length of overlap to consider a match
+ */
+export function findMatchingProgressions(
+    userSequence: string[],
+    pool: ChordProgression[],
+    minMatchLength: number = 1
+): ProgressionMatch[] {
+    if (userSequence.length === 0) return [];
+
+    const matches: ProgressionMatch[] = [];
+
+    for (const prog of pool) {
+        // Strict substring match: check if entire userSequence exists in prog.roman
+        // We ignore minMatchLength for "strict" behavior, effectively minMatchLength = userSequence.length
+
+        if (prog.roman.length < userSequence.length) continue;
+
+        for (let i = 0; i <= prog.roman.length - userSequence.length; i++) {
+            let isMatch = true;
+            for (let j = 0; j < userSequence.length; j++) {
+                if (prog.roman[i + j] !== userSequence[j]) {
+                    isMatch = false;
+                    break;
+                }
+            }
+
+            if (isMatch) {
+                matches.push({
+                    progression: prog,
+                    matchedIndices: Array.from({ length: userSequence.length }, (_, k) => i + k),
+                    matchLength: userSequence.length
+                });
+                // Once we find a match, we can stop for this progression
+                break;
+            }
+        }
+    }
+
+    // Sort by matches - since all matches are now the full length, 
+    // secondary sort by weight (popularity) is good.
+    return matches.sort((a, b) => b.progression.weight - a.progression.weight);
 }
 

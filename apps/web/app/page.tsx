@@ -5,6 +5,7 @@ import {
   buildDiatonicChords,
   DEFAULT_MODE,
   DEFAULT_TONIC,
+  getScale,
   prefersFlats,
   SCALES,
   suggestSubstitutions,
@@ -15,14 +16,41 @@ import { ChordDetail } from "./components/ChordDetail";
 import { DegreeTable } from "./components/DegreeTable";
 
 export default function Page() {
+  // Harmony State
   const [tonic, setTonic] = useState(DEFAULT_TONIC);
   const [mode, setMode] = useState<ModeId>(DEFAULT_MODE);
   const [includeSevenths, setIncludeSevenths] = useState(false);
+
+  // Overlay State
+  const [overlayTonic, setOverlayTonic] = useState(DEFAULT_TONIC);
+  const [syncOverlayTonic, setSyncOverlayTonic] = useState(true);
+  const [overlayMode, setOverlayMode] = useState<ModeId>(DEFAULT_MODE);
+  const [showHarmonyScale, setShowHarmonyScale] = useState(true);
+
+  // Effect to sync overlay tonic
+  useEffect(() => {
+    if (syncOverlayTonic) {
+      setOverlayTonic(tonic);
+    }
+  }, [tonic, syncOverlayTonic]);
 
   const chords = useMemo(
     () => buildDiatonicChords(tonic, mode, includeSevenths),
     [tonic, mode, includeSevenths],
   );
+
+  // Computed Scale Data
+  const harmonyScalePcs = useMemo(() => getScale(tonic, mode).pcs, [tonic, mode]);
+  const activeOverlayTonic = syncOverlayTonic ? tonic : overlayTonic;
+  const overlayScalePcs = useMemo(
+    () => getScale(activeOverlayTonic, overlayMode).pcs,
+    [activeOverlayTonic, overlayMode]
+  );
+
+  const outsideNotes = useMemo(() => {
+    const harmonySet = new Set(harmonyScalePcs);
+    return overlayScalePcs.filter(pc => !harmonySet.has(pc));
+  }, [harmonyScalePcs, overlayScalePcs]);
 
   const [selectedDegree, setSelectedDegree] = useState(1);
 
@@ -50,50 +78,110 @@ export default function Page() {
     <main className="flex h-full flex-col bg-slate-50 text-slate-900">
       {/* Top Toolbar */}
       <header className="flex shrink-0 flex-col gap-4 border-b border-slate-200 bg-white px-6 py-4 shadow-sm sm:flex-row sm:items-center sm:justify-between">
-        <div>
+        <div className="flex flex-col gap-1">
           <h1 className="text-xl font-bold leading-tight text-slate-800">
             Diatoniske akkorder
           </h1>
           <p className="text-xs text-slate-500">
-            {scaleInfo?.name} • {tonic} tonic
+            Akkorder fra: <strong>{tonic} {scaleInfo?.name}</strong>
           </p>
         </div>
 
-        <div className="flex flex-wrap items-center gap-4">
-          <div className="flex items-center gap-2">
-            <select
-              className="rounded-lg border border-slate-200 bg-slate-50 px-3 py-1.5 text-sm font-medium focus:border-indigo-500 focus:outline-none"
-              onChange={(event) => setTonic(event.target.value)}
-              value={tonic}
-            >
-              {TONIC_OPTIONS.map((option) => (
-                <option key={option} value={option}>
-                  {option}
-                </option>
-              ))}
-            </select>
-            <select
-              className="rounded-lg border border-slate-200 bg-slate-50 px-3 py-1.5 text-sm font-medium focus:border-indigo-500 focus:outline-none"
-              onChange={(event) => setMode(event.target.value as ModeId)}
-              value={mode}
-            >
-              {SCALES.map((scale) => (
-                <option key={scale.id} value={scale.id}>
-                  {scale.name}
-                </option>
-              ))}
-            </select>
+        <div className="flex flex-col gap-4 sm:flex-row sm:items-center">
+          {/* Harmony Controls */}
+          <div className="flex flex-col gap-2 rounded-lg border border-slate-100 bg-slate-50 p-2 text-xs">
+            <span className="font-semibold uppercase tracking-wide text-slate-400">Harmoni</span>
+            <div className="flex items-center gap-2">
+              <select
+                className="rounded border border-slate-200 bg-white px-2 py-1 focus:border-indigo-500 focus:outline-none"
+                onChange={(event) => setTonic(event.target.value)}
+                value={tonic}
+              >
+                {TONIC_OPTIONS.map((option) => (
+                  <option key={option} value={option}>
+                    {option}
+                  </option>
+                ))}
+              </select>
+              <select
+                className="rounded border border-slate-200 bg-white px-2 py-1 focus:border-indigo-500 focus:outline-none"
+                onChange={(event) => setMode(event.target.value as ModeId)}
+                value={mode}
+              >
+                {SCALES.filter(s => s.isHarmony).map((scale) => (
+                  <option key={scale.id} value={scale.id}>
+                    {scale.name}
+                  </option>
+                ))}
+              </select>
+            </div>
           </div>
 
-          <label className="flex cursor-pointer items-center gap-2 rounded-lg border border-slate-200 bg-slate-50 px-3 py-1.5 text-sm hover:bg-slate-100">
-            <input
-              checked={includeSevenths}
-              className="accent-indigo-600"
-              onChange={(event) => setIncludeSevenths(event.target.checked)}
-              type="checkbox"
-            />
-            <span>7-akkorder</span>
-          </label>
+          {/* Overlay Controls */}
+          <div className="flex flex-col gap-2 rounded-lg border border-slate-100 bg-slate-50 p-2 text-xs">
+            <div className="flex items-center justify-between gap-4">
+              <span className="font-semibold uppercase tracking-wide text-slate-400">Gripebrett Overlay</span>
+              <label className="flex items-center gap-1 cursor-pointer" title="Bruk samme tonika som harmoni">
+                <input
+                  type="checkbox"
+                  checked={syncOverlayTonic}
+                  onChange={(e) => setSyncOverlayTonic(e.target.checked)}
+                  className="rounded border-slate-300 text-indigo-600 focus:ring-indigo-500"
+                />
+                <span className="text-[10px] text-slate-500">Sync Tonika</span>
+              </label>
+            </div>
+            <div className="flex items-center gap-2">
+              <select
+                className="rounded border border-slate-200 bg-white px-2 py-1 focus:border-indigo-500 focus:outline-none disabled:opacity-50"
+                onChange={(event) => {
+                  setOverlayTonic(event.target.value);
+                  setSyncOverlayTonic(false);
+                }}
+                value={syncOverlayTonic ? tonic : overlayTonic}
+                disabled={syncOverlayTonic}
+              >
+                {TONIC_OPTIONS.map((option) => (
+                  <option key={option} value={option}>
+                    {option}
+                  </option>
+                ))}
+              </select>
+              <select
+                className="rounded border border-slate-200 bg-white px-2 py-1 focus:border-indigo-500 focus:outline-none"
+                onChange={(event) => setOverlayMode(event.target.value as ModeId)}
+                value={overlayMode}
+              >
+                {SCALES.map((scale) => (
+                  <option key={scale.id} value={scale.id}>
+                    {scale.name}
+                  </option>
+                ))}
+              </select>
+            </div>
+          </div>
+
+          <div className="flex items-center gap-4">
+            <label className="flex cursor-pointer items-center gap-2 text-sm text-slate-600 hover:text-slate-900">
+              <input
+                checked={includeSevenths}
+                className="accent-indigo-600"
+                onChange={(event) => setIncludeSevenths(event.target.checked)}
+                type="checkbox"
+              />
+              <span>7-ere</span>
+            </label>
+
+            <label className="flex cursor-pointer items-center gap-2 text-sm text-slate-600 hover:text-slate-900">
+              <input
+                checked={showHarmonyScale}
+                className="accent-indigo-600"
+                onChange={(event) => setShowHarmonyScale(event.target.checked)}
+                type="checkbox"
+              />
+              <span>Vis harmoni</span>
+            </label>
+          </div>
         </div>
       </header>
 
@@ -118,8 +206,7 @@ export default function Page() {
               <ul className="list-disc space-y-1 pl-4 text-blue-700/80">
                 <li>Klikk på en rad for detaljer.</li>
                 <li>
-                  Prøv <strong>E + aeolisk</strong> eller{" "}
-                  <strong>A + dorisk</strong>.
+                  Prøv å endre <strong>Overlay</strong> til Blues eller Pentaton for å se sammenhenger på gripebrettet.
                 </li>
                 <li>Substitusjoner baseres på funksjon.</li>
               </ul>
@@ -133,6 +220,11 @@ export default function Page() {
             chord={selectedChord}
             substitutions={substitutions}
             useFlats={useFlats}
+
+            harmonyNotes={harmonyScalePcs}
+            overlayNotes={overlayScalePcs}
+            outsideNotes={outsideNotes}
+            showHarmony={showHarmonyScale}
           />
         </div>
       </div>

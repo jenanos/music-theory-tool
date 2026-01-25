@@ -14,6 +14,7 @@ import {
     type TransposedProgression,
     type NextChordSuggestion,
     type ModeId,
+    findMatchingProgressions,
 } from "@repo/theory";
 import {
     DndContext,
@@ -139,12 +140,28 @@ export default function ProgressionsPage() {
     // Derived Data
     const progressions = useMemo(() => {
         const filtered = filterProgressions(
-            modeId, // Filter matches current mode strictly? Or all compatible? User said "populate list... filter based on selected mode"
+            modeId,
             selectedTags.length > 0 ? selectedTags : undefined,
             chordType
         );
-        return filtered.map((p) => transposeProgression(p, tonic));
-    }, [tonic, modeId, selectedTags, chordType]);
+
+        const currentSeq = sequenceItems.map(i => i.roman);
+
+        if (currentSeq.length > 0) {
+            // Find matches
+            const matches = findMatchingProgressions(currentSeq, filtered);
+            return matches.map(m => ({
+                data: transposeProgression(m.progression, tonic),
+                matchedIndices: m.matchedIndices
+            }));
+        }
+
+        // Default behavior if no sequence
+        return filtered.map((p) => ({
+            data: transposeProgression(p, tonic),
+            matchedIndices: [] as number[]
+        }));
+    }, [tonic, modeId, selectedTags, chordType, sequenceItems]);
 
     const sequenceRomans = sequenceItems.map(i => i.roman);
 
@@ -257,7 +274,7 @@ export default function ProgressionsPage() {
                                 onChange={(e) => setModeId(e.target.value as ModeId)}
                                 value={modeId}
                             >
-                                {SCALES.map((scale) => (
+                                {SCALES.filter(s => s.isHarmony).map((scale) => (
                                     <option key={scale.id} value={scale.id}>{scale.name}</option>
                                 ))}
                             </select>
@@ -331,41 +348,50 @@ export default function ProgressionsPage() {
                         <div className="grid grid-cols-1 gap-3 xl:grid-cols-2">
                             {progressions.map((prog) => (
                                 <div
-                                    key={prog.id}
+                                    key={prog.data.id}
                                     className="group relative flex flex-col rounded-lg border border-slate-200 bg-white p-3 shadow-sm transition-all hover:border-indigo-300 hover:shadow-md"
                                 >
                                     <div className="mb-2 flex items-start justify-between">
                                         <div>
                                             <h3 className="font-semibold text-slate-800 text-sm group-hover:text-indigo-700">
-                                                {prog.name}
+                                                {prog.data.name}
                                             </h3>
-                                            {prog.description && (
-                                                <p className="text-[10px] text-slate-500 line-clamp-2">{prog.description}</p>
+                                            {prog.data.description && (
+                                                <p className="text-[10px] text-slate-500 line-clamp-2">{prog.data.description}</p>
                                             )}
-                                            {prog.usageExamples && (
+                                            {prog.data.usageExamples && (
                                                 <p className="mt-1 text-[9px] text-indigo-500 font-medium whitespace-nowrap overflow-hidden text-ellipsis">
-                                                    <span className="opacity-70">Eksempel:</span> {prog.usageExamples}
+                                                    <span className="opacity-70">Eksempel:</span> {prog.data.usageExamples}
                                                 </p>
                                             )}
                                         </div>
                                         <div className="flex text-amber-400 text-[10px]">
-                                            {"★".repeat(Math.min(5, Math.ceil(prog.weight / 2)))}
+                                            {"★".repeat(Math.min(5, Math.ceil(prog.data.weight / 2)))}
                                         </div>
                                     </div>
 
                                     <div className="flex flex-wrap gap-1.5 mb-2">
-                                        {prog.chords.map((c, i) => (
-                                            <span
-                                                key={i}
-                                                className="rounded bg-indigo-50 px-2 py-0.5 text-xs font-bold text-indigo-700 font-mono"
-                                            >
-                                                {c}
-                                            </span>
-                                        ))}
+                                        {prog.data.chords.map((c, i) => {
+                                            const isMatched = prog.matchedIndices.includes(i);
+                                            return (
+                                                <div
+                                                    key={i}
+                                                    className={`flex flex-col items-center justify-center rounded px-2 py-1 transition-all ${isMatched
+                                                        ? "bg-indigo-600 text-white shadow-sm scale-110 mx-0.5"
+                                                        : "bg-indigo-50 text-indigo-700"
+                                                        }`}
+                                                >
+                                                    <span className="text-xs font-bold font-mono leading-none mb-0.5">{c}</span>
+                                                    <span className={`text-[9px] font-medium leading-none ${isMatched ? "text-indigo-200" : "text-indigo-400 opacity-80"}`}>
+                                                        {prog.data.roman[i]}
+                                                    </span>
+                                                </div>
+                                            );
+                                        })}
                                     </div>
 
                                     <div className="mt-auto flex flex-wrap gap-1">
-                                        {prog.tags.slice(0, 3).map(tag => (
+                                        {prog.data.tags.slice(0, 3).map(tag => (
                                             <span key={tag} className="text-[9px] text-slate-400 border border-slate-100 rounded px-1">
                                                 {TAG_LABELS[tag] ?? tag}
                                             </span>
@@ -378,7 +404,7 @@ export default function ProgressionsPage() {
                                         onClick={() => {
                                             setSequenceItems(prev => [
                                                 ...prev,
-                                                ...prog.roman.map(r => ({ id: crypto.randomUUID(), roman: r }))
+                                                ...prog.data.roman.map(r => ({ id: crypto.randomUUID(), roman: r }))
                                             ]);
                                         }}
                                     >
@@ -467,8 +493,8 @@ export default function ProgressionsPage() {
                                         key={i}
                                         onClick={() => addToSequence(s.roman)}
                                         className={`group flex flex-col items-center justify-center rounded-lg border p-3 shadow-sm transition-all hover:shadow-md active:scale-95 text-center ${s.isDiatonic
-                                                ? "border-slate-200 bg-white hover:border-indigo-300 hover:bg-indigo-50"
-                                                : "border-amber-200 bg-amber-50 hover:border-amber-300 hover:bg-amber-100"
+                                            ? "border-slate-200 bg-white hover:border-indigo-300 hover:bg-indigo-50"
+                                            : "border-amber-200 bg-amber-50 hover:border-amber-300 hover:bg-amber-100"
                                             }`}
                                     >
                                         <span className={`text-sm font-bold ${s.isDiatonic ? "text-slate-800 group-hover:text-indigo-700" : "text-amber-800 group-hover:text-amber-900"}`}>

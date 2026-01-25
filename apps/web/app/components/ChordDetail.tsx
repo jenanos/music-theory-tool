@@ -8,12 +8,20 @@ type ChordDetailProps = {
   chord: DiatonicChord;
   substitutions: SubstitutionSuggestion[];
   useFlats: boolean;
+  harmonyNotes: number[];
+  overlayNotes: number[];
+  outsideNotes: number[];
+  showHarmony: boolean;
 };
 
 export function ChordDetail({
   chord,
   substitutions,
   useFlats,
+  harmonyNotes,
+  overlayNotes,
+  outsideNotes,
+  showHarmony,
 }: ChordDetailProps) {
 
 
@@ -52,7 +60,14 @@ export function ChordDetail({
             <h3 className="mb-3 text-sm font-semibold uppercase tracking-wide text-slate-500">
               Gripebrett (0–12 bånd)
             </h3>
-            <Fretboard chordTones={chord.tones} useFlats={useFlats} />
+            <Fretboard
+              chordTones={chord.tones}
+              useFlats={useFlats}
+              harmonyTones={harmonyNotes}
+              overlayTones={overlayNotes}
+              outsideTones={outsideNotes}
+              showHarmony={showHarmony}
+            />
           </div>
 
         </div>

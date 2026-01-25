@@ -5,6 +5,7 @@ import {
     suggestNextChords,
     getStartingChords,
     getAllTags,
+    findMatchingProgressions,
     CHORD_PROGRESSIONS,
 } from "../src/progressions";
 
@@ -129,6 +130,70 @@ describe("chord progressions", () => {
             // i should be a common starting chord
             const hasI = starts.some((s) => s.roman === "i");
             expect(hasI).toBe(true);
+        });
+
+        describe("findMatchingProgressions", () => {
+            // Mock data
+            const pool = [
+                {
+                    id: "exact",
+                    name: "Exact Match",
+                    mode: "ionian" as const,
+                    type: "triad" as const,
+                    weight: 10,
+                    tags: [],
+                    roman: ["I", "V"]
+                },
+                {
+                    id: "substring",
+                    name: "Substring Match",
+                    mode: "ionian" as const,
+                    type: "triad" as const,
+                    weight: 8,
+                    tags: [],
+                    roman: ["vi", "I", "V", "I"]
+                },
+                {
+                    id: "partial",
+                    name: "Partial Match",
+                    mode: "ionian" as const,
+                    type: "triad" as const,
+                    weight: 5,
+                    tags: [],
+                    roman: ["V", "VII"]
+                }
+            ];
+
+            it("matches exact sequence", () => {
+                const matches = findMatchingProgressions(["I", "V"], pool);
+                expect(matches.some(m => m.progression.id === "exact")).toBe(true);
+                expect(matches.some(m => m.progression.id === "substring")).toBe(true); // "I", "V" is in "vi", "I", "V", "I"
+            });
+
+            it("does NOT match partial suffix", () => {
+                const matches = findMatchingProgressions(["I", "V", "VII"], pool);
+                expect(matches.length).toBe(0);
+            });
+
+            it("matches strict substring", () => {
+                const matches = findMatchingProgressions(["I", "V"], pool);
+                const substringMatch = matches.find(m => m.progression.id === "substring");
+                expect(substringMatch).toBeDefined();
+                // Should match indices 1, 2
+                expect(substringMatch?.matchedIndices).toEqual([1, 2]);
+            });
+
+            it("does NOT match if order is wrong", () => {
+                const matches = findMatchingProgressions(["V", "I"], pool);
+                expect(matches.some(m => m.progression.id === "exact")).toBe(false);
+                expect(matches.some(m => m.progression.id === "substring")).toBe(true);
+            });
+
+            it("does NOT match non-contiguous", () => {
+                const matches = findMatchingProgressions(["vi", "V"], pool);
+                const match = matches.find(m => m.progression.id === "substring");
+                expect(match).toBeUndefined();
+            });
         });
     });
 });

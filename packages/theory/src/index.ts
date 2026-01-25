@@ -3,6 +3,7 @@ export * from "./substitutions";
 export * from "./data";
 export * from "./utils";
 export * from "./types";
+export * from "./scales";
 
 import {
   MODES,
@@ -29,12 +30,6 @@ export const TONIC_OPTIONS = [
 export const DEFAULT_TONIC = "E";
 export const DEFAULT_MODE: ModeId = "aeolian";
 
-// Generate SCALES array for UI from MODES data
-export const SCALES: ScaleDefinition[] = Object.values(MODES).map((m) => ({
-  id: m.id as ModeId,
-  name: m.name,
-  intervals: m.intervals,
-}));
 
 const ROMANS = ["I", "II", "III", "IV", "V", "VI", "VII"] as const;
 
@@ -43,17 +38,39 @@ const INTERVAL_NAMES: Record<number, string> = {
   7: "5", 8: "#5", 9: "6", 10: "b7", 11: "7",
 };
 
+import { SCALES } from "./scales";
+
 export function getScale(tonic: string, mode: ModeId) {
-  const scale = MODES[mode];
-  if (!scale) {
-    throw new Error(`Ukjent modus: ${mode}`);
+  // Use SCALES for lookup, fallback to MODES if needed (though SCALES should have all)
+  const scaleDef = SCALES.find(s => s.id === mode);
+
+  if (!scaleDef) {
+    // Fallback to old behavior for backward compat or if passed from strictly typed ModeId
+    const fallback = MODES[mode];
+    if (!fallback) {
+      throw new Error(`Ukjent modus: ${mode}`);
+    }
+    const tonicPc = parseNoteName(tonic);
+    const useFlats = prefersFlats(tonic);
+    const pcs = fallback.intervals.map((interval) => (tonicPc + interval) % 12);
+    const noteNames = pcs.map((pc) => noteName(pc, useFlats));
+    return {
+      scale: fallback,
+      tonic,
+      tonicPc,
+      pcs,
+      noteNames,
+      useFlats,
+    };
   }
+
   const tonicPc = parseNoteName(tonic);
   const useFlats = prefersFlats(tonic);
-  const pcs = scale.intervals.map((interval) => (tonicPc + interval) % 12);
+  const pcs = scaleDef.intervals.map((interval) => (tonicPc + interval) % 12);
   const noteNames = pcs.map((pc) => noteName(pc, useFlats));
+
   return {
-    scale,
+    scale: scaleDef,
     tonic,
     tonicPc,
     pcs,

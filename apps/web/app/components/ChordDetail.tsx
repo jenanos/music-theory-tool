@@ -12,6 +12,7 @@ type ChordDetailProps = {
   overlayNotes: number[];
   outsideNotes: number[];
   showHarmony: boolean;
+  showOverlay: boolean;
 };
 
 export function ChordDetail({
@@ -22,6 +23,7 @@ export function ChordDetail({
   overlayNotes,
   outsideNotes,
   showHarmony,
+  showOverlay,
 }: ChordDetailProps) {
 
 
@@ -67,6 +69,7 @@ export function ChordDetail({
               overlayTones={overlayNotes}
               outsideTones={outsideNotes}
               showHarmony={showHarmony}
+              showOverlay={showOverlay}
             />
           </div>
 

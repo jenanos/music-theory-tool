@@ -18,6 +18,7 @@ type FretboardProps = {
   overlayTones?: number[];
   outsideTones?: number[];
   showHarmony?: boolean;
+  showOverlay?: boolean;
 };
 
 export function Fretboard({
@@ -27,6 +28,7 @@ export function Fretboard({
   overlayTones = [],
   outsideTones = [],
   showHarmony = true,
+  showOverlay = true,
 }: FretboardProps) {
   const chordSet = new Set(chordTones.map((tone) => tone % 12));
   const harmonySet = new Set(harmonyTones.map((tone) => tone % 12));
@@ -57,7 +59,7 @@ export function Fretboard({
               const isChordTone = chordSet.has(pitchClass);
               const isRoot = pitchClass === rootTone;
               const isOutside = outsideSet.has(pitchClass);
-              const isOverlay = overlaySet.has(pitchClass);
+              const isOverlay = showOverlay && overlaySet.has(pitchClass);
               const isHarmony = harmonySet.has(pitchClass);
 
               let content = null;

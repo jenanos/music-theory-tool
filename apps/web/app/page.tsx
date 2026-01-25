@@ -25,7 +25,7 @@ export default function Page() {
   const [overlayTonic, setOverlayTonic] = useState(DEFAULT_TONIC);
   const [syncOverlayTonic, setSyncOverlayTonic] = useState(true);
   const [overlayMode, setOverlayMode] = useState<ModeId>(DEFAULT_MODE);
-  const [showHarmonyScale, setShowHarmonyScale] = useState(true);
+  const [showOverlayScale, setShowOverlayScale] = useState(true);
 
   // Effect to sync overlay tonic
   useEffect(() => {
@@ -90,7 +90,7 @@ export default function Page() {
         <div className="flex flex-col gap-4 sm:flex-row sm:items-center">
           {/* Harmony Controls */}
           <div className="flex flex-col gap-2 rounded-lg border border-slate-100 bg-slate-50 p-2 text-xs">
-            <span className="font-semibold uppercase tracking-wide text-slate-400">Harmoni</span>
+            <span className="font-semibold uppercase tracking-wide text-slate-400">Toneart</span>
             <div className="flex items-center gap-2">
               <select
                 className="rounded border border-slate-200 bg-white px-2 py-1 focus:border-indigo-500 focus:outline-none"
@@ -105,7 +105,11 @@ export default function Page() {
               </select>
               <select
                 className="rounded border border-slate-200 bg-white px-2 py-1 focus:border-indigo-500 focus:outline-none"
-                onChange={(event) => setMode(event.target.value as ModeId)}
+                onChange={(event) => {
+                  const newMode = event.target.value as ModeId;
+                  setMode(newMode);
+                  setOverlayMode(newMode);
+                }}
                 value={mode}
               >
                 {SCALES.filter(s => s.isHarmony).map((scale) => (
@@ -115,54 +119,7 @@ export default function Page() {
                 ))}
               </select>
             </div>
-          </div>
-
-          {/* Overlay Controls */}
-          <div className="flex flex-col gap-2 rounded-lg border border-slate-100 bg-slate-50 p-2 text-xs">
-            <div className="flex items-center justify-between gap-4">
-              <span className="font-semibold uppercase tracking-wide text-slate-400">Gripebrett Overlay</span>
-              <label className="flex items-center gap-1 cursor-pointer" title="Bruk samme tonika som harmoni">
-                <input
-                  type="checkbox"
-                  checked={syncOverlayTonic}
-                  onChange={(e) => setSyncOverlayTonic(e.target.checked)}
-                  className="rounded border-slate-300 text-indigo-600 focus:ring-indigo-500"
-                />
-                <span className="text-[10px] text-slate-500">Sync Tonika</span>
-              </label>
-            </div>
-            <div className="flex items-center gap-2">
-              <select
-                className="rounded border border-slate-200 bg-white px-2 py-1 focus:border-indigo-500 focus:outline-none disabled:opacity-50"
-                onChange={(event) => {
-                  setOverlayTonic(event.target.value);
-                  setSyncOverlayTonic(false);
-                }}
-                value={syncOverlayTonic ? tonic : overlayTonic}
-                disabled={syncOverlayTonic}
-              >
-                {TONIC_OPTIONS.map((option) => (
-                  <option key={option} value={option}>
-                    {option}
-                  </option>
-                ))}
-              </select>
-              <select
-                className="rounded border border-slate-200 bg-white px-2 py-1 focus:border-indigo-500 focus:outline-none"
-                onChange={(event) => setOverlayMode(event.target.value as ModeId)}
-                value={overlayMode}
-              >
-                {SCALES.map((scale) => (
-                  <option key={scale.id} value={scale.id}>
-                    {scale.name}
-                  </option>
-                ))}
-              </select>
-            </div>
-          </div>
-
-          <div className="flex items-center gap-4">
-            <label className="flex cursor-pointer items-center gap-2 text-sm text-slate-600 hover:text-slate-900">
+            <label className="flex cursor-pointer items-center gap-2 text-sm text-slate-600 hover:text-slate-900 mt-1">
               <input
                 checked={includeSevenths}
                 className="accent-indigo-600"
@@ -171,16 +128,62 @@ export default function Page() {
               />
               <span>7-ere</span>
             </label>
+          </div>
 
-            <label className="flex cursor-pointer items-center gap-2 text-sm text-slate-600 hover:text-slate-900">
-              <input
-                checked={showHarmonyScale}
-                className="accent-indigo-600"
-                onChange={(event) => setShowHarmonyScale(event.target.checked)}
-                type="checkbox"
-              />
-              <span>Vis harmoni</span>
-            </label>
+          {/* Overlay Controls */}
+          <div className="flex flex-col gap-2 rounded-lg border border-slate-100 bg-slate-50 p-2 text-xs">
+            <div className="flex items-center justify-between gap-4">
+              <span className="font-semibold uppercase tracking-wide text-slate-400">Skalaer</span>
+              <div className="flex items-center gap-3">
+                <label className="flex items-center gap-1 cursor-pointer" title="Vis skala på gripebrett">
+                  <input
+                    type="checkbox"
+                    checked={showOverlayScale}
+                    onChange={(e) => setShowOverlayScale(e.target.checked)}
+                    className="rounded border-slate-300 text-indigo-600 focus:ring-indigo-500"
+                  />
+                  <span className="text-[10px] text-slate-500">Vis</span>
+                </label>
+                <label className="flex items-center gap-1 cursor-pointer" title="Bruk samme tonika som harmoni">
+                  <input
+                    type="checkbox"
+                    checked={syncOverlayTonic}
+                    onChange={(e) => setSyncOverlayTonic(e.target.checked)}
+                    className="rounded border-slate-300 text-indigo-600 focus:ring-indigo-500"
+                  />
+                  <span className="text-[10px] text-slate-500">Sync Tonika</span>
+                </label>
+              </div>
+              <div className="flex items-center gap-2">
+                <select
+                  className="rounded border border-slate-200 bg-white px-2 py-1 focus:border-indigo-500 focus:outline-none disabled:opacity-50"
+                  onChange={(event) => {
+                    setOverlayTonic(event.target.value);
+                    setSyncOverlayTonic(false);
+                  }}
+                  value={syncOverlayTonic ? tonic : overlayTonic}
+                  disabled={syncOverlayTonic}
+                >
+                  {TONIC_OPTIONS.map((option) => (
+                    <option key={option} value={option}>
+                      {option}
+                    </option>
+                  ))}
+                </select>
+                <select
+                  className="rounded border border-slate-200 bg-white px-2 py-1 focus:border-indigo-500 focus:outline-none"
+                  onChange={(event) => setOverlayMode(event.target.value as ModeId)}
+                  value={overlayMode}
+                >
+                  {SCALES.map((scale) => (
+                    <option key={scale.id} value={scale.id}>
+                      {scale.name}
+                    </option>
+                  ))}
+                </select>
+              </div>
+            </div>
+
           </div>
         </div>
       </header>
@@ -224,7 +227,8 @@ export default function Page() {
             harmonyNotes={harmonyScalePcs}
             overlayNotes={overlayScalePcs}
             outsideNotes={outsideNotes}
-            showHarmony={showHarmonyScale}
+            showHarmony={false}
+            showOverlay={showOverlayScale}
           />
         </div>
       </div>

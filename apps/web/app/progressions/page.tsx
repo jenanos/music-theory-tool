@@ -280,8 +280,8 @@ export default function ProgressionsPage() {
                                             key={tag}
                                             onClick={() => toggleTag(tag)}
                                             className={`rounded px-2 py-1 text-[11px] font-medium transition-colors ${selectedTags.includes(tag)
-                                                    ? "bg-indigo-100 text-indigo-700"
-                                                    : "bg-slate-50 text-slate-600 hover:bg-slate-100 border border-slate-100"
+                                                ? "bg-indigo-100 text-indigo-700"
+                                                : "bg-slate-50 text-slate-600 hover:bg-slate-100 border border-slate-100"
                                                 }`}
                                         >
                                             {TAG_LABELS[tag] ?? tag}
@@ -316,7 +316,12 @@ export default function ProgressionsPage() {
                                                 {prog.name}
                                             </h3>
                                             {prog.description && (
-                                                <p className="text-[10px] text-slate-500 line-clamp-1">{prog.description}</p>
+                                                <p className="text-[10px] text-slate-500 line-clamp-2">{prog.description}</p>
+                                            )}
+                                            {prog.usageExamples && (
+                                                <p className="mt-1 text-[9px] text-indigo-500 font-medium whitespace-nowrap overflow-hidden text-ellipsis">
+                                                    <span className="opacity-70">Eksempel:</span> {prog.usageExamples}
+                                                </p>
                                             )}
                                         </div>
                                         <div className="flex text-amber-400 text-[10px]">

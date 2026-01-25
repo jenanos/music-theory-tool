@@ -4,6 +4,8 @@ const FUNCTION_LABELS: Record<DiatonicChord["function"], string> = {
   tonic: "Tonic",
   predominant: "Predominant",
   dominant: "Dominant",
+  subdominant: "Subdominant",
+  variable: "Variable",
 };
 
 type DegreeTableProps = {
@@ -33,9 +35,8 @@ export function DegreeTable({
             const isActive = chord.degree === selectedDegree;
             return (
               <tr
-                className={`border-t border-slate-200 transition ${
-                  isActive ? "bg-indigo-50" : "hover:bg-slate-50"
-                }`}
+                className={`border-t border-slate-200 transition ${isActive ? "bg-indigo-50" : "hover:bg-slate-50"
+                  }`}
                 key={`${chord.degree}-${chord.symbol}`}
               >
                 <td className="px-4 py-3 font-semibold text-slate-700">

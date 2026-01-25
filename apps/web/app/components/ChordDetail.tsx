@@ -1,8 +1,8 @@
 import type { DiatonicChord, SubstitutionSuggestion } from "@repo/theory";
-import { getVoicingsForChord } from "@repo/voicings";
+
 import { Fretboard } from "./Fretboard";
 import { SubstitutionPanel } from "./SubstitutionPanel";
-import { VoicingList } from "./VoicingList";
+
 
 type ChordDetailProps = {
   chord: DiatonicChord;
@@ -15,7 +15,7 @@ export function ChordDetail({
   substitutions,
   useFlats,
 }: ChordDetailProps) {
-  const voicings = getVoicingsForChord(chord.symbol);
+
 
   return (
     <section className="space-y-6">
@@ -54,12 +54,7 @@ export function ChordDetail({
             </h3>
             <Fretboard chordTones={chord.tones} useFlats={useFlats} />
           </div>
-          <div>
-            <h3 className="mb-3 text-sm font-semibold uppercase tracking-wide text-slate-500">
-              Voicings / grep
-            </h3>
-            <VoicingList voicings={voicings} />
-          </div>
+
         </div>
         <div>
           <h3 className="mb-3 text-sm font-semibold uppercase tracking-wide text-slate-500">

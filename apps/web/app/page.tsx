@@ -33,37 +33,36 @@ export default function Page() {
   const selectedChord =
     chords.find((chord) => chord.degree === selectedDegree) ?? chords[0];
 
-  if (!selectedChord) {
-    return null;
-  }
-
-  const substitutions = suggestSubstitutions(chords, selectedChord);
+  const substitutions = selectedChord
+    ? suggestSubstitutions({
+      tonic,
+      mode,
+      chord: selectedChord,
+      allChords: chords,
+    })
+    : [];
   const useFlats = prefersFlats(tonic);
   const scaleInfo = SCALES.find((scale) => scale.id === mode);
 
-  return (
-    <main className="min-h-screen bg-slate-50 pb-16 text-slate-900">
-      <div className="mx-auto max-w-6xl px-6 pb-10 pt-12">
-        <header className="mb-10 space-y-4">
-          <p className="text-sm font-semibold uppercase tracking-wide text-indigo-500">
-            Gitarist-støtteapp
-          </p>
-          <h1 className="text-3xl font-semibold leading-tight sm:text-4xl">
-            Diatoniske akkorder, grep og substitusjoner
-          </h1>
-          <p className="max-w-3xl text-base text-slate-600">
-            Velg tonic og modus for å se trinnene i tonearten, klikk deg inn på
-            en akkord og få detaljer, grep og forslag til erstatninger.
-          </p>
-        </header>
+  if (!selectedChord) return null;
 
-        <section className="mb-8 grid gap-6 rounded-2xl border border-slate-200 bg-white p-6 shadow-sm lg:grid-cols-[2fr,1fr,1fr]">
-          <div>
-            <label className="text-xs font-semibold uppercase text-slate-500">
-              Tonic
-            </label>
+  return (
+    <main className="flex h-full flex-col bg-slate-50 text-slate-900">
+      {/* Top Toolbar */}
+      <header className="flex shrink-0 flex-col gap-4 border-b border-slate-200 bg-white px-6 py-4 shadow-sm sm:flex-row sm:items-center sm:justify-between">
+        <div>
+          <h1 className="text-xl font-bold leading-tight text-slate-800">
+            Diatoniske akkorder
+          </h1>
+          <p className="text-xs text-slate-500">
+            {scaleInfo?.name} • {tonic} tonic
+          </p>
+        </div>
+
+        <div className="flex flex-wrap items-center gap-4">
+          <div className="flex items-center gap-2">
             <select
-              className="mt-2 w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm"
+              className="rounded-lg border border-slate-200 bg-slate-50 px-3 py-1.5 text-sm font-medium focus:border-indigo-500 focus:outline-none"
               onChange={(event) => setTonic(event.target.value)}
               value={tonic}
             >
@@ -73,13 +72,8 @@ export default function Page() {
                 </option>
               ))}
             </select>
-          </div>
-          <div>
-            <label className="text-xs font-semibold uppercase text-slate-500">
-              Modus / skala
-            </label>
             <select
-              className="mt-2 w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm"
+              className="rounded-lg border border-slate-200 bg-slate-50 px-3 py-1.5 text-sm font-medium focus:border-indigo-500 focus:outline-none"
               onChange={(event) => setMode(event.target.value as ModeId)}
               value={mode}
             >
@@ -90,65 +84,57 @@ export default function Page() {
               ))}
             </select>
           </div>
-          <div>
-            <label className="text-xs font-semibold uppercase text-slate-500">
-              Akkordtype
-            </label>
-            <div className="mt-2 flex items-center gap-2 rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm">
-              <input
-                checked={includeSevenths}
-                id="sevenths"
-                onChange={(event) => setIncludeSevenths(event.target.checked)}
-                type="checkbox"
-              />
-              <label htmlFor="sevenths">Vis 7-akkorder</label>
-            </div>
-            <p className="mt-2 text-xs text-slate-500">
-              {scaleInfo?.name} • {tonic} tonic
-            </p>
-          </div>
-        </section>
 
-        <section className="grid gap-8 lg:grid-cols-[1.1fr,1fr]">
-          <div className="space-y-4">
-            <h2 className="text-sm font-semibold uppercase tracking-wide text-slate-500">
-              Trinn-oversikt
-            </h2>
-            <DegreeTable
-              chords={chords}
-              onSelect={setSelectedDegree}
-              selectedDegree={selectedDegree}
+          <label className="flex cursor-pointer items-center gap-2 rounded-lg border border-slate-200 bg-slate-50 px-3 py-1.5 text-sm hover:bg-slate-100">
+            <input
+              checked={includeSevenths}
+              className="accent-indigo-600"
+              onChange={(event) => setIncludeSevenths(event.target.checked)}
+              type="checkbox"
             />
-          </div>
-          <div className="space-y-4">
-            <h2 className="text-sm font-semibold uppercase tracking-wide text-slate-500">
-              Tips
-            </h2>
-            <div className="rounded-xl border border-slate-200 bg-white p-4 text-sm text-slate-600 shadow-sm">
-              <ul className="list-disc space-y-2 pl-4">
-                <li>
-                  Prøv eksemplene: velg <strong>E + aeolisk</strong> eller
-                  <strong> A + dorisk</strong> og klikk på et trinn.
-                </li>
-                <li>
-                  Substitusjoner prioriterer samme funksjon og delte toner.
-                </li>
-                <li>
-                  Fretboardet markerer akkordtonene i grønt og grunntonen i
-                  lilla.
-                </li>
-              </ul>
-            </div>
-          </div>
-        </section>
+            <span>7-akkorder</span>
+          </label>
+        </div>
+      </header>
 
-        <section className="mt-12">
+      {/* Main Content Area */}
+      <div className="flex flex-1 overflow-hidden">
+        {/* Left Panel: Table & Tips */}
+        <div className="flex w-full max-w-md flex-col overflow-y-auto border-r border-slate-200 bg-white/50 p-6 lg:w-1/3">
+          <div className="space-y-6">
+            <section>
+              <h2 className="mb-3 text-xs font-bold uppercase tracking-wide text-slate-400">
+                Oversikt
+              </h2>
+              <DegreeTable
+                chords={chords}
+                onSelect={setSelectedDegree}
+                selectedDegree={selectedDegree}
+              />
+            </section>
+
+            <section className="rounded-xl border border-blue-100 bg-blue-50/50 p-4 text-sm text-blue-800">
+              <h3 className="mb-2 font-semibold">Tips</h3>
+              <ul className="list-disc space-y-1 pl-4 text-blue-700/80">
+                <li>Klikk på en rad for detaljer.</li>
+                <li>
+                  Prøv <strong>E + aeolisk</strong> eller{" "}
+                  <strong>A + dorisk</strong>.
+                </li>
+                <li>Substitusjoner baseres på funksjon.</li>
+              </ul>
+            </section>
+          </div>
+        </div>
+
+        {/* Right Panel: Detail View */}
+        <div className="flex-1 overflow-y-auto p-6 bg-slate-50">
           <ChordDetail
             chord={selectedChord}
             substitutions={substitutions}
             useFlats={useFlats}
           />
-        </section>
+        </div>
       </div>
     </main>
   );

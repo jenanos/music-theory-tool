@@ -20,8 +20,8 @@ export default function RootLayout({
   return (
     <html lang="no">
       <body className={geist.className}>
-        <nav className="border-b border-slate-200 bg-white">
-          <div className="mx-auto flex max-w-6xl items-center justify-between px-6 py-3">
+        <nav className="border-b border-slate-200 bg-white shrink-0">
+          <div className="mx-auto flex w-full max-w-[1920px] items-center justify-between px-6 py-3">
             <Link href="/" className="font-semibold text-slate-800">
               🎸 Gitarist-støtteapp
             </Link>
@@ -41,7 +41,9 @@ export default function RootLayout({
             </div>
           </div>
         </nav>
-        {children}
+        <div className="flex-1 overflow-hidden">
+          {children}
+        </div>
       </body>
     </html>
   );

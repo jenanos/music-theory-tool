@@ -14,11 +14,12 @@ import { getScale, noteName, prefersFlats, type ModeId } from "./index";
 export interface ChordProgression {
     id: string;
     name: string;
-    mode: "major" | "minor";
+    mode: ModeId;
     type: "triad" | "seventh";
     weight: number; // 1-10, higher = more common/popular
     tags: string[];
     roman: string[];
+    description?: string;
 }
 
 export interface TransposedProgression extends ChordProgression {
@@ -38,11 +39,84 @@ export interface NextChordSuggestion {
 // ============================================================================
 
 export const CHORD_PROGRESSIONS: ChordProgression[] = [
+    // ==================== NEW: Modal Progressions (User Requested) ====================
+    {
+        id: "modal_dorian_vamp",
+        name: "Dorian Vamp",
+        mode: "dorian",
+        type: "seventh",
+        weight: 9,
+        tags: ["jazz", "funky", "loop", "modal"],
+        roman: ["i7", "IV7"],
+        description: "Klassisk Dorian-lyd kjent fra 'Oye Como Va' eller 'So What'."
+    },
+    {
+        id: "modal_lydian_lift",
+        name: "The Lydian Lift",
+        mode: "lydian",
+        type: "seventh",
+        weight: 8,
+        tags: ["dreamy", "cinematic", "bright", "modal"],
+        roman: ["I", "II", "Imaj7"], // Simplified II/I to II for now
+        description: "Gir en svevende, drømmende følelse."
+    },
+    {
+        id: "modal_mixolydian_rock",
+        name: "Mixolydian Rock-n-Roll",
+        mode: "mixolydian",
+        type: "triad",
+        weight: 9,
+        tags: ["rock", "blues", "common", "modal"],
+        roman: ["I", "bVII", "IV"],
+        description: "Grunnsteinen i mye klassisk rock og blues."
+    },
+    {
+        id: "modal_phrygian_darkness",
+        name: "Phrygian Darkness",
+        mode: "phrygian",
+        type: "triad",
+        weight: 8,
+        tags: ["dark", "dramatic", "flamenco", "modal"],
+        roman: ["i", "bII"],
+        description: "En spansk-klingende, mørk progresjon."
+    },
+    {
+        id: "modal_aeolian_ballad",
+        name: "Aeolian Ballad",
+        mode: "aeolian",
+        type: "triad",
+        weight: 9,
+        tags: ["pop", "melancholic", "emotional", "modal"],
+        roman: ["i", "VI", "III", "VII"],
+        description: "Også kjent som den klassiske pop-minor progresjonen."
+    },
+    {
+        id: "modal_locrian_tension",
+        name: "Locrian Tension",
+        mode: "locrian",
+        type: "seventh",
+        weight: 6,
+        tags: ["experimental", "tension", "modal"],
+        roman: ["iø7", "bIImaj7"],
+        description: "Veldig dissonant og spenningsfylt."
+    },
+    {
+        id: "modal_ionian_jazz",
+        name: "Jazz ii-V-I (Ionian)",
+        mode: "ionian",
+        type: "seventh",
+        weight: 10,
+        tags: ["jazz", "cadence", "classical"],
+        roman: ["ii7", "V7", "Imaj7"],
+        description: "Den mest brukte progresjonen i jazz."
+    },
+
+
     // ==================== Major Triads - Common ====================
     {
         id: "maj_tri_01",
         name: "Axis of Awesome",
-        mode: "major",
+        mode: "ionian",
         type: "triad",
         weight: 10,
         tags: ["common", "pop", "loop"],
@@ -51,7 +125,7 @@ export const CHORD_PROGRESSIONS: ChordProgression[] = [
     {
         id: "maj_tri_02",
         name: "Sensitive Female Chord Progression",
-        mode: "major",
+        mode: "ionian",
         type: "triad",
         weight: 10,
         tags: ["common", "pop", "loop"],
@@ -60,7 +134,7 @@ export const CHORD_PROGRESSIONS: ChordProgression[] = [
     {
         id: "maj_tri_03",
         name: "Classic Pop Ballad",
-        mode: "major",
+        mode: "ionian",
         type: "triad",
         weight: 9,
         tags: ["common", "pop", "ballad"],
@@ -69,7 +143,7 @@ export const CHORD_PROGRESSIONS: ChordProgression[] = [
     {
         id: "maj_tri_04",
         name: "12-Bar Blues (kort)",
-        mode: "major",
+        mode: "ionian",
         type: "triad",
         weight: 9,
         tags: ["common", "rock", "blues"],
@@ -78,7 +152,7 @@ export const CHORD_PROGRESSIONS: ChordProgression[] = [
     {
         id: "maj_tri_05",
         name: "Three Chord Rock",
-        mode: "major",
+        mode: "ionian",
         type: "triad",
         weight: 9,
         tags: ["common", "rock"],
@@ -87,7 +161,7 @@ export const CHORD_PROGRESSIONS: ChordProgression[] = [
     {
         id: "maj_tri_06",
         name: "50s Doo-Wop",
-        mode: "major",
+        mode: "ionian",
         type: "triad",
         weight: 8,
         tags: ["common", "50s", "vintage"],
@@ -96,7 +170,7 @@ export const CHORD_PROGRESSIONS: ChordProgression[] = [
     {
         id: "maj_tri_07",
         name: "Simple ii-V-I",
-        mode: "major",
+        mode: "ionian",
         type: "triad",
         weight: 8,
         tags: ["common", "pop", "cadence"],
@@ -105,7 +179,7 @@ export const CHORD_PROGRESSIONS: ChordProgression[] = [
     {
         id: "maj_tri_08",
         name: "Pop Anthemic",
-        mode: "major",
+        mode: "ionian",
         type: "triad",
         weight: 8,
         tags: ["common", "pop", "anthemic"],
@@ -114,7 +188,7 @@ export const CHORD_PROGRESSIONS: ChordProgression[] = [
     {
         id: "maj_tri_09",
         name: "Emotional Rise",
-        mode: "major",
+        mode: "ionian",
         type: "triad",
         weight: 8,
         tags: ["common", "pop"],
@@ -123,7 +197,7 @@ export const CHORD_PROGRESSIONS: ChordProgression[] = [
     {
         id: "maj_tri_10",
         name: "Driving Pop",
-        mode: "major",
+        mode: "ionian",
         type: "triad",
         weight: 7,
         tags: ["common", "pop"],
@@ -132,7 +206,7 @@ export const CHORD_PROGRESSIONS: ChordProgression[] = [
     {
         id: "maj_tri_11",
         name: "Folk Standard",
-        mode: "major",
+        mode: "ionian",
         type: "triad",
         weight: 7,
         tags: ["common", "folk"],
@@ -141,7 +215,7 @@ export const CHORD_PROGRESSIONS: ChordProgression[] = [
     {
         id: "maj_tri_12",
         name: "Mixolydian Rock",
-        mode: "major",
+        mode: "ionian", // Usually described in major, but uses bVII
         type: "triad",
         weight: 7,
         tags: ["common", "rock", "mixolydian"],
@@ -150,7 +224,7 @@ export const CHORD_PROGRESSIONS: ChordProgression[] = [
     {
         id: "maj_tri_13",
         name: "Sweet Child Riff",
-        mode: "major",
+        mode: "ionian",
         type: "triad",
         weight: 7,
         tags: ["common", "rock", "mixolydian"],
@@ -159,7 +233,7 @@ export const CHORD_PROGRESSIONS: ChordProgression[] = [
     {
         id: "maj_tri_14",
         name: "Deceptive Resolution",
-        mode: "major",
+        mode: "ionian",
         type: "triad",
         weight: 6,
         tags: ["common", "pop", "deceptive"],
@@ -168,7 +242,7 @@ export const CHORD_PROGRESSIONS: ChordProgression[] = [
     {
         id: "maj_tri_15",
         name: "ii-V-I Kadens",
-        mode: "major",
+        mode: "ionian",
         type: "triad",
         weight: 6,
         tags: ["common", "cadence", "jazz"],
@@ -177,7 +251,7 @@ export const CHORD_PROGRESSIONS: ChordProgression[] = [
     {
         id: "maj_tri_16",
         name: "Autentisk Kadens",
-        mode: "major",
+        mode: "ionian",
         type: "triad",
         weight: 6,
         tags: ["common", "cadence", "classical"],
@@ -188,7 +262,7 @@ export const CHORD_PROGRESSIONS: ChordProgression[] = [
     {
         id: "maj_adv_01",
         name: "Minor Plagal",
-        mode: "major",
+        mode: "ionian",
         type: "triad",
         weight: 6,
         tags: ["modal_interchange", "color", "emotional"],
@@ -197,7 +271,7 @@ export const CHORD_PROGRESSIONS: ChordProgression[] = [
     {
         id: "maj_adv_02",
         name: "Borrowed iv-bVII",
-        mode: "major",
+        mode: "ionian",
         type: "triad",
         weight: 6,
         tags: ["modal_interchange", "color"],
@@ -206,7 +280,7 @@ export const CHORD_PROGRESSIONS: ChordProgression[] = [
     {
         id: "maj_adv_03",
         name: "Epic Borrowed (Mario Kadens)",
-        mode: "major",
+        mode: "ionian",
         type: "triad",
         weight: 6,
         tags: ["modal_interchange", "color", "epic"],
@@ -215,7 +289,7 @@ export const CHORD_PROGRESSIONS: ChordProgression[] = [
     {
         id: "maj_adv_04",
         name: "Chromatic Median",
-        mode: "major",
+        mode: "ionian",
         type: "triad",
         weight: 5,
         tags: ["modal_interchange", "color"],
@@ -224,7 +298,7 @@ export const CHORD_PROGRESSIONS: ChordProgression[] = [
     {
         id: "maj_adv_05",
         name: "Dramatic Borrowed",
-        mode: "major",
+        mode: "ionian",
         type: "triad",
         weight: 5,
         tags: ["modal_interchange", "color", "dramatic"],
@@ -233,7 +307,7 @@ export const CHORD_PROGRESSIONS: ChordProgression[] = [
     {
         id: "maj_adv_06",
         name: "Passing Diminished",
-        mode: "major",
+        mode: "ionian",
         type: "triad",
         weight: 5,
         tags: ["chromatic", "passing"],
@@ -242,7 +316,7 @@ export const CHORD_PROGRESSIONS: ChordProgression[] = [
     {
         id: "maj_adv_07",
         name: "Chromatic Approach to ii",
-        mode: "major",
+        mode: "ionian",
         type: "triad",
         weight: 5,
         tags: ["chromatic", "passing"],
@@ -251,7 +325,7 @@ export const CHORD_PROGRESSIONS: ChordProgression[] = [
     {
         id: "maj_adv_08",
         name: "Kvintsirkel",
-        mode: "major",
+        mode: "ionian",
         type: "triad",
         weight: 5,
         tags: ["sequence", "circle_of_fifths", "classical"],
@@ -262,7 +336,7 @@ export const CHORD_PROGRESSIONS: ChordProgression[] = [
     {
         id: "maj_sec_01",
         name: "V/V til V",
-        mode: "major",
+        mode: "ionian",
         type: "seventh",
         weight: 7,
         tags: ["secondary_dominant", "common"],
@@ -271,7 +345,7 @@ export const CHORD_PROGRESSIONS: ChordProgression[] = [
     {
         id: "maj_sec_02",
         name: "V/vi til vi",
-        mode: "major",
+        mode: "ionian",
         type: "seventh",
         weight: 7,
         tags: ["secondary_dominant", "common"],
@@ -280,7 +354,7 @@ export const CHORD_PROGRESSIONS: ChordProgression[] = [
     {
         id: "maj_sec_03",
         name: "V/ii i Kadens",
-        mode: "major",
+        mode: "ionian",
         type: "seventh",
         weight: 6,
         tags: ["secondary_dominant"],
@@ -289,7 +363,7 @@ export const CHORD_PROGRESSIONS: ChordProgression[] = [
     {
         id: "maj_sec_04",
         name: "V/IV til IV",
-        mode: "major",
+        mode: "ionian",
         type: "seventh",
         weight: 6,
         tags: ["secondary_dominant"],
@@ -298,7 +372,7 @@ export const CHORD_PROGRESSIONS: ChordProgression[] = [
     {
         id: "maj_sec_05",
         name: "Turnaround med Sekundærdominanter",
-        mode: "major",
+        mode: "ionian",
         type: "seventh",
         weight: 6,
         tags: ["secondary_dominant", "turnaround"],
@@ -309,7 +383,7 @@ export const CHORD_PROGRESSIONS: ChordProgression[] = [
     {
         id: "maj_jazz_01",
         name: "Jazz Standard Turnaround",
-        mode: "major",
+        mode: "ionian",
         type: "seventh",
         weight: 9,
         tags: ["jazz", "common", "turnaround"],
@@ -318,7 +392,7 @@ export const CHORD_PROGRESSIONS: ChordProgression[] = [
     {
         id: "maj_jazz_02",
         name: "ii-V-I (Jazz)",
-        mode: "major",
+        mode: "ionian",
         type: "seventh",
         weight: 9,
         tags: ["jazz", "common", "cadence"],
@@ -327,7 +401,7 @@ export const CHORD_PROGRESSIONS: ChordProgression[] = [
     {
         id: "maj_jazz_03",
         name: "Turnaround med VI7",
-        mode: "major",
+        mode: "ionian",
         type: "seventh",
         weight: 8,
         tags: ["jazz", "turnaround"],
@@ -336,7 +410,7 @@ export const CHORD_PROGRESSIONS: ChordProgression[] = [
     {
         id: "maj_jazz_04",
         name: "Rhythm Changes (A-del)",
-        mode: "major",
+        mode: "ionian",
         type: "seventh",
         weight: 8,
         tags: ["jazz", "rhythm_changes"],
@@ -345,7 +419,7 @@ export const CHORD_PROGRESSIONS: ChordProgression[] = [
     {
         id: "maj_jazz_05",
         name: "Passing Diminished (Jazz)",
-        mode: "major",
+        mode: "ionian",
         type: "seventh",
         weight: 7,
         tags: ["jazz", "chromatic", "passing"],
@@ -354,7 +428,7 @@ export const CHORD_PROGRESSIONS: ChordProgression[] = [
     {
         id: "maj_jazz_06",
         name: "Backdoor ii-V",
-        mode: "major",
+        mode: "ionian",
         type: "seventh",
         weight: 7,
         tags: ["jazz", "backdoor"],
@@ -363,7 +437,7 @@ export const CHORD_PROGRESSIONS: ChordProgression[] = [
     {
         id: "maj_jazz_07",
         name: "Tritone Substitution (ii-bII-I)",
-        mode: "major",
+        mode: "ionian",
         type: "seventh",
         weight: 6,
         tags: ["jazz", "tritone_sub"],
@@ -372,7 +446,7 @@ export const CHORD_PROGRESSIONS: ChordProgression[] = [
     {
         id: "maj_jazz_08",
         name: "Direct Tritone Sub",
-        mode: "major",
+        mode: "ionian",
         type: "seventh",
         weight: 6,
         tags: ["jazz", "tritone_sub"],
@@ -383,7 +457,7 @@ export const CHORD_PROGRESSIONS: ChordProgression[] = [
     {
         id: "min_tri_01",
         name: "Andalusian Moll",
-        mode: "minor",
+        mode: "aeolian",
         type: "triad",
         weight: 10,
         tags: ["common", "aeolian", "loop"],
@@ -392,7 +466,7 @@ export const CHORD_PROGRESSIONS: ChordProgression[] = [
     {
         id: "min_tri_02",
         name: "Moll med Dur-V",
-        mode: "minor",
+        mode: "aeolian",
         type: "triad",
         weight: 9,
         tags: ["common", "minor", "cadence"],
@@ -401,7 +475,7 @@ export const CHORD_PROGRESSIONS: ChordProgression[] = [
     {
         id: "min_tri_03",
         name: "Natural Minor Loop",
-        mode: "minor",
+        mode: "aeolian",
         type: "triad",
         weight: 8,
         tags: ["common", "natural_minor"],
@@ -410,7 +484,7 @@ export const CHORD_PROGRESSIONS: ChordProgression[] = [
     {
         id: "min_tri_04",
         name: "Fallende Linje",
-        mode: "minor",
+        mode: "aeolian",
         type: "triad",
         weight: 8,
         tags: ["common", "minor", "color"],
@@ -419,7 +493,7 @@ export const CHORD_PROGRESSIONS: ChordProgression[] = [
     {
         id: "min_tri_05",
         name: "Pop Moll",
-        mode: "minor",
+        mode: "aeolian",
         type: "triad",
         weight: 7,
         tags: ["common", "minor", "pop"],
@@ -428,7 +502,7 @@ export const CHORD_PROGRESSIONS: ChordProgression[] = [
     {
         id: "min_tri_06",
         name: "Dramatisk Moll",
-        mode: "minor",
+        mode: "aeolian",
         type: "triad",
         weight: 7,
         tags: ["common", "minor", "dramatic"],
@@ -437,7 +511,7 @@ export const CHORD_PROGRESSIONS: ChordProgression[] = [
     {
         id: "min_tri_07",
         name: "Enkel Moll-kadens",
-        mode: "minor",
+        mode: "aeolian",
         type: "triad",
         weight: 7,
         tags: ["common", "minor"],
@@ -446,7 +520,7 @@ export const CHORD_PROGRESSIONS: ChordProgression[] = [
     {
         id: "min_tri_08",
         name: "iv-V-i Kadens",
-        mode: "minor",
+        mode: "aeolian",
         type: "triad",
         weight: 6,
         tags: ["common", "minor", "cadence"],
@@ -455,7 +529,7 @@ export const CHORD_PROGRESSIONS: ChordProgression[] = [
     {
         id: "min_tri_09",
         name: "Melankolsk Moll",
-        mode: "minor",
+        mode: "aeolian",
         type: "triad",
         weight: 6,
         tags: ["common", "minor", "melancholic"],
@@ -464,7 +538,7 @@ export const CHORD_PROGRESSIONS: ChordProgression[] = [
     {
         id: "min_tri_10",
         name: "Moll Fargerik",
-        mode: "minor",
+        mode: "aeolian",
         type: "triad",
         weight: 6,
         tags: ["minor", "color"],
@@ -475,7 +549,7 @@ export const CHORD_PROGRESSIONS: ChordProgression[] = [
     {
         id: "min_adv_01",
         name: "Napolitansk Sekst",
-        mode: "minor",
+        mode: "aeolian",
         type: "triad",
         weight: 6,
         tags: ["neapolitan", "color", "classical"],
@@ -484,7 +558,7 @@ export const CHORD_PROGRESSIONS: ChordProgression[] = [
     {
         id: "min_adv_02",
         name: "Kromatisk Passing (Moll)",
-        mode: "minor",
+        mode: "aeolian",
         type: "triad",
         weight: 6,
         tags: ["chromatic", "passing"],
@@ -493,7 +567,7 @@ export const CHORD_PROGRESSIONS: ChordProgression[] = [
     {
         id: "min_adv_03",
         name: "Moll Kvintsirkel",
-        mode: "minor",
+        mode: "aeolian",
         type: "triad",
         weight: 5,
         tags: ["sequence", "circle_of_fifths"],
@@ -502,7 +576,7 @@ export const CHORD_PROGRESSIONS: ChordProgression[] = [
     {
         id: "min_adv_04",
         name: "Picardy-ters Avslutning",
-        mode: "minor",
+        mode: "aeolian",
         type: "triad",
         weight: 5,
         tags: ["picardy", "ending", "classical"],
@@ -513,7 +587,7 @@ export const CHORD_PROGRESSIONS: ChordProgression[] = [
     {
         id: "min_jazz_01",
         name: "Minor ii-V-i (Jazz)",
-        mode: "minor",
+        mode: "aeolian",
         type: "seventh",
         weight: 9,
         tags: ["jazz", "common", "cadence"],
@@ -522,7 +596,7 @@ export const CHORD_PROGRESSIONS: ChordProgression[] = [
     {
         id: "min_jazz_02",
         name: "Minor Turnaround",
-        mode: "minor",
+        mode: "aeolian",
         type: "seventh",
         weight: 8,
         tags: ["jazz", "turnaround"],
@@ -531,7 +605,7 @@ export const CHORD_PROGRESSIONS: ChordProgression[] = [
     {
         id: "min_jazz_03",
         name: "Minor Backdoor",
-        mode: "minor",
+        mode: "aeolian",
         type: "seventh",
         weight: 7,
         tags: ["jazz", "backdoor"],
@@ -540,7 +614,7 @@ export const CHORD_PROGRESSIONS: ChordProgression[] = [
     {
         id: "min_jazz_04",
         name: "Minor Tritone Sub",
-        mode: "minor",
+        mode: "aeolian",
         type: "seventh",
         weight: 6,
         tags: ["jazz", "tritone_sub"],
@@ -569,7 +643,7 @@ export function getAllTags(): string[] {
  * Filter progressions by mode and optional tags
  */
 export function filterProgressions(
-    mode: "major" | "minor" | "all",
+    mode: ModeId | "all",
     tags?: string[],
     type?: "triad" | "seventh" | "all"
 ): ChordProgression[] {
@@ -636,7 +710,7 @@ function parseRomanNumeral(roman: string): {
 /**
  * Convert a roman numeral to an actual chord symbol in a given key
  */
-function romanToChord(
+export function romanToChord(
     roman: string,
     tonic: string,
     mode: ModeId
@@ -714,10 +788,17 @@ function romanToChord(
 export function transposeProgression(
     progression: ChordProgression,
     tonic: string,
-    mode: ModeId = "ionian"
+    mode: ModeId = "ionian" // Fallback but basically unused if overrideMode is handled
 ): TransposedProgression {
-    // Use appropriate mode based on progression
-    const actualMode: ModeId = progression.mode === "minor" ? "aeolian" : mode;
+    // Use the mode from the progression itself as the source mode for roman numeral interpretation!
+    // But wait, if I am in C Major (Ionian), and I view a Dorian progression (i7 - IV7), 
+    // Do I show chords for C Dorian? Yes, "Start with: ... dynamic ... correct diatonic chords for the selected mode"
+    // The PROGESSION has a native mode. 
+    // The USER selects a Mode in the UI. 
+    // If the User selects "Dorian", we show Dorian progressions.
+    // So we should transpose using the mode of the progression (which matches the selected mode).
+
+    const actualMode = progression.mode;
 
     const chords = progression.roman.map((roman) =>
         romanToChord(roman, tonic, actualMode)
@@ -786,8 +867,16 @@ export function suggestNextChords(
     // Convert to array and sort by frequency
     const suggestions: NextChordSuggestion[] = [];
 
-    // Determine actual mode for transposition
-    const actualMode: ModeId = mode === "aeolian" || mode === "dorian" ? mode : "ionian";
+    // Determine actual mode for transposition - use the passed mode from UI
+    // So if I am in C Dorian, and I have "i7", what comes next? 
+    // The map uses Roman Numerals. 
+    // Currently, transitionMap mixes all modes! 
+    // "i" in Dorian might go to "IV7". "i" in Aeolian might go to "bVI".
+    // Does "i" = "i" across modes? Yes. 
+    // But "IV7" is distinct to Dorian. "iv" is distinct to Aeolian.
+    // So mixing them is fine, it just suggests what follows that roman numeral symbol.
+
+    const actualMode: ModeId = mode;
 
     for (const [roman, data] of fromMap) {
         suggestions.push({
@@ -798,43 +887,6 @@ export function suggestNextChords(
         });
     }
 
-    return suggestions.sort((a, b) => b.frequency - a.frequency).slice(0, 8);
-}
-
-/**
- * Get starting chord suggestions (most common first chords)
- */
-export function getStartingChords(
-    mode: "major" | "minor",
-    tonic: string
-): NextChordSuggestion[] {
-    const chordCounts = new Map<string, { count: number; progressionIds: string[] }>();
-    const actualMode: ModeId = mode === "minor" ? "aeolian" : "ionian";
-
-    for (const prog of CHORD_PROGRESSIONS) {
-        if (prog.mode !== mode) continue;
-
-        const firstChord = prog.roman[0];
-        if (!firstChord) continue;
-
-        if (!chordCounts.has(firstChord)) {
-            chordCounts.set(firstChord, { count: 0, progressionIds: [] });
-        }
-
-        const entry = chordCounts.get(firstChord)!;
-        entry.count += prog.weight;
-        entry.progressionIds.push(prog.id);
-    }
-
-    const suggestions: NextChordSuggestion[] = [];
-    for (const [roman, data] of chordCounts) {
-        suggestions.push({
-            roman,
-            chord: romanToChord(roman, tonic, actualMode),
-            frequency: data.count,
-            fromProgressions: data.progressionIds,
-        });
-    }
-
+    // Sort by frequency
     return suggestions.sort((a, b) => b.frequency - a.frequency);
 }

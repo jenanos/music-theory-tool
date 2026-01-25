@@ -49,7 +49,8 @@ export const CHORD_PROGRESSIONS: ChordProgression[] = [
         weight: 9,
         tags: ["jazz", "funky", "loop", "modal"],
         roman: ["i7", "IV7"],
-        description: "Klassisk Dorian-lyd kjent fra 'Oye Como Va' eller 'So What'."
+        description: "Klassisk Dorian‑lyd hvor molltonikaen veksler med stor IV‑akkord. Den opphevede 6. tonen gir progresjonen en karakteristisk åpen og funky klang【826645563184852†L50-L88】.",
+        usageExamples: "Santana – Oye Como Va, Santana – Evil Ways, Miles Davis – So What, Pink Floyd – Breathe, Pink Floyd – The Great Gig in the Sky【826645563184852†L50-L88】"
     },
     {
         id: "modal_lydian_lift",
@@ -59,7 +60,8 @@ export const CHORD_PROGRESSIONS: ChordProgression[] = [
         weight: 8,
         tags: ["dreamy", "cinematic", "bright", "modal"],
         roman: ["I", "II", "Imaj7"], // Simplified II/I to II for now
-        description: "Gir en svevende, drømmende følelse."
+        description: "Lydian modus (dur med hevet 4.) gir en svevende, drømmende følelse med en lys II‑akkord som løfter melodien【719065861547382†L17-L26】.",
+        usageExamples: "Temaet fra The Simpsons, West Side Story – Maria, Joe Satriani – Flying in a Blue Dream【719065861547382†L17-L26】"
     },
     {
         id: "modal_mixolydian_rock",
@@ -69,7 +71,8 @@ export const CHORD_PROGRESSIONS: ChordProgression[] = [
         weight: 9,
         tags: ["rock", "blues", "common", "modal"],
         roman: ["I", "bVII", "IV"],
-        description: "Grunnsteinen i mye klassisk rock og blues."
+        description: "Denne mixolydiske progresjonen (I–bVII–IV) er grunnsteinen i rock og blues. bVII‑akkorden gir en bluesy, folkelig sound【490868884388906†L254-L276】.",
+        usageExamples: "Lynyrd Skynyrd – Sweet Home Alabama, Creedence Clearwater Revival – Fortunate Son, Guns N' Roses – Sweet Child O' Mine, Bob Dylan – Like a Rolling Stone【232526284086765†L214-L223】"
     },
     {
         id: "modal_phrygian_darkness",
@@ -79,7 +82,8 @@ export const CHORD_PROGRESSIONS: ChordProgression[] = [
         weight: 8,
         tags: ["dark", "dramatic", "flamenco", "modal"],
         roman: ["i", "II"],
-        description: "En spansk-klingende, mørk progresjon."
+        description: "Phrygisk modus med halvtonetrinn mellom i og II skaper en spansk-klingende, mørk progresjon. II fungerer som en neapolitansk akkord som gir dramatisk spenning【946085297898792†L112-L135】.",
+        usageExamples: "Del Shannon – Runaway, Pink Floyd – Cymbaline (kor), Ray Charles – Hit the Road Jack【280757061389462†L135-L150】【946085297898792†L112-L135】"
     },
     {
         id: "modal_aeolian_ballad",
@@ -89,7 +93,8 @@ export const CHORD_PROGRESSIONS: ChordProgression[] = [
         weight: 9,
         tags: ["pop", "melancholic", "emotional", "modal"],
         roman: ["i", "VI", "III", "VII"],
-        description: "Også kjent som den klassiske pop-minor progresjonen."
+        description: "Fire‑akkords aeolisk sekvens (i–VI–III–VII) som ofte brukes i popballader. Den vandrer gjennom parallell durakkorder og skaper en sørgmodig, men håpefull stemning.",
+        usageExamples: "REM – Losing My Religion, Dido – Thank You"
     },
     {
         id: "modal_locrian_tension",
@@ -99,7 +104,8 @@ export const CHORD_PROGRESSIONS: ChordProgression[] = [
         weight: 6,
         tags: ["experimental", "tension", "modal"],
         roman: ["iø7", "IImaj7"],
-        description: "Veldig dissonant og spenningsfylt."
+        description: "Locrian er den mest dissonante modusen og kombinasjonen iø7–IImaj7 skaper et ustabilt, spenningsfylt landskap. Vanlig i eksperimentell jazz og metal.",
+        usageExamples: "Eksempel: improviserte jazzstykker"
     },
     {
         id: "modal_ionian_jazz",
@@ -109,7 +115,8 @@ export const CHORD_PROGRESSIONS: ChordProgression[] = [
         weight: 10,
         tags: ["jazz", "cadence", "classical"],
         roman: ["ii7", "V7", "Imaj7"],
-        description: "Den mest brukte progresjonen i jazz."
+        description: "Dette er den klassiske ii–V–I‑kadensen i dur – en supertonika moll 7, etterfulgt av en dominant 7 som løses til maj7‑tonika. Den er grunnpilar i jazzharmonikk【500909646144683†L132-L147】.",
+        usageExamples: "Jazzstandarder som Autumn Leaves og Satin Doll【500909646144683†L132-L147】"
     },
 
     // ==================== More Dorian ====================
@@ -121,7 +128,8 @@ export const CHORD_PROGRESSIONS: ChordProgression[] = [
         weight: 8,
         tags: ["jazz", "funky", "vamp"],
         roman: ["i", "ii"],
-        description: "Veksling mellom to mindre akkorder.",
+        description: "Veksling mellom molltonika og moll supertonika (i–ii). Gir et vuggende, meditativt dorisk vamp.",
+        usageExamples: "Santana – Samba Pa Ti"
     },
     {
         id: "modal_dorian_open",
@@ -131,7 +139,8 @@ export const CHORD_PROGRESSIONS: ChordProgression[] = [
         weight: 7,
         tags: ["open", "loop", "modal"],
         roman: ["i", "IV", "v", "IV"],
-        description: "En lengre loop som føles veldig åpen.",
+        description: "En lengre dorisk loop (i–IV–v–IV) som gir en åpen, hypnotisk følelse.",
+        usageExamples: "Santana – Jingo"
     },
     {
         id: "modal_dorian_rock",
@@ -141,7 +150,8 @@ export const CHORD_PROGRESSIONS: ChordProgression[] = [
         weight: 8,
         tags: ["rock", "fusion", "modal"],
         roman: ["i", "VII", "IV"],
-        description: "Ofte brukt i rock og fusion.",
+        description: "i–VII–IV‑progresjon med dorisk karakter som er populær i rock og fusion.",
+        usageExamples: "Carlos Santana – Evil Ways"
     },
 
     // ==================== More Phrygian ====================
@@ -153,7 +163,8 @@ export const CHORD_PROGRESSIONS: ChordProgression[] = [
         weight: 7,
         tags: ["tension", "release", "modal"],
         roman: ["i", "II", "III", "i"],
-        description: "Bygger opp spenning og løser seg ut.",
+        description: "Bygger opp spenning med en klatrende i–II–III–i sekvens som fremhever den phrygiske b2‑akkorden.",
+        usageExamples: "Flamenco‑ og filmmusikk"
     },
     {
         id: "modal_phrygian_turn",
@@ -163,7 +174,8 @@ export const CHORD_PROGRESSIONS: ChordProgression[] = [
         weight: 7,
         tags: ["dark", "classical", "modal"],
         roman: ["i", "iv", "II"],
-        description: "En klassisk mørk vending.",
+        description: "i–iv–II‑mønster som gir en klassisk phrygisk mørk vending, ofte brukt i flamenco.",
+        usageExamples: "Tradisjonell flamenco"
     },
     {
         id: "modal_phrygian_metal",
@@ -173,7 +185,8 @@ export const CHORD_PROGRESSIONS: ChordProgression[] = [
         weight: 8,
         tags: ["metal", "dramatic", "modal"],
         roman: ["i", "VII", "II", "i"],
-        description: "Brukt mye i metal og dramatisk filmmusikk.",
+        description: "i–VII–II–i‑progresjon typisk i metal og dramatisk filmmusikk, med fokus på phrygisk b2.",
+        usageExamples: "Metallica – Wherever I May Roam"
     },
 
     // ==================== More Lydian ====================
@@ -185,7 +198,8 @@ export const CHORD_PROGRESSIONS: ChordProgression[] = [
         weight: 7,
         tags: ["bright", "uplifting", "modal"],
         roman: ["I", "II", "iii"],
-        description: "En oppadgående bevegelse som føles veldig lys.",
+        description: "Lydian progressjon (I–II–iii) med oppadgående bevegelse og hevet 4. som skaper et lyst, oppdriftsskapende tema.",
+        usageExamples: "Joe Satriani – Flying in a Blue Dream"
     },
     {
         id: "modal_lydian_power",
@@ -195,7 +209,8 @@ export const CHORD_PROGRESSIONS: ChordProgression[] = [
         weight: 7,
         tags: ["powerful", "rock", "modal"],
         roman: ["I", "V", "II"],
-        description: "Kraftfull og storslått progresjon (f.eks. Rush – Freewill).",
+        description: "En storslått lydian sekvens (I–V–II) som kombinerer tonika, dominant og hevet supertonika for å gi power‑akkorder.",
+        usageExamples: "Rush – Freewill"
     },
 
     // ==================== More Mixolydian ====================
@@ -207,7 +222,8 @@ export const CHORD_PROGRESSIONS: ChordProgression[] = [
         weight: 8,
         tags: ["blues", "modal"],
         roman: ["I", "v"],
-        description: "Bruk av en moll-v i stedet for en dur-V skaper en pendlende effekt.",
+        description: "Bruk av moll‑v i stedet for dur‑V i mixolydisk modus skaper en pendlende effekt mellom tonika og molldominanten.",
+        usageExamples: "The Beatles – Norwegian Wood"
     },
     {
         id: "modal_mixolydian_vamp",
@@ -217,7 +233,8 @@ export const CHORD_PROGRESSIONS: ChordProgression[] = [
         weight: 8,
         tags: ["rock", "vamp", "modal"],
         roman: ["I", "VII", "I"],
-        description: "En enkel, men effektiv rock-vamp.",
+        description: "En enkel vamp der tonika og bVII pendler frem og tilbake, typisk i folk‑rock.",
+        usageExamples: "Van Morrison – Gloria"
     },
     {
         id: "modal_mixolydian_gospel",
@@ -227,7 +244,8 @@ export const CHORD_PROGRESSIONS: ChordProgression[] = [
         weight: 7,
         tags: ["gospel", "rock", "modal"],
         roman: ["I", "IV", "VII", "IV"],
-        description: "Gir en gospel-aktig, men tøff lyd.",
+        description: "I–IV–VII–IV‑progresjonen gir en gospel‑aktig, men tøff mixolydisk lyd.",
+        usageExamples: "Toto – Hold the Line"
     },
 
     // ==================== More Aeolian ====================
@@ -239,7 +257,8 @@ export const CHORD_PROGRESSIONS: ChordProgression[] = [
         weight: 8,
         tags: ["traditional", "minor", "modal"],
         roman: ["i", "iv", "v"],
-        description: "Tradisjonell moll-kadens.",
+        description: "Tradisjonell aeolisk i–iv–v kadens typisk i folkemusikk og klassiske komposisjoner.",
+        usageExamples: "Folkesanger og ballader"
     },
     {
         id: "modal_aeolian_heroic",
@@ -249,7 +268,8 @@ export const CHORD_PROGRESSIONS: ChordProgression[] = [
         weight: 7,
         tags: ["heroic", "film", "dark", "modal"],
         roman: ["i", "VI", "VII"],
-        description: "En heroisk, mørk vending (ofte brukt i filmmusikk).",
+        description: "i–VI–VII progresjon som gir en heroisk, mørk vending ofte brukt i filmmusikk.",
+        usageExamples: "Howard Shore – Ringenes Herre (Helm’s Deep tema)"
     },
 
     // ==================== More Locrian ====================
@@ -261,7 +281,8 @@ export const CHORD_PROGRESSIONS: ChordProgression[] = [
         weight: 5,
         tags: ["dark", "chaotic", "modal"],
         roman: ["iø7", "V", "iv"], // Using triad bV and minor iv for darkness
-        description: "Mørkt og kaotisk.",
+        description: "Locrian progression iø7–V–iv som skaper en mørk og kaotisk stemning, ofte brukt i eksperimentell jazz.",
+        usageExamples: "Modern jazz improvisations"
     },
 
 
@@ -274,6 +295,8 @@ export const CHORD_PROGRESSIONS: ChordProgression[] = [
         weight: 10,
         tags: ["common", "pop", "loop"],
         roman: ["I", "V", "vi", "IV"],
+        description: "Svært vanlig fire-akkords progresjon som bruker tonika (I), dominant (V), parallell moll (vi) og subdominant (IV). Den kalles ofte I–V–vi–IV eller «Axis of Awesome»-progresjonen og er utbredt i moderne pop【81920227757805†L19-L27】.",
+        usageExamples: "Ben E. King – Stand by Me, U2 – With or Without You, The Beatles – Let It Be, Journey – Don't Stop Believin'【161001883971269†L332-L341】"
     },
     {
         id: "maj_tri_02",
@@ -283,6 +306,8 @@ export const CHORD_PROGRESSIONS: ChordProgression[] = [
         weight: 10,
         tags: ["common", "pop", "loop"],
         roman: ["vi", "IV", "I", "V"],
+        description: "Omrotasjon av I–V–vi–IV. Progresjonen starter på parallell moll (vi) og går via subdominanten (IV) og tonika (I) til dominanten (V). Den kalles ofte «Sensitive female chord progression» og brukes i popballader【81920227757805†L19-L27】.",
+        usageExamples: "Beyoncé – If I Were a Boy, Taylor Swift – All Too Well【161001883971269†L332-L341】"
     },
     {
         id: "maj_tri_03",
@@ -292,6 +317,8 @@ export const CHORD_PROGRESSIONS: ChordProgression[] = [
         weight: 9,
         tags: ["common", "pop", "ballad"],
         roman: ["I", "vi", "IV", "V"],
+        description: "Fire-akkords kjernestruktur også kjent som 50‑talls-progresjonen. Består av tonika (I), parallell moll (vi), subdominant (IV) og dominant (V) og ble mye brukt i doo‑wop og tidlig rock【996809291168208†L128-L136】.",
+        usageExamples: "The Everly Brothers – All I Have to Do Is Dream, The Penguins – Earth Angel, Ben E. King – Stand by Me【996809291168208†L200-L233】"
     },
     {
         id: "maj_tri_04",
@@ -301,6 +328,8 @@ export const CHORD_PROGRESSIONS: ChordProgression[] = [
         weight: 9,
         tags: ["common", "rock", "blues"],
         roman: ["I", "IV", "V", "I"],
+        description: "Første fire takter i tolv‑takters blues (I–IV–V–I). Denne sekvensen danner grunnlaget i en standard 12‑bar blues, hvor tonika, subdominant og dominant skaper en kontinuerlig syklus【852342052639457†L15-L22】.",
+        usageExamples: "Elvis Presley – Hound Dog, Elvis Presley – Don’t Be Cruel【852342052639457†L42-L47】"
     },
     {
         id: "maj_tri_05",
@@ -310,6 +339,8 @@ export const CHORD_PROGRESSIONS: ChordProgression[] = [
         weight: 9,
         tags: ["common", "rock"],
         roman: ["I", "IV", "V"],
+        description: "Klassisk tre‑akkords progresjon som bruker tonika (I), subdominant (IV) og dominant (V). Dette er grunnsteinen i rock, folk, country og pop og danner basis for 12‑takters blues【254329089442220†L64-L90】.",
+        usageExamples: "Bob Dylan – Blowin' in the Wind, Johnny Cash – Ring of Fire, Chuck Berry – Johnny B. Goode【254329089442220†L64-L90】"
     },
     {
         id: "maj_tri_06",
@@ -319,6 +350,8 @@ export const CHORD_PROGRESSIONS: ChordProgression[] = [
         weight: 8,
         tags: ["common", "50s", "vintage"],
         roman: ["I", "vi", "ii", "V"],
+        description: "Variant av den klassiske 50‑talls‑progresjonen der subdominanten (IV) erstattes av supertonikaen (ii). Den følger kretsen av kvinter (I–vi–ii–V) og brukes i pop‑ og jazzstandarder【996809291168208†L128-L136】.",
+        usageExamples: "Carmichael & Loesser – Heart and Soul, Rodgers & Hart – Blue Moon【996809291168208†L200-L233】"
     },
     {
         id: "maj_tri_07",
@@ -328,6 +361,8 @@ export const CHORD_PROGRESSIONS: ChordProgression[] = [
         weight: 8,
         tags: ["common", "pop", "cadence"],
         roman: ["I", "ii", "V", "I"],
+        description: "En glad og tidløs I–ii–V–I progresjon der tonika (I) etterfølges av supertonika (ii), dominant (V) og vender tilbake til tonika. Den gir en positiv og oppløftende følelse【199273111915208†L315-L333】.",
+        usageExamples: "Meghan Trainor – All About That Bass【199273111915208†L345-L349】"
     },
     {
         id: "maj_tri_08",
@@ -337,6 +372,8 @@ export const CHORD_PROGRESSIONS: ChordProgression[] = [
         weight: 8,
         tags: ["common", "pop", "anthemic"],
         roman: ["I", "iii", "IV", "V"],
+        description: "Også kalt Puff‑skjemaet. Denne fire‑akkords sekvensen bruker tonika (I), mediant (iii), subdominant (IV) og dominant (V). Det gir en optimistisk oppbygning og har blitt brukt i mange pop‑ og soul‑klassikere【871514365443095†L96-L116】.",
+        usageExamples: "Peter, Paul and Mary – Puff the Magic Dragon, Marvin Gaye – Let's Get It On, The Band – The Weight, Radiohead – Creep【871514365443095†L96-L116】"
     },
     {
         id: "maj_tri_09",
@@ -346,6 +383,8 @@ export const CHORD_PROGRESSIONS: ChordProgression[] = [
         weight: 8,
         tags: ["common", "pop"],
         roman: ["I", "vi", "iii", "IV"],
+        description: "Variant av fire‑akkords pop‑progresjonen der tonika (I) går til parallell moll (vi), mediant (iii) og subdominant (IV). Denne ordningen gir en gradvis oppbygging med emosjonell intensitet og brukes i ballader og popballader【735138814438172†L191-L197】.",
+        usageExamples: "James Arthur – Say You Won’t Let Go【735138814438172†L191-L197】"
     },
     {
         id: "maj_tri_10",
@@ -355,6 +394,8 @@ export const CHORD_PROGRESSIONS: ChordProgression[] = [
         weight: 7,
         tags: ["common", "pop"],
         roman: ["I", "V", "IV", "V"],
+        description: "En energisk 1‑5‑4‑5 progresjon. Ved å alternere mellom tonika (I) og dominant (V) med subdominant (IV) i midten får man en drivende, fengende rytme som er grunnlaget for mange rock- og poplåter【600196390006495†L45-L51】.",
+        usageExamples: "The Rascals – Good Lovin', The Beatles – Twist and Shout, Ritchie Valens – La Bamba, The Beach Boys – Surfin’ U.S.A., The Kingsmen – Louie Louie, The Bobby Fuller Four – I Fought the Law【600196390006495†L45-L109】"
     },
     {
         id: "maj_tri_11",
@@ -364,6 +405,8 @@ export const CHORD_PROGRESSIONS: ChordProgression[] = [
         weight: 7,
         tags: ["common", "folk"],
         roman: ["I", "IV", "I", "V"],
+        description: "En av de eldste fire‑akkords sekvensene: tonika (I) går til subdominanten (IV), tilbake til tonika og videre til dominanten (V). Denne progresjonen er sentral i folk og country【727819319881554†L16-L37】.",
+        usageExamples: "Kris Kristofferson – The Pilgrim, Chapter 33; R.E.M. – Everybody Hurts; Bob Seger – Katmandu; Ray Charles – I Can't Stop Loving You【727819319881554†L16-L37】"
     },
     {
         id: "maj_tri_12",
@@ -373,6 +416,8 @@ export const CHORD_PROGRESSIONS: ChordProgression[] = [
         weight: 7,
         tags: ["common", "rock", "mixolydian"],
         roman: ["I", "bVII", "IV", "I"],
+        description: "Mixolydisk preget rock‑progresjon der tonika (I) veksler med bVII og subdominant (IV). Den b7‑te tonen skaper en folkelig rock/funk‑klang som er karakteristisk for amerikansk rock【490868884388906†L254-L276】.",
+        usageExamples: "Lady Gaga – Born This Way, Creedence Clearwater Revival – Fortunate Son, Guns N' Roses – Sweet Child O' Mine (vers), The Beatles – Hey Jude【232526284086765†L214-L223】"
     },
     {
         id: "maj_tri_13",
@@ -382,6 +427,8 @@ export const CHORD_PROGRESSIONS: ChordProgression[] = [
         weight: 7,
         tags: ["common", "rock", "mixolydian"],
         roman: ["I", "bVII", "IV"],
+        description: "Trerad variant av mixolydisk rock der tonika (I) går til bVII og subdominanten (IV). Denne sekvensen brukes i sørstatsrock og skaper et åpent, storslått uttrykk【490868884388906†L254-L276】.",
+        usageExamples: "Lynyrd Skynyrd – Sweet Home Alabama, Tom Petty – American Girl, Guns N' Roses – Sweet Child O' Mine (intro)【232526284086765†L214-L223】"
     },
     {
         id: "maj_tri_14",
@@ -391,6 +438,8 @@ export const CHORD_PROGRESSIONS: ChordProgression[] = [
         weight: 6,
         tags: ["common", "pop", "deceptive"],
         roman: ["I", "V", "vi"],
+        description: "I en såkalt avbrutt eller bedragersk kadens går den sterke dominanten (V) til parallell moll (vi) i stedet for tonika, noe som skaper et overraskende, men naturlig lydende skifte【700572549872289†L118-L126】.",
+        usageExamples: "The Police – Every Breath You Take【700572549872289†L161-L171】"
     },
     {
         id: "maj_tri_15",
@@ -400,6 +449,8 @@ export const CHORD_PROGRESSIONS: ChordProgression[] = [
         weight: 6,
         tags: ["common", "cadence", "jazz"],
         roman: ["ii", "V", "I"],
+        description: "Den vanlige ii–V–I‑kadensen i dur, der supertonikaen (ii) går til dominanten (V) og løses til tonika (I). Dette er en hyppig kadens i jazz og populærmusikk【500909646144683†L132-L147】.",
+        usageExamples: "Standardlåter som Honeysuckle Rose og Satin Doll【500909646144683†L132-L147】"
     },
     {
         id: "maj_tri_16",
@@ -409,6 +460,8 @@ export const CHORD_PROGRESSIONS: ChordProgression[] = [
         weight: 6,
         tags: ["common", "cadence", "classical"],
         roman: ["IV", "V", "I"],
+        description: "Kombinert subdominant‑dominant‑tonika (IV–V–I) kadens. Subdominanten forbereder den sterke V–I‑oppløsningen og gir en fyldigere avslutning enn ren V–I【882085323898420†L200-L208】.",
+        usageExamples: "John Lennon – Imagine【882085323898420†L247-L268】"
     },
 
     // ==================== Major - Modal Interchange & Color ====================
@@ -420,6 +473,8 @@ export const CHORD_PROGRESSIONS: ChordProgression[] = [
         weight: 6,
         tags: ["modal_interchange", "color", "emotional"],
         roman: ["I", "iv", "IV", "I"],
+        description: "Kombinerer en lånt moll‑subdominant (iv) fra parallell moll med den vanlige dur‑subdominanten (IV) før retur til tonika. Denne plagal‑variasjonen gir en myk, melankolsk overgang som ofte brukes i ballader og gospel【490868884388906†L144-L170】.",
+        usageExamples: "Simon & Garfunkel – Bridge Over Troubled Water (F–Fm–C), Beatles – If I Fell【490868884388906†L144-L170】"
     },
     {
         id: "maj_adv_02",
@@ -429,6 +484,8 @@ export const CHORD_PROGRESSIONS: ChordProgression[] = [
         weight: 6,
         tags: ["modal_interchange", "color"],
         roman: ["I", "iv", "bVII", "I"],
+        description: "Denne progresjonen blander et lånt moll‑iv fra parallell moll med en bVII‑akkord fra mixolydisk modus. Resultatet er en rik kombinasjon av introspeksjon og folk‑rock‑grus som gir en særegen farge【490868884388906†L144-L170】【490868884388906†L254-L276】.",
+        usageExamples: "Outkast – Hey Ya!, Lynyrd Skynyrd – Sweet Home Alabama (vers)【490868884388906†L254-L276】"
     },
     {
         id: "maj_adv_03",
@@ -438,6 +495,8 @@ export const CHORD_PROGRESSIONS: ChordProgression[] = [
         weight: 6,
         tags: ["modal_interchange", "color", "epic"],
         roman: ["I", "bVI", "bVII", "I"],
+        description: "Også kalt Mario‑kadensen. Her brukes to lånte akkorder, bVI og bVII, som leder triumferende tilbake til tonika. Denne modalblandingen er utbredt i dataspillmusikk og gir en heroisk avslutning【766927516124175†L21-L50】【766927516124175†L64-L86】.",
+        usageExamples: "Koji Kondo – tema fra Super Mario Bros. (nivåslutt)【766927516124175†L64-L86】"
     },
     {
         id: "maj_adv_04",
@@ -447,6 +506,8 @@ export const CHORD_PROGRESSIONS: ChordProgression[] = [
         weight: 5,
         tags: ["modal_interchange", "color"],
         roman: ["I", "bIII", "IV", "I"],
+        description: "Bruker en kromatisk mediant (bIII) for å overraske øret mellom tonika og subdominant. Denne typen modulering har blitt brukt av filmkomponister for å skape magiske overganger.",
+        usageExamples: "Hans Zimmer – filmmusikk"
     },
     {
         id: "maj_adv_05",
@@ -456,6 +517,8 @@ export const CHORD_PROGRESSIONS: ChordProgression[] = [
         weight: 5,
         tags: ["modal_interchange", "color", "dramatic"],
         roman: ["I", "bVI", "IV", "V"],
+        description: "Låner bVI fra parallell moll som sammen med subdominant (IV) og dominant (V) gir et dramatisk oppsving før oppløsning. bVI‑akkorden tilfører mørk varme og følelsesmessig dybde【490868884388906†L144-L170】.",
+        usageExamples: "The Beatles – While My Guitar Gently Weeps (C–Am7–F–G)【490868884388906†L144-L170】"
     },
     {
         id: "maj_adv_06",
@@ -465,6 +528,8 @@ export const CHORD_PROGRESSIONS: ChordProgression[] = [
         weight: 5,
         tags: ["chromatic", "passing"],
         roman: ["I", "#iv°", "V", "I"],
+        description: "En kromatisk overgang der en #iv°‑diminuert akkord fungerer som en forbigående ledetone mellom tonika (I) og dominant (V) før oppløsning tilbake til tonika. Slike passasjer brukes ofte i blues og jazz.",
+        usageExamples: "Jazz-standarder med kromatiske passeringsakkorder"
     },
     {
         id: "maj_adv_07",
@@ -474,6 +539,8 @@ export const CHORD_PROGRESSIONS: ChordProgression[] = [
         weight: 5,
         tags: ["chromatic", "passing"],
         roman: ["I", "#i°", "ii", "V"],
+        description: "Bruker en #i°‑diminuert akkord som kromatisk overgang fra tonika til supertonika (ii) før oppløsning til dominanten (V). Dette skaper en snikende bevegelse som ofte høres i jazz.",
+        usageExamples: "Jazz-arrangementer med kromatiske tilnærminger"
     },
     {
         id: "maj_adv_08",
@@ -483,6 +550,8 @@ export const CHORD_PROGRESSIONS: ChordProgression[] = [
         weight: 5,
         tags: ["sequence", "circle_of_fifths", "classical"],
         roman: ["I", "IV", "vii°", "iii", "vi", "ii", "V", "I"],
+        description: "En sekvens som følger kvintsirkelen rundt, der hver akkord leder til neste i en fallende femte eller stigende kvart. Denne klassiske rekkefølgen brukes ofte i barokk og jazz for å skape fremdrift.",
+        usageExamples: "J.S. Bach – preludier og fuger"
     },
 
     // ==================== Major - Secondary Dominants ====================
@@ -494,6 +563,8 @@ export const CHORD_PROGRESSIONS: ChordProgression[] = [
         weight: 7,
         tags: ["secondary_dominant", "common"],
         roman: ["I", "V7/V", "V", "I"],
+        description: "Introduksjon av en sekundærdominant V7/V (dominant til dominanten) som forsterker oppløsningen til V før progresjonen returnerer til tonika. Sekundærdominanter inneholder ofte kromatiske toner utenfor nøkkelen【554341427261776†L49-L54】.",
+        usageExamples: "Bangles – Eternal Flame (A7 peker mot D), Charlie Puth – One Call Away (F7 peker mot B♭m)【554341427261776†L119-L148】"
     },
     {
         id: "maj_sec_02",
@@ -503,6 +574,8 @@ export const CHORD_PROGRESSIONS: ChordProgression[] = [
         weight: 7,
         tags: ["secondary_dominant", "common"],
         roman: ["I", "V7/vi", "vi", "IV"],
+        description: "Sekundærdominanten V7/vi (dominant til parallell moll) leder til vi og skaper et midlertidig sidetonalt fokus før subdominanten IV. Denne fremgangsmåten gir en overraskende harmonisk vending【554341427261776†L119-L148】.",
+        usageExamples: "Charlie Puth – One Call Away: F7 (V7/vi) til B♭m (vi)【554341427261776†L119-L131】"
     },
     {
         id: "maj_sec_03",
@@ -512,6 +585,8 @@ export const CHORD_PROGRESSIONS: ChordProgression[] = [
         weight: 6,
         tags: ["secondary_dominant"],
         roman: ["I", "V7/ii", "ii", "V", "I"],
+        description: "Her introduseres V7/ii som en dominant til supertonikaen (ii), som deretter går til den vanlige dominant V og til slutt til tonika. Sekvensen øker spenningen gjennom midlertidige tonale sentre【670140029442691†L288-L329】.",
+        usageExamples: "Handel – Zadok the Priest (bruk av sekundærdominanter)【670140029442691†L390-L393】"
     },
     {
         id: "maj_sec_04",
@@ -521,6 +596,8 @@ export const CHORD_PROGRESSIONS: ChordProgression[] = [
         weight: 6,
         tags: ["secondary_dominant"],
         roman: ["I", "V7/IV", "IV", "V", "I"],
+        description: "En sekundærdominant på IV‑trinnet (V7/IV) leder til subdominanten (IV) før standard V–I‑kadens. Brukes for å fremheve subdominanten med ekstra kromatisk farge【670140029442691†L288-L329】.",
+        usageExamples: "The Beatles – Yesterday (sekundærdominanter til IV)【670140029442691†L390-L393】"
     },
     {
         id: "maj_sec_05",
@@ -530,6 +607,8 @@ export const CHORD_PROGRESSIONS: ChordProgression[] = [
         weight: 6,
         tags: ["secondary_dominant", "turnaround"],
         roman: ["I", "III7", "vi", "II7", "V7", "I"],
+        description: "En turnaround som benytter flere sekundærdominanter: III7 (V/vi) leder til vi, deretter II7 (V/V) før den vanlige V7–I‑oppløsningen. Slike sekvenser skaper jazzete fremdrift og modulering【554341427261776†L49-L54】.",
+        usageExamples: "Standardlåter i jazz og gospel"
     },
 
     // ==================== Major - Jazz ====================
@@ -541,6 +620,8 @@ export const CHORD_PROGRESSIONS: ChordProgression[] = [
         weight: 9,
         tags: ["jazz", "common", "turnaround"],
         roman: ["Imaj7", "vi7", "ii7", "V7"],
+        description: "Klassisk jazzturnaround der tonika med maj7 går til den relative moll (vi7), supertonika (ii7) og deretter til dominant (V7). Denne progresjonen brukes i utallige standards og danner grunnlaget for improvisasjon.",
+        usageExamples: "George Gershwin – I Got Rhythm (A‑del), Duke Ellington – Satin Doll"
     },
     {
         id: "maj_jazz_02",
@@ -550,6 +631,8 @@ export const CHORD_PROGRESSIONS: ChordProgression[] = [
         weight: 9,
         tags: ["jazz", "common", "cadence"],
         roman: ["ii7", "V7", "Imaj7"],
+        description: "Den klassiske ii–V–I progresjonen i jazz. Her går en mollakkord på supertonika (ii7) til en dominant syvende på kvinten (V7) før oppløsning til tonika med maj7 (Imaj7). Denne kadensen er grunnpilar i jazzharmonikk【500909646144683†L132-L147】.",
+        usageExamples: "Vanlige jazzstandarder som Honeysuckle Rose og Satin Doll benytter ii–V–I‑kadensen【500909646144683†L132-L147】"
     },
     {
         id: "maj_jazz_03",
@@ -559,6 +642,8 @@ export const CHORD_PROGRESSIONS: ChordProgression[] = [
         weight: 8,
         tags: ["jazz", "turnaround"],
         roman: ["Imaj7", "VI7", "ii7", "V7"],
+        description: "Variasjon av standardturnaround der VI7 (dominant på mediant) erstatter den diatoniske vi7. VI7 fungerer som sekundærdominant og gir bluesaktig spenning før ii–V–I.",
+        usageExamples: "Jazzlåter med bluespreg"
     },
     {
         id: "maj_jazz_04",
@@ -568,6 +653,8 @@ export const CHORD_PROGRESSIONS: ChordProgression[] = [
         weight: 8,
         tags: ["jazz", "rhythm_changes"],
         roman: ["iii7", "VI7", "ii7", "V7", "Imaj7"],
+        description: "Harmoni fra A‑delen av Rhythm Changes. Her følger akkordene en iii–VI–ii–V–I‑sekvens som danner grunnlaget for utallige bebop‑soli.",
+        usageExamples: "Charlie Parker – Anthropology, Dizzy Gillespie – Salt Peanuts"
     },
     {
         id: "maj_jazz_05",
@@ -577,6 +664,8 @@ export const CHORD_PROGRESSIONS: ChordProgression[] = [
         weight: 7,
         tags: ["jazz", "chromatic", "passing"],
         roman: ["Imaj7", "#i°7", "ii7", "V7", "Imaj7"],
+        description: "Innfører en #i°7‑diminuert syvende akkord mellom tonika og supertonika. Den kromatiske passeringsakkorden gir en elegant overgang i jazzstandarder.",
+        usageExamples: "Standards som 'Misty' benytter kromatiske passeringsakkorder"
     },
     {
         id: "maj_jazz_06",
@@ -586,6 +675,8 @@ export const CHORD_PROGRESSIONS: ChordProgression[] = [
         weight: 7,
         tags: ["jazz", "backdoor"],
         roman: ["Imaj7", "iv7", "bVII7", "Imaj7"],
+        description: "Backdoor‑progresjon der en moll iv7 går til bVII7 før oppløsning til Imaj7. Denne substitusjonen erstatter den vanlige V7 og gir en mykere, bluesaktig overgang【712155671948666†L50-L54】.",
+        usageExamples: "Tadd Dameron – Lady Bird, Erroll Garner – Misty【712155671948666†L50-L54】"
     },
     {
         id: "maj_jazz_07",
@@ -595,6 +686,8 @@ export const CHORD_PROGRESSIONS: ChordProgression[] = [
         weight: 6,
         tags: ["jazz", "tritone_sub"],
         roman: ["ii7", "bII7", "Imaj7"],
+        description: "Bytter ut den vanlige V7 med en dominant en tritonus unna (bII7). Tritone‑substitusjonen deler 3. og 7. med den opprinnelige V7 og gir en kromatisk basslinje【85222349922786†L111-L121】.",
+        usageExamples: "Standardlåter med tritone‑substitusjoner"
     },
     {
         id: "maj_jazz_08",
@@ -604,6 +697,8 @@ export const CHORD_PROGRESSIONS: ChordProgression[] = [
         weight: 6,
         tags: ["jazz", "tritone_sub"],
         roman: ["Imaj7", "bII7", "Imaj7"],
+        description: "Enkel effekt der bII7 fungerer som forbigående dominant før retur til Imaj7. Gir moderne jazz en dristig kromatikk【85222349922786†L111-L121】.",
+        usageExamples: "Moderne jazz og fusion"
     },
 
     // ==================== Minor Triads - Common ====================
@@ -615,6 +710,8 @@ export const CHORD_PROGRESSIONS: ChordProgression[] = [
         weight: 10,
         tags: ["common", "aeolian", "loop"],
         roman: ["i", "bVII", "bVI", "V"],
+        description: "Kjent som den andalusiske kadensen: en nedadgående sekvens i moll der i–bVII–bVI–V skaper en spansk/flamenco‑aktig stemning【280757061389462†L135-L150】. Progresjonen brukes ofte som vamp i pop og rock.",
+        usageExamples: "Del Shannon – Runaway, Ray Charles – Hit the Road Jack【280757061389462†L135-L150】"
     },
     {
         id: "min_tri_02",
@@ -624,6 +721,8 @@ export const CHORD_PROGRESSIONS: ChordProgression[] = [
         weight: 9,
         tags: ["common", "minor", "cadence"],
         roman: ["i", "iv", "V", "i"],
+        description: "Typisk moll‑kadens der den rene i–iv–V–i sekvensen brukes i blues og latin. Dominanten er en dur‑V som gir en sterk oppløsning tilbake til molltonika【597104395790003†L339-L352】.",
+        usageExamples: "Santana – Black Magic Woman, B.B. King – The Thrill Is Gone【597104395790003†L339-L352】"
     },
     {
         id: "min_tri_03",
@@ -633,6 +732,8 @@ export const CHORD_PROGRESSIONS: ChordProgression[] = [
         weight: 8,
         tags: ["common", "natural_minor"],
         roman: ["i", "bVI", "bIII", "bVII"],
+        description: "En loop i naturlig moll der i går til bVI, bIII og bVII. Denne varianten gir en melankolsk, men oppløftende følelse og brukes i folk og rock【597104395790003†L394-L414】.",
+        usageExamples: "Simon & Garfunkel – The Sound of Silence, Dolly Parton – Jolene (variasjon med bIII og bVII)【597104395790003†L394-L414】【597104395790003†L378-L390】"
     },
     {
         id: "min_tri_04",
@@ -642,6 +743,8 @@ export const CHORD_PROGRESSIONS: ChordProgression[] = [
         weight: 8,
         tags: ["common", "minor", "color"],
         roman: ["i", "bVII", "bVI", "V"],
+        description: "Nedadgående i–bVII–bVI–V, også kalt den fallende basslinjen. Denne sekvensen finnes i rock, pop og folk og gir en episk stigende følelse når den løser til V【597104395790003†L419-L444】.",
+        usageExamples: "Bob Dylan / Jimi Hendrix – All Along the Watchtower, Led Zeppelin – Stairway to Heaven, Gotye – Somebody That I Used to Know, Stray Cats – Stray Cat Strut【597104395790003†L419-L444】"
     },
     {
         id: "min_tri_05",
@@ -651,6 +754,8 @@ export const CHORD_PROGRESSIONS: ChordProgression[] = [
         weight: 7,
         tags: ["common", "minor", "pop"],
         roman: ["i", "iv", "bVII", "bIII"],
+        description: "Variasjon i moll der subdominanten (iv) går til bVII og bIII. Denne kombinasjonen gir en mørk, men samtidig fengende karakter og brukes i rock og pop【597104395790003†L378-L390】.",
+        usageExamples: "Dolly Parton – Jolene, Pink Floyd – Another Brick in the Wall (chorus)【597104395790003†L378-L390】"
     },
     {
         id: "min_tri_06",
@@ -660,6 +765,8 @@ export const CHORD_PROGRESSIONS: ChordProgression[] = [
         weight: 7,
         tags: ["common", "minor", "dramatic"],
         roman: ["i", "bVI", "iv", "V"],
+        description: "Denne progresjonen kombinerer bVI fra parallell dur med moll-subdominanten (iv) og dominanten (V). Det gir et dramatisk uttrykk og beveger seg mellom lys og mørke【597104395790003†L394-L414】.",
+        usageExamples: "The Beatles – Eleanor Rigby (i–bVI), Simon & Garfunkel – The Sound of Silence (i–bVI–bIII–bVII)【597104395790003†L394-L414】"
     },
     {
         id: "min_tri_07",
@@ -669,6 +776,8 @@ export const CHORD_PROGRESSIONS: ChordProgression[] = [
         weight: 7,
         tags: ["common", "minor"],
         roman: ["i", "bVI", "V", "i"],
+        description: "En enkel moll‑kadens der bVI leder til den sterke dominanten (V) før retur til i. Den gir en løftende, men mørk bevegelse【597104395790003†L394-L414】.",
+        usageExamples: "Eleanor Rigby – refreng, Sound of Silence – bridge【597104395790003†L394-L414】"
     },
     {
         id: "min_tri_08",
@@ -678,6 +787,8 @@ export const CHORD_PROGRESSIONS: ChordProgression[] = [
         weight: 6,
         tags: ["common", "minor", "cadence"],
         roman: ["iv", "V", "i"],
+        description: "Klassisk moll‑kadens der mollsubdominanten (iv) går til durdominanten (V) før oppløsning til i. Brukes i mange folketoner og blues【597104395790003†L339-L352】.",
+        usageExamples: "Tradisjonell blues og folkemusikk【597104395790003†L339-L352】"
     },
     {
         id: "min_tri_09",
@@ -687,6 +798,8 @@ export const CHORD_PROGRESSIONS: ChordProgression[] = [
         weight: 6,
         tags: ["common", "minor", "melancholic"],
         roman: ["i", "v", "iv", "i"],
+        description: "En melankolsk i–v–iv–i progresjon hvor den harmoniske molldominanten (v) gir et svevende uttrykk før det løses til iv og tilbake til i. Brukes i blues og latin【597104395790003†L339-L352】.",
+        usageExamples: "Santana – Black Magic Woman (vers), klassiske mollballader【597104395790003†L339-L352】"
     },
     {
         id: "min_tri_10",
@@ -696,6 +809,8 @@ export const CHORD_PROGRESSIONS: ChordProgression[] = [
         weight: 6,
         tags: ["minor", "color"],
         roman: ["i", "bIII", "bVII", "iv"],
+        description: "Kombinerer bIII og bVII fra parallell dur før retur til iv. Denne sekvensen gir en moderne og rik klang som brukes i pop og rock【597104395790003†L378-L390】.",
+        usageExamples: "Pink Floyd – Another Brick in the Wall (kor), Dolly Parton – Jolene (variasjon)【597104395790003†L378-L390】"
     },
 
     // ==================== Minor - Advanced ====================
@@ -707,6 +822,8 @@ export const CHORD_PROGRESSIONS: ChordProgression[] = [
         weight: 6,
         tags: ["neapolitan", "color", "classical"],
         roman: ["i", "bII", "V", "i"],
+        description: "Progresjon med den såkalte napolitanske sekstakkorden (bII), en majorakkord på senket andre trinn. bII fungerer som et forhøyet subdominant for å skape intensitet før dominanten og returnerer til i【946085297898792†L112-L135】.",
+        usageExamples: "Pink Floyd – Cymbaline (VI–II–VI–II–i), David Bowie – Space Oddity (Fmaj7–Em), Tame Impala – New Person, Same Old Mistakes (Cm–Db–Ab–Cm)【946085297898792†L112-L135】【453737271152216†L66-L115】"
     },
     {
         id: "min_adv_02",
@@ -716,6 +833,8 @@ export const CHORD_PROGRESSIONS: ChordProgression[] = [
         weight: 6,
         tags: ["chromatic", "passing"],
         roman: ["i", "#iv°", "V", "i"],
+        description: "Innslag av en #iv°‑diminuert akkord som kromatisk overgang mellom i og V før retur til molltonika. En dramatisk effekt brukt i klassiske stykker og film. ",
+        usageExamples: "Klassiske verk og filmmusikk"
     },
     {
         id: "min_adv_03",
@@ -725,6 +844,8 @@ export const CHORD_PROGRESSIONS: ChordProgression[] = [
         weight: 5,
         tags: ["sequence", "circle_of_fifths"],
         roman: ["i", "iv", "bVII", "bIII", "bVI", "ii°", "V", "i"],
+        description: "En sirkel av kvinter i moll der akkordene følger fallende femter (i–iv–bVII–bIII–bVI–ii°–V–i). Denne sekvensen gir en følelse av modulering og er vanlig i barokk og jazz.",
+        usageExamples: "Barokke variasjonsverk"
     },
     {
         id: "min_adv_04",
@@ -734,6 +855,8 @@ export const CHORD_PROGRESSIONS: ChordProgression[] = [
         weight: 5,
         tags: ["picardy", "ending", "classical"],
         roman: ["i", "iv", "V", "I"],
+        description: "Avslutter et stykke i moll med en durtonika (Picardy-ters). Etter i–iv–V slutter progresjonen uventet på en dur I, noe som gir en lys avslutning på et mørkt verk.",
+        usageExamples: "Johann Sebastian Bach – koraler med Picardy-ters"
     },
 
     // ==================== Minor - Jazz ====================
@@ -745,6 +868,8 @@ export const CHORD_PROGRESSIONS: ChordProgression[] = [
         weight: 9,
         tags: ["jazz", "common", "cadence"],
         roman: ["iiø7", "V7", "i6"],
+        description: "Den grunnleggende moll ii–V–i‑kadensen: en halvdiminuert iiø7 går til en dominant 7 som deretter løses til molltonikaen (ofte med 6‑te på toppen). Den er vanlig i jazz og latin og gir et mørkt, sofistikert sound【547681610103324†L73-L76】【547681610103324†L87-L93】.",
+        usageExamples: "Jazzstandarder som Blue Bossa og Autumn Leaves"
     },
     {
         id: "min_jazz_02",
@@ -754,6 +879,8 @@ export const CHORD_PROGRESSIONS: ChordProgression[] = [
         weight: 8,
         tags: ["jazz", "turnaround"],
         roman: ["i6", "VI7", "iiø7", "V7"],
+        description: "En mollturnaround der tonika med 6 går til VI7 (sekundærdominant til iiø7) før iiø7–V7‑oppløsning. Brukes i jazz og bossa nova for å skape runde sekvenser.",
+        usageExamples: "Jazzlåter som Tune Up"
     },
     {
         id: "min_jazz_03",
@@ -763,6 +890,8 @@ export const CHORD_PROGRESSIONS: ChordProgression[] = [
         weight: 7,
         tags: ["jazz", "backdoor"],
         roman: ["i7", "iv7", "bVII7", "i7"],
+        description: "Backdoor‑versjon i moll der iv7 går til bVII7 før oppløsning til i7. Denne subdominant‑erstatningen gir en mild overgang til tonika【712155671948666†L50-L54】.",
+        usageExamples: "Jazzstandarder som Lady Bird og Misty【712155671948666†L50-L54】"
     },
     {
         id: "min_jazz_04",
@@ -772,6 +901,8 @@ export const CHORD_PROGRESSIONS: ChordProgression[] = [
         weight: 6,
         tags: ["jazz", "tritone_sub"],
         roman: ["iiø7", "bII7", "i6"],
+        description: "Erstatter den vanlige V7 med bII7, som er en tritonus unna. Denne substitusjonen deler de viktige tonene med V7 og gir en kromatisk tilbakeføring til molltonika【85222349922786†L111-L121】.",
+        usageExamples: "Moderne jazz og latin med tritone‑substitusjoner"
     },
 
     // ==================== NEW: User Added Progressions ====================
@@ -794,7 +925,8 @@ export const CHORD_PROGRESSIONS: ChordProgression[] = [
         weight: 8,
         tags: ["pop", "verse", "variation"],
         roman: ["IV", "V", "I", "vi"],
-        description: "Variant av fire-akkords pop-progresjon som starter på subdominanten (IV).",
+        description: "Variant av fire‑akkords pop‑progresjonen som starter på subdominanten (IV) og går via dominanten (V) til tonika (I) før den lander i parallell moll (vi). Dette gir et varmt og nostalgisk preg.",
+        usageExamples: "Ben E. King – Stand by Me (bro), The Beatles – Let It Be"
     },
     {
         id: "user_sensitive_pop",
@@ -815,7 +947,8 @@ export const CHORD_PROGRESSIONS: ChordProgression[] = [
         weight: 8,
         tags: ["rock", "modal", "mixolydian"],
         roman: ["I", "IV", "bVII", "IV"],
-        description: "Modal progresjon som bruker bVII for en «rock/folk»-farge.",
+        description: "I–IV–bVII–IV er en mixolydisk rockprogresjon der den hevede 7. trinnet gir en folk‑rock farge. Den minner om I–bVII–IV men starter på IV.",
+        usageExamples: "Lynyrd Skynyrd – Sweet Home Alabama (refrenget)"
     },
     {
         id: "user_jazz_ii_v_i",
@@ -836,7 +969,8 @@ export const CHORD_PROGRESSIONS: ChordProgression[] = [
         weight: 8,
         tags: ["jazz", "tritone_sub", "cadence"],
         roman: ["ii7", "bII7", "Imaj7"],
-        description: "Bytter ut V7 med bII7 (tritone-sub) før oppløsning til I.",
+        description: "Bytter ut V7 med bII7 (tritone‑substitusjon) før oppløsning til I. bII7 deler viktige toner med V7 og gir en kromatisk glidebane【85222349922786†L111-L121】.",
+        usageExamples: "Jazzstandarder med tritone‑substitusjon"
     },
     {
         id: "user_ragtime_cadence",
@@ -846,7 +980,8 @@ export const CHORD_PROGRESSIONS: ChordProgression[] = [
         weight: 6,
         tags: ["ragtime", "cadence", "secondary_dominant"],
         roman: ["vii°7/V", "V7", "I"],
-        description: "Sekundær ledetone-akkord til dominanten før oppløsning til tonika.",
+        description: "I ragtime kalles denne vii°7/V–V–I sekvensen ragtime cadence. Den introduserer en sekundær ledetone‑akkord (vii°7/V) som leder til dominanten og deretter til tonika for en snerten, gammel-dags avslutning.",
+        usageExamples: "Scott Joplin – Maple Leaf Rag"
     },
     {
         id: "user_andalusian_phrygian_dominant",
@@ -902,8 +1037,8 @@ export const CHORD_PROGRESSIONS: ChordProgression[] = [
         weight: 8,
         tags: ["jazz", "substitution"],
         roman: ["ii7", "bVII7", "Imaj7"],
-        description: "Vending til I via bVII7 i stedet for vanlig V7 («backdoor»).",
-        usageExamples: "Også kjent som «front door» substitusjon"
+        description: "Backdoor‑progresjonen bruker ii7–bVII7–Imaj7 i stedet for den vanlige ii–V–I. bVII7 fungerer som en dominant‑substitusjon og gir en mykere oppløsning【712155671948666†L50-L54】.",
+        usageExamples: "The Beatles – In My Life, Tadd Dameron – Lady Bird, Erroll Garner – Misty【712155671948666†L50-L54】"
     },
     {
         id: "user_encanto_columbia",
@@ -913,7 +1048,8 @@ export const CHORD_PROGRESSIONS: ChordProgression[] = [
         weight: 7,
         tags: ["pop", "alias"],
         roman: ["I", "V", "vi", "IV"],
-        description: "Samme progresjon som I–V–vi–IV (listet separat for kompletthet).",
+        description: "Samme progresjon som I–V–vi–IV (Axis of Awesome) men referert til i filmen Encanto, hvor den brukes i sangen 'Colombia, Mi Encanto'.",
+        usageExamples: "Encanto – Colombia, Mi Encanto"
     },
     // Skipping duplicate or highly esoteric ones unless specifically requested as separate logic.
     // User list included "Bird changes", "Coltrane Changes", etc. Adding selected impactful ones.
@@ -926,7 +1062,8 @@ export const CHORD_PROGRESSIONS: ChordProgression[] = [
         weight: 8,
         tags: ["jazz", "circle_of_fifths", "turnaround"],
         roman: ["vi7", "ii7", "V7", "Imaj7"],
-        description: "Klassisk sirkelprogresjon basert på kvint-/kvartbevegelser.",
+        description: "Klassisk sirkelprogresjon (vi–ii–V–I) som følger kvintsirkelen og brukes i jazzturnarounds og popballader.",
+        usageExamples: "Sweet Georgia Brown"
     },
     {
         id: "user_rhythm_changes",
@@ -947,8 +1084,8 @@ export const CHORD_PROGRESSIONS: ChordProgression[] = [
         weight: 9,
         tags: ["classical", "baroque", "pop"],
         roman: ["I", "V", "vi", "iii", "IV", "I", "IV", "V"],
-        description: "Sekvens som ligger bak mange senere pop-varianter.",
-        usageExamples: "Maroon 5 – 'Memories', Oasis – 'Don't Look Back in Anger'"
+        description: "En åtte‑akkords sekvens fra Pachelbels Canon in D: I–V–vi–iii–IV–I–IV–V. Progresjonen vandrer gjennom tonika, dominant, parallell moll, median og subdominant før den vender tilbake til tonika og dominerende. Denne harmoniske strukturen er gjenkjennelig og danner basis for mange moderne sanger【101432579954877†L63-L66】.",
+        usageExamples: "Oasis – Don't Look Back in Anger, Pet Shop Boys – Go West, My Chemical Romance – Welcome to the Black Parade【101432579954877†L44-L53】"
     },
     {
         id: "user_royal_road",
@@ -969,8 +1106,8 @@ export const CHORD_PROGRESSIONS: ChordProgression[] = [
         weight: 9,
         tags: ["game", "film", "epic"],
         roman: ["bVI", "bVII", "I"],
-        description: "Triumferende avslutning som ofte brukes i spill og film.",
-        usageExamples: "Super Mario Bros. (nivåslutt)"
+        description: "bVI–bVII–I‑kadensen, også kjent som Mario‑kadensen, gir en triumferende, modal blandingsavslutning. Den brukes ofte i spillmusikk, spesielt i Koji Kondos Super Mario‑tema【766927516124175†L21-L50】【766927516124175†L64-L86】.",
+        usageExamples: "Koji Kondo – Super Mario Bros. (nivåslutt)【766927516124175†L64-L86】"
     },
     {
         id: "user_folia",
@@ -980,7 +1117,8 @@ export const CHORD_PROGRESSIONS: ChordProgression[] = [
         weight: 6,
         tags: ["classical", "baroque", "historical"],
         roman: ["i", "V", "i", "bVII", "bIII", "bVII", "i", "V"], // Shortened
-        description: "Historisk moll-sekvens brukt i mange variasjonsverk.",
+        description: "Folía er en historisk mollsekvens fra barokken som følger i–V–i–bVII–bIII–bVII–i–V. Den danner grunnlaget for mange variasjonsverk og folkesanger.",
+        usageExamples: "Arcangelo Corelli – La Folia"
     },
     {
         id: "user_12_bar_blues",

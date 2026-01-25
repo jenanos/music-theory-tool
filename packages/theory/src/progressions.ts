@@ -5,7 +5,14 @@
  * along with functions for filtering, transposing, and suggesting next chords.
  */
 
-import { getScale, noteName, prefersFlats, type ModeId } from "./index";
+import {
+    getScale,
+    noteName,
+    prefersFlats,
+    type ModeId,
+    MODAL_SIGNATURES,
+    MODE_DIATONIC_7THS,
+} from "./index";
 
 // ============================================================================
 // Types
@@ -33,7 +40,10 @@ export interface NextChordSuggestion {
     chord: string;
     frequency: number; // How often this follows in the dataset
     fromProgressions: string[]; // IDs of progressions that contain this transition
+    isDiatonic: boolean; // Is it diatonic in the current mode?
+    secondaryLabel?: string; // e.g. "V (Rel. Ionian)"
 }
+
 
 // ============================================================================
 // Dataset
@@ -70,7 +80,7 @@ export const CHORD_PROGRESSIONS: ChordProgression[] = [
         type: "triad",
         weight: 9,
         tags: ["rock", "blues", "common", "modal"],
-        roman: ["I", "bVII", "IV"],
+        roman: ["I", "VII", "IV"],
         description: "Denne mixolydiske progresjonen (I–bVII–IV) er grunnsteinen i rock og blues. bVII‑akkorden gir en bluesy, folkelig sound【490868884388906†L254-L276】.",
         usageExamples: "Lynyrd Skynyrd – Sweet Home Alabama, Creedence Clearwater Revival – Fortunate Son, Guns N' Roses – Sweet Child O' Mine, Bob Dylan – Like a Rolling Stone【232526284086765†L214-L223】"
     },
@@ -946,7 +956,7 @@ export const CHORD_PROGRESSIONS: ChordProgression[] = [
         type: "triad",
         weight: 8,
         tags: ["rock", "modal", "mixolydian"],
-        roman: ["I", "IV", "bVII", "IV"],
+        roman: ["I", "IV", "VII", "IV"],
         description: "I–IV–bVII–IV er en mixolydisk rockprogresjon der den hevede 7. trinnet gir en folk‑rock farge. Den minner om I–bVII–IV men starter på IV.",
         usageExamples: "Lynyrd Skynyrd – Sweet Home Alabama (refrenget)"
     },
@@ -1237,7 +1247,45 @@ function parseRomanNumeral(roman: string): {
     if (qualityMark === "+") quality = "augmented";
 
     return { degree, quality, accidental, extension };
+}
 
+/**
+ * Check if a Roman numeral is diatonic in the given mode
+ */
+function isDiatonic(roman: string, mode: ModeId): boolean {
+    // If it's a secondary dominant or slash chord, it's not diatonic (mostly)
+    if (roman.includes("/")) return false;
+
+    const { degree, quality, accidental } = parseRomanNumeral(roman);
+
+    // If parsing failed
+    if (degree === 0) return false;
+
+    // 1. Check Root Accidental
+    // Strict Mode-Relative: accidentals imply chromatic roots
+    if (accidental !== "") return false;
+
+    // 2. Check Quality
+    const diatonicQualities = MODE_DIATONIC_7THS[mode];
+    if (!diatonicQualities) return true; // Fallback
+
+    const expected = diatonicQualities[degree - 1]; // e.g. "m7"
+    if (!expected) return true;
+
+    // Map expected 7th symbols to basic triad qualities
+    const isExpectedMajor = expected.startsWith("maj") || expected === "7"; // Dominant is major triad
+    const isExpectedMinor = expected.startsWith("m") && !expected.includes("b5") && !expected.includes("maj");
+    const isExpectedDim = expected.includes("dim") || expected.includes("b5");
+
+    if (quality === "major" && !isExpectedMajor) return false;
+    if (quality === "minor" && !isExpectedMinor) return false;
+    if ((quality === "diminished" || quality === "half-diminished") && !isExpectedDim) return false;
+    if (quality === "augmented") return false; // Augmented usually non-diatonic (except Harmonic Minor IIIaug?)
+    // Harmonic minor III is augMaj7. So quality "augmented" is Diatonic for Harmonic Minor III.
+    if (quality === "augmented" && mode === "harmonic_minor" && degree === 3) return true;
+    if (quality === "augmented") return false;
+
+    return true;
 }
 
 /**
@@ -1252,7 +1300,6 @@ export function romanToChord(
 
     // Handle secondary dominants
     if (roman.includes("/")) {
-        // For now, simplify secondary dominants
         const parts = roman.split("/");
         const targetRoman = parts[1];
         const targetParsed = parseRomanNumeral(targetRoman ?? "");
@@ -1320,17 +1367,9 @@ export function romanToChord(
  */
 export function transposeProgression(
     progression: ChordProgression,
-    tonic: string,
-    mode: ModeId = "ionian" // Fallback but basically unused if overrideMode is handled
+    tonic: string
 ): TransposedProgression {
-    // Use the mode from the progression itself as the source mode for roman numeral interpretation!
-    // But wait, if I am in C Major (Ionian), and I view a Dorian progression (i7 - IV7), 
-    // Do I show chords for C Dorian? Yes, "Start with: ... dynamic ... correct diatonic chords for the selected mode"
-    // The PROGESSION has a native mode. 
-    // The USER selects a Mode in the UI. 
-    // If the User selects "Dorian", we show Dorian progressions.
-    // So we should transpose using the mode of the progression (which matches the selected mode).
-
+    // Determine the progression's intended mode for accurate transposition
     const actualMode = progression.mode;
 
     const chords = progression.roman.map((roman) =>
@@ -1377,13 +1416,55 @@ function buildTransitionMap(): Map<string, Map<string, { count: number; progress
 const transitionMap = buildTransitionMap();
 
 /**
+ * Get a secondary label explaining the chord function relative to Ionian (Major)
+ * e.g. D Dorian "i" -> "ii (Rel. Ionian)"
+ */
+function getRelativeIonianLabel(roman: string, mode: ModeId): string | undefined {
+    // Mode offsets from Ionian (in scale degrees)
+    // Ionian=0, Dorian=1, Phrygian=2, Lydian=3, Mixolydian=4, Aeolian=5, Locrian=6
+    const modeOffsets: Record<string, number> = {
+        ionian: 0, dorian: 1, phrygian: 2, lydian: 3, mixolydian: 4, aeolian: 5, locrian: 6, harmonic_minor: 5
+    };
+
+    if (mode === "ionian") return undefined; // No relative label needed
+
+    const offset = modeOffsets[mode] ?? 0;
+    const { degree, quality, accidental, extension } = parseRomanNumeral(roman);
+
+    if (degree === 0 || accidental !== "") return undefined; // Too complex for simple rel mapping
+
+    const newDegree = ((degree - 1 + offset) % 7) + 1;
+
+    // Construct new Roman
+    // We keep quality, but degree changes.
+    // e.g. Dorian (offset 1). "i" (deg 1 minor) -> deg 2 minor "ii".
+    // "IV" (deg 4 major) -> deg 5 major "V".
+    // This simple mapping works for strictly diatonic chords.
+
+    const romanMap = ["I", "II", "III", "IV", "V", "VI", "VII"];
+    let base = romanMap[newDegree - 1]!;
+
+    if (quality === "minor" || quality === "half-diminished" || quality === "diminished") {
+        base = base.toLowerCase();
+    }
+
+    let suffix = quality === "diminished" ? "°" : (quality === "half-diminished" ? "ø" : "");
+    if (extension) suffix += extension;
+
+    return `${base}${suffix} (Rel. Ionian)`;
+}
+
+/**
  * Suggest next chords based on a partial sequence
  */
 export function suggestNextChords(
     partialSequence: string[],
     tonic: string,
-    mode: ModeId = "ionian"
+    mode: ModeId = "ionian",
+    options: { useSpice?: boolean } = {}
 ): NextChordSuggestion[] {
+    const { useSpice = false } = options;
+
     if (partialSequence.length === 0) {
         return [];
     }
@@ -1393,35 +1474,85 @@ export function suggestNextChords(
 
     // Look up transitions from this chord
     const fromMap = transitionMap.get(lastChord);
-    if (!fromMap) {
-        return [];
+
+    // Convert to array
+    const suggestions: NextChordSuggestion[] = [];
+    const seenRomans = new Set<string>();
+
+    if (fromMap) {
+        for (const [roman, data] of fromMap) {
+            seenRomans.add(roman);
+            suggestions.push({
+                roman,
+                chord: romanToChord(roman, tonic, mode),
+                frequency: data.count,
+                fromProgressions: data.progressionIds,
+                isDiatonic: isDiatonic(roman, mode)
+            });
+        }
     }
 
-    // Convert to array and sort by frequency
-    const suggestions: NextChordSuggestion[] = [];
+    // Ensure Signature Chords are present even if not in transition map
+    // (If the user just started or data is sparse)
+    const signatures = MODAL_SIGNATURES[mode] || [];
+    for (const sig of signatures) {
+        if (!seenRomans.has(sig)) {
+            suggestions.push({
+                roman: sig,
+                chord: romanToChord(sig, tonic, mode),
+                frequency: 1, // Base weight
+                fromProgressions: [],
+                isDiatonic: isDiatonic(sig, mode)
+            });
+            seenRomans.add(sig);
+        }
+    }
 
-    // Determine actual mode for transposition - use the passed mode from UI
-    // So if I am in C Dorian, and I have "i7", what comes next? 
-    // The map uses Roman Numerals. 
-    // Currently, transitionMap mixes all modes! 
-    // "i" in Dorian might go to "IV7". "i" in Aeolian might go to "bVI".
-    // Does "i" = "i" across modes? Yes. 
-    // But "IV7" is distinct to Dorian. "iv" is distinct to Aeolian.
-    // So mixing them is fine, it just suggests what follows that roman numeral symbol.
-
-    const actualMode: ModeId = mode;
-
-    for (const [roman, data] of fromMap) {
+    // Also ensure Tonic is present (Back to Home)
+    const tonicRoman = (mode === "ionian" || mode === "lydian" || mode === "mixolydian") ? "I" : "i";
+    if (!seenRomans.has(tonicRoman)) {
         suggestions.push({
-            roman,
-            chord: romanToChord(roman, tonic, actualMode),
-            frequency: data.count,
-            fromProgressions: data.progressionIds,
+            roman: tonicRoman,
+            chord: romanToChord(tonicRoman, tonic, mode),
+            frequency: 1,
+            fromProgressions: [],
+            isDiatonic: true
         });
     }
 
+    // Filter and Weight
+    const processed = suggestions.filter(s => {
+        // Filter out non-diatonic if spice is OFF
+        // EXCEPTION: Allow "Signature" chords even if they technically have accidentals?
+        // (Our updated isDiatonic handles the renamed Mixed-VII etc).
+        // If "Spice" is OFF, we hide complex stuff.
+        if (!useSpice && !s.isDiatonic) return false;
+        return true;
+    }).map(s => {
+        let score = s.frequency;
+
+        // Boost Signature Chords
+        if (signatures.includes(s.roman)) {
+            score *= 2.0; // Significant boost
+        }
+
+        // Boost Tonic (Loop back)
+        if (s.roman === tonicRoman) {
+            score *= 1.5;
+        }
+
+        // Add Secondary Label
+        const label = getRelativeIonianLabel(s.roman, mode);
+
+        return {
+            ...s,
+            frequency: score,
+            secondaryLabel: label
+        };
+    });
+
     // Sort by frequency
-    return suggestions.sort((a, b) => b.frequency - a.frequency);
+    return processed.sort((a, b) => b.frequency - a.frequency);
 }
 
 /**
@@ -1429,7 +1560,8 @@ export function suggestNextChords(
  */
 export function getStartingChords(
     mode: ModeId | "major" | "minor",
-    tonic: string
+    tonic: string,
+    options: { useSpice?: boolean } = {} // Not strictly used for start yet, but good for API consistency
 ): NextChordSuggestion[] {
     let actualMode: ModeId = "ionian";
     if (mode === "major") actualMode = "ionian";
@@ -1438,9 +1570,8 @@ export function getStartingChords(
 
     const starters = new Map<string, number>();
 
-    // Collect starting chords from progressions
+    // 1. Collect starting chords from progressions
     for (const prog of CHORD_PROGRESSIONS) {
-        // Match mode (handling major/minor aliases)
         const progModeIsCompatible =
             prog.mode === actualMode ||
             (mode === "major" && prog.mode === "ionian") ||
@@ -1454,26 +1585,32 @@ export function getStartingChords(
         }
     }
 
+    // 2. Ensure Tonic and Signatures are present
+    const tonicRoman = (actualMode === "ionian" || actualMode === "lydian" || actualMode === "mixolydian") ? "I" : "i";
+    if (!starters.has(tonicRoman)) starters.set(tonicRoman, 10);
+
+    const signatures = MODAL_SIGNATURES[actualMode] || [];
+    for (const sig of signatures) {
+        if (!starters.has(sig)) starters.set(sig, 5); // Decent weight
+    }
+
+    const { useSpice = false } = options;
+
     const results: NextChordSuggestion[] = [];
     for (const [roman, weight] of starters) {
+        const diatonic = isDiatonic(roman, actualMode);
+        if (!useSpice && !diatonic) continue;
+
         results.push({
             roman,
             chord: romanToChord(roman, tonic, actualMode),
             frequency: weight,
-            fromProgressions: [], // We don't track specific IDs for start yet
-        });
-    }
-
-    // Fallback if no progressions found (shouldn't happen with full dataset)
-    if (results.length === 0) {
-        const defaultStart = (actualMode === "aeolian" || actualMode === "dorian" || actualMode === "phrygian" || actualMode === "locrian") ? "i" : "I";
-        results.push({
-            roman: defaultStart,
-            chord: romanToChord(defaultStart, tonic, actualMode),
-            frequency: 1,
-            fromProgressions: []
+            fromProgressions: [],
+            isDiatonic: diatonic,
+            secondaryLabel: getRelativeIonianLabel(roman, actualMode)
         });
     }
 
     return results.sort((a, b) => b.frequency - a.frequency);
 }
+

@@ -96,6 +96,17 @@ export const FUNCTION_GROUPS: Record<
     harmonic_minor: { tonic: [1, 3], predominant: [2, 4, 6], dominant: [5, 7] },
 };
 
+export const MODAL_SIGNATURES: Record<string, string[]> = {
+    ionian: ["IV", "V"],
+    dorian: ["IV", "ii"], // Major IV characteristic
+    phrygian: ["II", "vii"], // Major II (Neapolitan function relative to minor)
+    lydian: ["II", "vii"], // Major II characteristic
+    mixolydian: ["VII", "v"], // Major VII (Backdoor/Flat 7 relative to major), minor v
+    aeolian: ["VI", "VII", "v"], // Natural minor flow
+    locrian: ["II", "i°"], // Major II
+    harmonic_minor: ["V", "VI"], // Dominant V, Major VI
+};
+
 export interface SubstitutionRule {
     id: string;
     category: "basic" | "functional" | "jazz" | "modal_interchange" | "chromatic";

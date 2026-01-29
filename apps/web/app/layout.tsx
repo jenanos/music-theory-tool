@@ -38,6 +38,12 @@ export default function RootLayout({
               >
                 Progresjoner
               </Link>
+              <Link
+                href="/charts"
+                className="text-slate-600 hover:text-indigo-600 hover:underline"
+              >
+                Blekker
+              </Link>
             </div>
           </div>
         </nav>

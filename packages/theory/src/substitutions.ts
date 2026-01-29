@@ -13,7 +13,7 @@ import { parseNoteName, noteName, prefersFlats } from "./utils";
 // Helper to determine chord intervals from quality string
 function getQualityIntervals(quality: string): number[] {
     // Check exact match
-    if ((CHORD_QUALITIES as any)[quality]) return (CHORD_QUALITIES as any)[quality];
+    if (quality in CHORD_QUALITIES) return [...CHORD_QUALITIES[quality as keyof typeof CHORD_QUALITIES]];
 
     // Fallbacks
     if (quality === "maj" || quality === "") return [0, 4, 7];
@@ -98,7 +98,8 @@ export function suggestSubstitutions(
     for (const rule of SUBSTITUTION_RULES) {
         const when = rule.when;
 
-        if (when.scope === "diatonic") { }
+        // if (when.scope === "diatonic") { }
+
         if (when.mode_is && when.mode_is !== mode) continue;
         if (when.degree_is && when.degree_is !== chord.degree) continue;
         if (when.function_is && when.function_is !== chord.function) continue;
@@ -174,7 +175,7 @@ export function suggestSubstitutions(
                 const nextRoot = nextChord.tones[0];
                 if (nextRoot !== undefined && chord.tones[0] !== undefined) {
                     // Calc V7 of Next
-                    const domRoot = (nextRoot + 7) % 12;
+                    // const domRoot = (nextRoot + 7) % 12;
 
                     // Check if current chord root is same as dom root? 
                     if ((chord.tones[0] - nextRoot + 12) % 12 === 7) {

@@ -18,8 +18,7 @@ import {
 import {
   DiatonicChord,
   ModeId,
-  HarmonicFunction,
-  ScaleDefinition
+  HarmonicFunction
 } from "./types";
 
 // Re-export common constants for convenience

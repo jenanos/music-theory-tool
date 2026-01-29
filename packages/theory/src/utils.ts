@@ -1,5 +1,4 @@
 
-import { ScaleDefinition } from "./types";
 import { MODES } from "./data";
 
 export const SHARP_NOTES = [

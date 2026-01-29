@@ -1,5 +1,5 @@
 
-import { ModeId, ScaleDefinition, ScaleFamily } from "./types";
+import { ModeId, ScaleDefinition } from "./types";
 import { noteName, parseNoteName, prefersFlats } from "./utils";
 
 // ============================================================================

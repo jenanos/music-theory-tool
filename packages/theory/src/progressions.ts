@@ -1308,7 +1308,7 @@ export function romanToChord(
         let targetDegree = targetParsed.degree - 1;
         if (targetDegree < 0) targetDegree = 0;
 
-        const targetNote = scale.noteNames[targetDegree % 7] ?? tonic;
+        // const targetNote = scale.noteNames[targetDegree % 7] ?? tonic;
         // V7 of target = a major 7th chord a fifth above target
         const targetPc = scale.pcs[targetDegree % 7] ?? 0;
         const dominantPc = (targetPc + 7) % 12; // Fifth above
@@ -1632,34 +1632,52 @@ export function findMatchingProgressions(
     const matches: ProgressionMatch[] = [];
 
     for (const prog of pool) {
-        // Strict substring match: check if entire userSequence exists in prog.roman
-        // We ignore minMatchLength for "strict" behavior, effectively minMatchLength = userSequence.length
+        // Check suffixes of userSequence, from longest to shortest (down to minMatchLength)
+        // effectively: length = userSequence.length downTo minMatchLength
 
-        if (prog.roman.length < userSequence.length) continue;
+        // Optimization: The match length cannot be longer than the progression itself
+        const maxPossibleMatch = Math.min(userSequence.length, prog.roman.length);
 
-        for (let i = 0; i <= prog.roman.length - userSequence.length; i++) {
-            let isMatch = true;
-            for (let j = 0; j < userSequence.length; j++) {
-                if (prog.roman[i + j] !== userSequence[j]) {
-                    isMatch = false;
+        for (let len = maxPossibleMatch; len >= minMatchLength; len--) {
+            const suffix = userSequence.slice(-len);
+
+            // Check if this suffix exists in prog.roman
+            // We search for the sub-array 'suffix' inside 'prog.roman'
+            let foundIndex = -1;
+
+            // Naive search for sub-array
+            for (let i = 0; i <= prog.roman.length - len; i++) {
+                let isMatch = true;
+                for (let j = 0; j < len; j++) {
+                    if (prog.roman[i + j] !== suffix[j]) {
+                        isMatch = false;
+                        break;
+                    }
+                }
+                if (isMatch) {
+                    foundIndex = i;
                     break;
                 }
             }
 
-            if (isMatch) {
+            if (foundIndex !== -1) {
                 matches.push({
                     progression: prog,
-                    matchedIndices: Array.from({ length: userSequence.length }, (_, k) => i + k),
-                    matchLength: userSequence.length
+                    matchedIndices: Array.from({ length: len }, (_, k) => foundIndex + k),
+                    matchLength: len
                 });
-                // Once we find a match, we can stop for this progression
+                // Found the longest match for this progression, stop checking shorter suffixes
                 break;
             }
         }
     }
 
-    // Sort by matches - since all matches are now the full length, 
-    // secondary sort by weight (popularity) is good.
-    return matches.sort((a, b) => b.progression.weight - a.progression.weight);
+    // Sort by match length (descending), then by weight (descending)
+    return matches.sort((a, b) => {
+        if (a.matchLength !== b.matchLength) {
+            return b.matchLength - a.matchLength;
+        }
+        return b.progression.weight - a.progression.weight;
+    });
 }
 

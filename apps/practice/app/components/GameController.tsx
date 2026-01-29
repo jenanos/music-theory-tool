@@ -13,8 +13,9 @@ const STRING_OPEN_NOTES = [4, 11, 7, 2, 9, 4]; // Indices in NOTES array for Hig
 const getNoteAt = (stringIndex: number, fret: number) => {
     // stringIndex 1-based.
     const openNoteIndex = STRING_OPEN_NOTES[stringIndex - 1];
+    if (openNoteIndex === undefined) return "?";
     const noteIndex = (openNoteIndex + fret) % 12;
-    return NOTES[noteIndex];
+    return NOTES[noteIndex] || "?";
 };
 
 interface Question {
@@ -34,7 +35,7 @@ export const GameController = () => {
         if (selectedStrings.length === 0) return;
 
         // Pick a random string from selected
-        const stringToAsk = selectedStrings[Math.floor(Math.random() * selectedStrings.length)];
+        const stringToAsk = selectedStrings[Math.floor(Math.random() * selectedStrings.length)]!;
         // Pick a random fret 1-12
         const fretToAsk = Math.floor(Math.random() * 12) + 1;
         const note = getNoteAt(stringToAsk, fretToAsk);

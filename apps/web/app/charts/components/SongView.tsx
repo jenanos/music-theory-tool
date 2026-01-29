@@ -57,6 +57,7 @@ export function SongView({ song, onChange }: SongViewProps) {
             id,
             label: "Ny Seksjon",
             chordLines: [],
+            degreeLines: [],
         };
         onChange({ ...song, sections: [...song.sections, newSection] });
     };

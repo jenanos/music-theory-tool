@@ -2,17 +2,26 @@ import { useMemo } from "react";
 
 interface ChordDisplayProps {
     chordLine: string;
+    degreeLine?: string;
     className?: string;
     onClick?: () => void;
 }
 
-export function ChordDisplay({ chordLine, className, onClick }: ChordDisplayProps) {
+export function ChordDisplay({ chordLine, degreeLine, className, onClick }: ChordDisplayProps) {
     const rows = useMemo(() => {
         if (!chordLine) return [];
-        return chordLine.split('\n').map(line =>
-            line.split(/[\s|-]+/).filter(Boolean)
-        );
-    }, [chordLine]);
+        const cLines = chordLine.split('\n');
+        const dLines = degreeLine ? degreeLine.split('\n') : [];
+
+        return cLines.map((line, lineIndex) => {
+            const chords = line.split(/[\s|-]+/).filter(Boolean);
+            const degrees = dLines[lineIndex]
+                ? dLines[lineIndex].split(/[\s|-]+/).filter(Boolean)
+                : [];
+
+            return { chords, degrees };
+        });
+    }, [chordLine, degreeLine]);
 
     if (!chordLine.trim()) {
         return (
@@ -31,21 +40,25 @@ export function ChordDisplay({ chordLine, className, onClick }: ChordDisplayProp
             className={`flex flex-col gap-2 rounded-md bg-slate-50 p-3 min-h-[60px] cursor-pointer hover:bg-slate-100 ring-1 ring-slate-900/5 ${className}`}
         >
             {rows.map((row, rowIndex) => (
-                <div key={rowIndex} className="flex flex-wrap items-center gap-2 min-h-[40px]">
-                    {row.length > 0 ? (
-                        row.map((chord, chordIndex) => (
+                <div key={rowIndex} className="flex flex-wrap items-center gap-2 min-h-[56px]">
+                    {row.chords.length > 0 ? (
+                        row.chords.map((chord, chordIndex) => (
                             <div
                                 key={`${chord}-${rowIndex}-${chordIndex}`}
-                                className="flex h-10 min-w-[3rem] items-center justify-center rounded-lg bg-white px-3 shadow-sm ring-1 ring-slate-900/10 transition-transform hover:-translate-y-0.5 hover:shadow-md"
+                                className="flex flex-col gap-1 items-center justify-center p-2 rounded-lg bg-white shadow-sm ring-1 ring-slate-900/10 transition-transform hover:-translate-y-0.5 hover:shadow-md"
                             >
                                 <span className="font-bold text-slate-700">
                                     {chord}
                                 </span>
+                                {row.degrees[chordIndex] && (
+                                    <span className="text-xs font-medium text-indigo-500">
+                                        {row.degrees[chordIndex]}
+                                    </span>
+                                )}
                             </div>
                         ))
                     ) : (
-                        // Placeholder for empty line if needed, or just min-height
-                        <div className="h-10 border border-transparent" />
+                        <div className="h-14 border border-transparent" />
                     )}
                 </div>
             ))}

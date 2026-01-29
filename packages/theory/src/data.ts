@@ -17,6 +17,7 @@ export interface ModeDefinition {
     name: string; // Added human readable name
     degree_labels: string[];
     intervals: number[];
+    isHarmony: boolean;
 }
 
 export const MODES: Record<string, ModeDefinition> = {
@@ -25,48 +26,56 @@ export const MODES: Record<string, ModeDefinition> = {
         name: "Dur (ionisk)",
         degree_labels: ["1", "2", "3", "4", "5", "6", "7"],
         intervals: [0, 2, 4, 5, 7, 9, 11],
+        isHarmony: true,
     },
     dorian: {
         id: "dorian",
         name: "Dorisk",
         degree_labels: ["1", "2", "b3", "4", "5", "6", "b7"],
         intervals: [0, 2, 3, 5, 7, 9, 10],
+        isHarmony: true,
     },
     phrygian: {
         id: "phrygian",
         name: "Frygisk",
         degree_labels: ["1", "b2", "b3", "4", "5", "b6", "b7"],
         intervals: [0, 1, 3, 5, 7, 8, 10],
+        isHarmony: true,
     },
     lydian: {
         id: "lydian",
         name: "Lydisk",
         degree_labels: ["1", "2", "3", "#4", "5", "6", "7"],
         intervals: [0, 2, 4, 6, 7, 9, 11],
+        isHarmony: true,
     },
     mixolydian: {
         id: "mixolydian",
         name: "Mixolydisk",
         degree_labels: ["1", "2", "3", "4", "5", "6", "b7"],
         intervals: [0, 2, 4, 5, 7, 9, 10],
+        isHarmony: true,
     },
     aeolian: {
         id: "aeolian",
         name: "Naturlig moll (aeolisk)",
         degree_labels: ["1", "2", "b3", "4", "5", "b6", "b7"],
         intervals: [0, 2, 3, 5, 7, 8, 10],
+        isHarmony: true,
     },
     locrian: {
         id: "locrian",
         name: "Lokrisk",
         degree_labels: ["1", "b2", "b3", "4", "b5", "b6", "b7"],
         intervals: [0, 1, 3, 5, 6, 8, 10],
+        isHarmony: true,
     },
     harmonic_minor: {
         id: "harmonic_minor",
         name: "Harmonisk moll",
         degree_labels: ["1", "2", "b3", "4", "5", "b6", "7"],
         intervals: [0, 2, 3, 5, 7, 8, 11],
+        isHarmony: true,
     },
 };
 

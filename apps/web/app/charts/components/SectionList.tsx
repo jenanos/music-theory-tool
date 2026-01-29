@@ -93,25 +93,46 @@ export function SectionList({ sections, onUpdate, onAdd, onDelete }: SectionList
                                 {/* Right side: Content */}
                                 <div className="min-w-0 flex-1">
                                     {isEditing ? (
-                                        <>
-                                            <textarea
-                                                autoFocus
-                                                className="min-h-[120px] w-full resize-y rounded-md border-0 bg-slate-50 p-3 font-mono text-sm text-slate-700 shadow-inner focus:ring-2 focus:ring-indigo-600"
-                                                value={chordText}
-                                                onChange={(e) => {
-                                                    const val = e.target.value.replace(/%/g, '');
-                                                    onUpdate(section.id, { chordLines: val.split("\n") });
-                                                }}
-                                                onBlur={() => setEditingId(null)}
-                                                placeholder="Akkorder (en per linje)"
-                                            />
-                                            <div className="mt-2 text-xs text-slate-400">
+                                        <div className="flex flex-col gap-4">
+                                            <div>
+                                                <label className="mb-1 block text-sm font-medium text-slate-700">Akkorder</label>
+                                                <textarea
+                                                    autoFocus
+                                                    className="min-h-[100px] w-full resize-y rounded-md border-0 bg-slate-50 p-3 font-mono text-sm text-slate-700 shadow-inner focus:ring-2 focus:ring-indigo-600"
+                                                    value={chordText}
+                                                    onChange={(e) => {
+                                                        const val = e.target.value.replace(/%/g, '');
+                                                        onUpdate(section.id, { chordLines: val.split("\n") });
+                                                    }}
+                                                    placeholder="Akkorder (en per linje)"
+                                                />
+                                            </div>
+                                            <div>
+                                                <label className="mb-1 block text-sm font-medium text-slate-700">Trinn (valgfritt)</label>
+                                                <textarea
+                                                    className="min-h-[100px] w-full resize-y rounded-md border-0 bg-slate-50 p-3 font-mono text-sm text-slate-700 shadow-inner focus:ring-2 focus:ring-indigo-600"
+                                                    value={section.degreeLines ? section.degreeLines.join("\n") : ""}
+                                                    onChange={(e) => {
+                                                        const val = e.target.value;
+                                                        onUpdate(section.id, { degreeLines: val.split("\n") });
+                                                    }}
+                                                    placeholder="Trinn (eks: I - IV - V)"
+                                                />
+                                            </div>
+                                            <div className="text-xs text-slate-400">
                                                 Tips: Bruk | eller - for å skille takter. Bruk tekst (f.eks. 'x4') for repetisjon.
                                             </div>
-                                        </>
+                                            <button
+                                                onClick={() => setEditingId(null)}
+                                                className="self-start rounded bg-indigo-600 px-3 py-1.5 text-sm font-semibold text-white shadow-sm hover:bg-indigo-500"
+                                            >
+                                                Ferdig
+                                            </button>
+                                        </div>
                                     ) : (
                                         <ChordDisplay
                                             chordLine={chordText}
+                                            degreeLine={section.degreeLines ? section.degreeLines.join("\n") : ""}
                                             className="w-full"
                                             onClick={() => setEditingId(section.id)}
                                         />

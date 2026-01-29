@@ -86,10 +86,22 @@ export function SongView({ song, onChange }: SongViewProps) {
         onChange({ ...song, artist: newArtist });
     };
 
+    const [showUniqueSections, setShowUniqueSections] = useState(true);
+
+    // Filter unique sections based on chord lines content
+    const visibleSections = showUniqueSections
+        ? song.sections.filter((section, index, self) =>
+            // Keep the first section that has this specific chord content
+            index === self.findIndex((s) =>
+                s.chordLines.join('\n') === section.chordLines.join('\n')
+            )
+        )
+        : song.sections;
+
     return (
         <div className="flex flex-col h-full overflow-hidden bg-white">
             {/* Header */}
-            <div className="border-b border-slate-200 bg-white px-6 py-4">
+            <div className="border-b border-slate-200 bg-white px-6 py-4 flex-none">
                 <div className="flex items-center gap-4">
                     <input
                         className="text-2xl font-bold text-slate-800 placeholder-slate-300 focus:outline-none focus:ring-2 focus:ring-indigo-500 rounded px-1"
@@ -109,37 +121,58 @@ export function SongView({ song, onChange }: SongViewProps) {
                 </div>
             </div>
 
-            <div className="flex-1 overflow-y-auto p-6 space-y-8">
-                {/* Timeline */}
-                <section>
-                    <Timeline
-                        items={timelineItems}
-                        sections={song.sections}
-                        onReorder={handleReorder}
-                    />
-                    <div className="mt-2 flex flex-wrap gap-2">
-                        <span className="text-xs text-slate-500 py-1">Legg til i arrangement:</span>
-                        {song.sections.map(s => (
-                            <button
-                                key={s.id}
-                                onClick={() => addToArrangement(s.id)}
-                                className="text-xs px-2 py-1 rounded bg-slate-100 hover:bg-slate-200 text-slate-700 transition"
-                            >
-                                + {s.label}
-                            </button>
-                        ))}
-                    </div>
-                </section>
+            <div className="flex flex-1 overflow-hidden">
+                {/* Main Content: Sections */}
+                <div className="flex-1 overflow-y-auto p-6 bg-slate-50">
+                    <div className="max-w-3xl mx-auto space-y-6">
+                        <div className="flex items-center justify-end">
+                            <label className="flex items-center gap-2 text-sm text-slate-600 cursor-pointer select-none">
+                                <input
+                                    type="checkbox"
+                                    checked={showUniqueSections}
+                                    onChange={(e) => setShowUniqueSections(e.target.checked)}
+                                    className="rounded border-slate-300 text-indigo-600 focus:ring-indigo-600"
+                                />
+                                Vis unike seksjoner
+                            </label>
+                        </div>
 
-                {/* Sections */}
-                <section>
-                    <SectionList
-                        sections={song.sections}
-                        onUpdate={updateSection}
-                        onAdd={addSection}
-                        onDelete={deleteSection}
-                    />
-                </section>
+                        <SectionList
+                            sections={visibleSections}
+                            onUpdate={updateSection}
+                            onAdd={addSection}
+                            onDelete={deleteSection}
+                        />
+                    </div>
+                </div>
+
+                {/* Sidebar: Timeline */}
+                <div className="w-80 border-l border-slate-200 bg-white flex flex-col">
+                    <div className="p-4 flex-1 overflow-hidden flex flex-col">
+                        <Timeline
+                            items={timelineItems}
+                            sections={song.sections}
+                            onReorder={handleReorder}
+                        />
+
+                        <div className="mt-4 pt-4 border-t border-slate-100 overflow-y-auto flex-none max-h-[40%]">
+                            <span className="text-xs font-medium text-slate-500 block mb-2 uppercase tracking-wider">
+                                Legg til i arrangement
+                            </span>
+                            <div className="flex flex-wrap gap-2">
+                                {song.sections.map(s => (
+                                    <button
+                                        key={s.id}
+                                        onClick={() => addToArrangement(s.id)}
+                                        className="text-xs px-2 py-1.5 rounded bg-slate-100 hover:bg-slate-200 text-slate-700 transition border border-slate-200"
+                                    >
+                                        + {s.label}
+                                    </button>
+                                ))}
+                            </div>
+                        </div>
+                    </div>
+                </div>
             </div>
         </div>
     );

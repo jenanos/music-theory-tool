@@ -5,9 +5,10 @@ interface ChordDisplayProps {
     degreeLine?: string;
     className?: string;
     onClick?: () => void;
+    onChordClick?: (chord: string, degree?: string) => void;
 }
 
-export function ChordDisplay({ chordLine, degreeLine, className, onClick }: ChordDisplayProps) {
+export function ChordDisplay({ chordLine, degreeLine, className, onClick, onChordClick }: ChordDisplayProps) {
     const rows = useMemo(() => {
         if (!chordLine) return [];
         const cLines = chordLine.split('\n');
@@ -45,7 +46,13 @@ export function ChordDisplay({ chordLine, degreeLine, className, onClick }: Chor
                         row.chords.map((chord, chordIndex) => (
                             <div
                                 key={`${chord}-${rowIndex}-${chordIndex}`}
-                                className="flex flex-col gap-1 items-center justify-center p-2 rounded-lg bg-white shadow-sm ring-1 ring-slate-900/10 transition-transform hover:-translate-y-0.5 hover:shadow-md"
+                                onClick={(e) => {
+                                    if (onChordClick) {
+                                        e.stopPropagation();
+                                        onChordClick(chord, row.degrees[chordIndex]);
+                                    }
+                                }}
+                                className={`flex flex-col gap-1 items-center justify-center p-2 rounded-lg bg-white shadow-sm ring-1 ring-slate-900/10 transition-transform hover:-translate-y-0.5 hover:shadow-md ${onChordClick ? 'cursor-pointer hover:ring-indigo-300' : ''}`}
                             >
                                 <span className="font-bold text-slate-700">
                                     {chord}

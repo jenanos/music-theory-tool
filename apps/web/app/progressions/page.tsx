@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import {
     filterProgressions,
@@ -119,6 +119,16 @@ function SortableChordItem({
     );
 }
 
+// Type for saved progressions
+interface SavedProgression {
+    id: string;
+    name: string;
+    tonic: string;
+    mode: string;
+    sequence: string[];
+    createdAt: Date;
+}
+
 export default function ProgressionsPage() {
     const [tonic, setTonic] = useState("C");
     const [modeId, setModeId] = useState<ModeId>("ionian");
@@ -127,10 +137,21 @@ export default function ProgressionsPage() {
     const [useSpice, setUseSpice] = useState(false);
 
     // Sequence builder state
-    // We need unique IDs for sortable items, but the sequence is just strings.
-    // We'll wrap them in objects or just generate IDs.
-    // For simplicity, let's use an array of objects.
     const [sequenceItems, setSequenceItems] = useState<{ id: string; roman: string }[]>([]);
+
+    // Saved progressions state
+    const [savedProgressions, setSavedProgressions] = useState<SavedProgression[]>([]);
+    const [showSaveModal, setShowSaveModal] = useState(false);
+    const [saveName, setSaveName] = useState("");
+    const [isSaving, setIsSaving] = useState(false);
+
+    // Fetch saved progressions on mount
+    useEffect(() => {
+        fetch("/api/progressions")
+            .then(res => res.json())
+            .then(data => setSavedProgressions(data))
+            .catch(err => console.error("Failed to fetch saved progressions:", err));
+    }, []);
 
     const sensors = useSensors(
         useSensor(PointerSensor, { activationConstraint: { distance: 5 } }), // 5px movement to start drag
@@ -223,6 +244,60 @@ export default function ProgressionsPage() {
 
     const clearSequence = () => {
         setSequenceItems([]);
+    };
+
+    // Save progression to database
+    const handleSaveProgression = async () => {
+        if (!saveName.trim() || sequenceItems.length === 0) return;
+
+        setIsSaving(true);
+        try {
+            const response = await fetch("/api/progressions", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({
+                    name: saveName.trim(),
+                    tonic,
+                    mode: modeId,
+                    sequence: sequenceItems.map(i => i.roman),
+                }),
+            });
+
+            if (response.ok) {
+                const { id } = await response.json();
+                setSavedProgressions(prev => [{
+                    id,
+                    name: saveName.trim(),
+                    tonic,
+                    mode: modeId,
+                    sequence: sequenceItems.map(i => i.roman),
+                    createdAt: new Date(),
+                }, ...prev]);
+                setShowSaveModal(false);
+                setSaveName("");
+            }
+        } catch (err) {
+            console.error("Failed to save progression:", err);
+        } finally {
+            setIsSaving(false);
+        }
+    };
+
+    // Load a saved progression
+    const loadProgression = (prog: SavedProgression) => {
+        setTonic(prog.tonic);
+        setModeId(prog.mode as ModeId);
+        setSequenceItems(prog.sequence.map(roman => ({ id: crypto.randomUUID(), roman })));
+    };
+
+    // Delete a saved progression
+    const deleteProgression = async (id: string) => {
+        try {
+            await fetch(`/api/progressions?id=${id}`, { method: "DELETE" });
+            setSavedProgressions(prev => prev.filter(p => p.id !== id));
+        } catch (err) {
+            console.error("Failed to delete progression:", err);
+        }
     };
 
     const handleDragEnd = (event: DragEndEvent) => {
@@ -424,14 +499,24 @@ export default function ProgressionsPage() {
                                 <h2 className="text-xs font-bold uppercase tracking-wide text-slate-400">
                                     Din Sekvens
                                 </h2>
-                                {sequenceItems.length > 0 && (
-                                    <button
-                                        onClick={clearSequence}
-                                        className="text-xs font-medium text-red-500 hover:text-red-600"
-                                    >
-                                        Tøm
-                                    </button>
-                                )}
+                                <div className="flex items-center gap-2">
+                                    {sequenceItems.length > 0 && (
+                                        <>
+                                            <button
+                                                onClick={() => setShowSaveModal(true)}
+                                                className="text-xs font-medium text-indigo-600 hover:text-indigo-700"
+                                            >
+                                                Lagre
+                                            </button>
+                                            <button
+                                                onClick={clearSequence}
+                                                className="text-xs font-medium text-red-500 hover:text-red-600"
+                                            >
+                                                Tøm
+                                            </button>
+                                        </>
+                                    )}
+                                </div>
                             </div>
 
                             <div className="min-h-[120px] rounded-xl border-2 border-dashed border-slate-200 bg-slate-50/50 p-4 transition-colors hover:bg-slate-50">
@@ -512,9 +597,83 @@ export default function ProgressionsPage() {
                                 ))}
                             </div>
                         </div>
+
+                        {/* Saved Progressions */}
+                        {savedProgressions.length > 0 && (
+                            <div className="mt-6 border-t border-slate-200 pt-6">
+                                <h2 className="mb-3 text-xs font-bold uppercase tracking-wide text-slate-400">
+                                    Lagrede sekvenser ({savedProgressions.length})
+                                </h2>
+                                <div className="space-y-2">
+                                    {savedProgressions.map((prog) => (
+                                        <div
+                                            key={prog.id}
+                                            className="group flex items-center justify-between rounded-lg border border-slate-200 bg-slate-50 p-3 hover:border-indigo-300 hover:bg-indigo-50 transition-colors"
+                                        >
+                                            <button
+                                                onClick={() => loadProgression(prog)}
+                                                className="flex-1 text-left"
+                                            >
+                                                <span className="font-medium text-slate-700 group-hover:text-indigo-700">
+                                                    {prog.name}
+                                                </span>
+                                                <span className="ml-2 text-xs text-slate-400">
+                                                    {prog.tonic} {prog.mode} · {prog.sequence.length} akkorder
+                                                </span>
+                                            </button>
+                                            <button
+                                                onClick={() => deleteProgression(prog.id)}
+                                                className="ml-2 p-1 text-slate-400 hover:text-red-500 opacity-0 group-hover:opacity-100 transition-opacity"
+                                            >
+                                                <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                                                    <path d="M3 6h18" />
+                                                    <path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6" />
+                                                    <path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2" />
+                                                </svg>
+                                            </button>
+                                        </div>
+                                    ))}
+                                </div>
+                            </div>
+                        )}
                     </div>
                 </div>
             </div>
+
+            {/* Save Modal */}
+            {showSaveModal && (
+                <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
+                    <div className="w-full max-w-md rounded-xl bg-white p-6 shadow-2xl">
+                        <h3 className="mb-4 text-lg font-bold text-slate-800">Lagre sekvens</h3>
+                        <input
+                            type="text"
+                            value={saveName}
+                            onChange={(e) => setSaveName(e.target.value)}
+                            placeholder="Navn på sekvensen..."
+                            className="w-full rounded-lg border border-slate-200 px-4 py-2 text-sm focus:border-indigo-500 focus:outline-none focus:ring-2 focus:ring-indigo-200"
+                            autoFocus
+                        />
+                        <div className="mt-2 text-xs text-slate-500">
+                            {tonic} {SCALES.find(s => s.id === modeId)?.name} · {sequenceItems.map(i => i.roman).join(" → ")}
+                        </div>
+                        <div className="mt-4 flex justify-end gap-2">
+                            <button
+                                onClick={() => { setShowSaveModal(false); setSaveName(""); }}
+                                className="rounded-lg px-4 py-2 text-sm text-slate-600 hover:bg-slate-100"
+                            >
+                                Avbryt
+                            </button>
+                            <button
+                                onClick={handleSaveProgression}
+                                disabled={!saveName.trim() || isSaving}
+                                className="rounded-lg bg-indigo-600 px-4 py-2 text-sm text-white hover:bg-indigo-700 disabled:opacity-50"
+                            >
+                                {isSaving ? "Lagrer..." : "Lagre"}
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            )}
         </main>
     );
 }

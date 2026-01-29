@@ -1,10 +1,19 @@
 
 "use client";
 
-import { useState, useCallback } from "react";
+import { useState, useCallback, useMemo, useEffect } from "react";
 import { Song, Section } from "../data";
 import { Timeline } from "./Timeline";
 import { SectionList } from "./SectionList";
+import {
+    suggestSubstitutions,
+    buildDiatonicChords,
+    getScale,
+    type ModeId,
+    type SubstitutionSuggestion,
+    type DiatonicChord
+} from "@repo/theory";
+import { SubstitutionPanel } from "../../components/SubstitutionPanel";
 
 interface SongViewProps {
     song: Song;
@@ -19,6 +28,44 @@ interface TimelineItem {
 // Simple ID generator that works everywhere
 function generateId() {
     return Math.random().toString(36).substring(2, 9);
+}
+
+// Helper to parse key string into tonic and mode
+function parseKey(keyString: string): { tonic: string; mode: ModeId } | null {
+    if (!keyString) return null;
+
+    // Normalize spaces
+    const parts = keyString.trim().split(/\s+/);
+    if (parts.length === 0) return null;
+
+    let tonic = parts[0];
+    if (!tonic) return null;
+
+    let mode: ModeId = "ionian"; // Default to major
+
+    // Check for minor suffix in tonic (e.g. "Fm", "Cm")
+    if (tonic.endsWith("m") && !tonic.includes("maj") && !tonic.includes("dim")) {
+        tonic = tonic.substring(0, tonic.length - 1);
+        mode = "aeolian";
+    }
+
+    // Check second part for mode name
+    if (parts.length > 1) {
+        const modeInput = parts[1];
+        if (modeInput) {
+            const inputLower = modeInput.toLowerCase();
+            if (inputLower.includes("dur") || inputLower === "major") mode = "ionian";
+            else if (inputLower.includes("moll") || inputLower === "minor") mode = "aeolian";
+            else if (inputLower.includes("dorisk") || inputLower === "dorian") mode = "dorian";
+            else if (inputLower.includes("frygisk") || inputLower === "phrygian") mode = "phrygian";
+            else if (inputLower.includes("lydisk") || inputLower === "lydian") mode = "lydian";
+            else if (inputLower.includes("mikso") || inputLower === "mixolydian") mode = "mixolydian";
+            else if (inputLower.includes("eolisk") || inputLower === "aeolian") mode = "aeolian";
+            else if (inputLower.includes("lokrisk") || inputLower === "locrian") mode = "locrian";
+        }
+    }
+
+    return { tonic, mode };
 }
 
 export function SongView({ song, onChange }: SongViewProps) {
@@ -88,38 +135,210 @@ export function SongView({ song, onChange }: SongViewProps) {
     };
 
     const [showUniqueSections, setShowUniqueSections] = useState(true);
+    const [showNotes, setShowNotes] = useState(false);
+
+    // Version history state
+    const [showOriginal, setShowOriginal] = useState(false);
+    const [originalSong, setOriginalSong] = useState<Song | null>(null);
+    const [isLoadingOriginal, setIsLoadingOriginal] = useState(false);
+
+    // Fetch original version when toggle is enabled
+    useEffect(() => {
+        if (showOriginal && !originalSong) {
+            setIsLoadingOriginal(true);
+            fetch(`/api/songs/${song.id}/original`)
+                .then((res) => {
+                    if (!res.ok) throw new Error("Failed to fetch original");
+                    return res.json();
+                })
+                .then((data) => setOriginalSong(data))
+                .catch((err) => console.error("Error fetching original:", err))
+                .finally(() => setIsLoadingOriginal(false));
+        }
+    }, [showOriginal, originalSong, song.id]);
+
+    // Use original or current song based on toggle
+    const displaySong = showOriginal && originalSong ? originalSong : song;
+    const isReadonly = showOriginal;
 
     // Filter unique sections based on chord lines content
     const visibleSections = showUniqueSections
-        ? song.sections.filter((section, index, self) =>
+        ? displaySong.sections.filter((section, index, self) =>
             // Keep the first section that has this specific chord content
             index === self.findIndex((s) =>
                 s.chordLines.join('\n') === section.chordLines.join('\n')
             )
         )
-        : song.sections;
+        : displaySong.sections;
+
+    // --- SUBSTITUTION LOGIC ---
+    const [selectedChord, setSelectedChord] = useState<{ symbol: string, suggestions: SubstitutionSuggestion[] } | null>(null);
+
+    const handleChordClick = useCallback((chordSymbol: string, degree?: string) => {
+        if (!song.key) return;
+
+        const keyInfo = parseKey(song.key);
+        if (!keyInfo) return;
+
+        const { tonic, mode } = keyInfo;
+        const diatonicChords = buildDiatonicChords(tonic, mode, true); // Include 7ths for richer context
+
+        let targetChord: DiatonicChord | undefined;
+
+        // 1. Try to find by explicit degree if provided (most accurate)
+        if (degree) {
+            // Normalize roman numeral (remove 7ths etc for matching)
+            const degreeBase = degree.replace(/[^IViv0-9]/g, '');
+            // This is tricky because buildDiatonicChords returns Roman numerals.
+            // Let's try matching the exact roman string first, then loosely.
+            targetChord = diatonicChords.find(c => c.roman === degree);
+            if (!targetChord) {
+                targetChord = diatonicChords.find(c => c.roman.startsWith(degree));
+            }
+        }
+
+        // 2. Fallback: Find by symbol (e.g. "Am")
+        if (!targetChord) {
+            targetChord = diatonicChords.find(c => c.symbol === chordSymbol);
+        }
+
+        // 3. Fallback: Create a synthetic chord object if we can't match it to scale context
+        // This allows suggesting substitutions even for non-diatonic chords if we had robust logic,
+        // but suggestSubstitutions relies heavily on DiatonicChord structure.
+        // For now, if we can't find it in the scale context, we might struggle.
+        // Let's at least try to find a chord with the same root.
+        if (!targetChord) {
+            // Simple synthetic attempt: parse root from symbol
+            // This is a "best effort" to enable substitutions for chords outside the strict key signature
+            // but it's limited without full chord parsing logic availability here.
+            // We'll skip for now to avoid errors, or defaults to first chord if desperate?
+            // Better: Show no suggestions to avoid confusion.
+        }
+
+        if (targetChord) {
+            const suggestions = suggestSubstitutions({
+                tonic,
+                mode,
+                chord: targetChord,
+                allChords: diatonicChords
+            });
+            setSelectedChord({ symbol: chordSymbol, suggestions });
+        } else {
+            // If we really want to show something, we could try to just use the symbol
+            // But existing substitution logic needs a DiatonicChord object with 'tones' etc.
+            // So we'll validly show empty or nothing.
+            console.warn("Kunne ikke finne akkord i kontekst:", chordSymbol, degree);
+            setSelectedChord({ symbol: chordSymbol, suggestions: [] });
+        }
+    }, [song.key]);
 
     return (
-        <div className="flex flex-col h-full overflow-hidden bg-white">
-            {/* Header */}
-            <div className="border-b border-slate-200 bg-white px-6 py-4 flex-none">
-                <div className="flex items-center gap-4">
-                    <input
-                        className="text-2xl font-bold text-slate-800 placeholder-slate-300 focus:outline-none focus:ring-2 focus:ring-indigo-500 rounded px-1"
-                        value={song.title}
-                        onChange={(e) => updateTitle(e.target.value)}
-                        placeholder="Låttittel"
+        <div className="flex flex-col h-full overflow-hidden bg-white relative">
+            {/* Modal / Overlay for Substitutions */}
+            {selectedChord && (
+                <div className="absolute inset-0 z-50 flex items-center justify-center bg-slate-900/20 backdrop-blur-sm p-4 animate-in fade-in duration-200">
+                    <div className="bg-white rounded-xl shadow-xl border border-slate-200 w-full max-w-2xl max-h-[80vh] flex flex-col overflow-hidden">
+                        <div className="flex items-center justify-between p-4 border-b border-slate-100 bg-slate-50">
+                            <h3 className="font-bold text-lg text-slate-800">
+                                Substitusjoner for <span className="text-indigo-600">{selectedChord.symbol}</span>
+                            </h3>
+                            <button
+                                onClick={() => setSelectedChord(null)}
+                                className="p-1 rounded-full hover:bg-slate-200 text-slate-400 hover:text-slate-600 transition"
+                            >
+                                <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                                </svg>
+                            </button>
+                        </div>
+                        <div className="p-6 overflow-y-auto">
+                            <SubstitutionPanel substitutions={selectedChord.suggestions} />
+                        </div>
+                    </div>
+                    {/* Backdrop click to close */}
+                    <div
+                        className="absolute inset-0 -z-10"
+                        onClick={() => setSelectedChord(null)}
                     />
-                    <input
-                        className="text-sm font-medium text-slate-500 placeholder-slate-300 focus:outline-none focus:ring-2 focus:ring-indigo-500 rounded px-1"
-                        value={song.artist || ""}
-                        onChange={(e) => updateArtist(e.target.value)}
-                        placeholder="Artist"
-                    />
-                    <span className="text-xs text-slate-300 ml-auto">
-                        {song.key ? `Key: ${song.key}` : "No key"}
-                    </span>
                 </div>
+            )}
+
+            {/* Header */}
+            <div className="border-b border-slate-200 bg-white px-6 py-4 flex-none relative z-10">
+                <div className="flex items-center gap-4">
+                    {isReadonly ? (
+                        <>
+                            <span className="text-2xl font-bold text-slate-800">{displaySong.title}</span>
+                            <span className="text-sm font-medium text-slate-500">{displaySong.artist || ''}</span>
+                            <span className="text-xs text-amber-600 bg-amber-50 px-2 py-1 rounded-full border border-amber-200">Originalversjon (skrivebeskyttet)</span>
+                        </>
+                    ) : (
+                        <>
+                            <input
+                                className="text-2xl font-bold text-slate-800 placeholder-slate-300 focus:outline-none focus:ring-2 focus:ring-indigo-500 rounded px-1"
+                                value={song.title}
+                                onChange={(e) => updateTitle(e.target.value)}
+                                placeholder="Låttittel"
+                            />
+                            <input
+                                className="text-sm font-medium text-slate-500 placeholder-slate-300 focus:outline-none focus:ring-2 focus:ring-indigo-500 rounded px-1"
+                                value={song.artist || ""}
+                                onChange={(e) => updateArtist(e.target.value)}
+                                placeholder="Artist"
+                            />
+                        </>
+                    )}
+
+                    <div className="ml-auto flex items-center gap-3">
+                        {/* Version Toggle */}
+                        <div className="flex items-center gap-1 bg-slate-100 rounded-lg p-0.5">
+                            <button
+                                onClick={() => setShowOriginal(false)}
+                                className={`px-3 py-1.5 text-xs font-medium rounded-md transition-colors ${!showOriginal
+                                    ? 'bg-white text-slate-800 shadow-sm'
+                                    : 'text-slate-500 hover:text-slate-700'
+                                    }`}
+                            >
+                                Nåværende
+                            </button>
+                            <button
+                                onClick={() => setShowOriginal(true)}
+                                disabled={isLoadingOriginal}
+                                className={`px-3 py-1.5 text-xs font-medium rounded-md transition-colors ${showOriginal
+                                    ? 'bg-white text-slate-800 shadow-sm'
+                                    : 'text-slate-500 hover:text-slate-700'
+                                    } disabled:opacity-50`}
+                            >
+                                {isLoadingOriginal ? 'Laster...' : 'Opprinnelig'}
+                            </button>
+                        </div>
+
+                        <span className="text-xs text-slate-300">
+                            {displaySong.key ? `Key: ${displaySong.key}` : "No key"}
+                        </span>
+
+                        {/* Info / Notes Toggle */}
+                        {displaySong.notes && (
+                            <button
+                                onClick={() => setShowNotes(!showNotes)}
+                                className={`p-1.5 rounded-full transition-colors ${showNotes ? 'bg-indigo-100 text-indigo-600' : 'text-slate-400 hover:text-indigo-600 hover:bg-slate-100'}`}
+                                title={showNotes ? "Skjul låtnotater" : "Vis låtnotater"}
+                            >
+                                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" className="w-5 h-5">
+                                    <path fillRule="evenodd" d="M18 10a8 8 0 1 1-16 0 8 8 0 0 1 16 0ZM8.94 6.94a.75.75 0 1 1-1.061-1.061 3 3 0 1 1 2.871 5.026v.345a.75.75 0 0 1-1.5 0v-.5c0-.72.57-1.172 1.081-1.287A1.5 1.5 0 1 0 8.94 6.94ZM10 15a1 1 0 1 0 0-2 1 1 0 0 0 0 2Z" clipRule="evenodd" />
+                                </svg>
+                            </button>
+                        )}
+                    </div>
+                </div>
+
+                {/* Expandable Notes Section */}
+                {displaySong.notes && showNotes && (
+                    <div className="mt-4 text-sm text-slate-600 bg-slate-50 p-3 rounded-md border border-slate-200 animate-in fade-in slide-in-from-top-1 duration-200">
+                        <div className="font-medium text-slate-900 mb-1">Notater</div>
+                        {displaySong.notes}
+                    </div>
+                )}
             </div>
 
             <div className="flex flex-1 overflow-hidden">
@@ -140,9 +359,10 @@ export function SongView({ song, onChange }: SongViewProps) {
 
                         <SectionList
                             sections={visibleSections}
-                            onUpdate={updateSection}
-                            onAdd={addSection}
-                            onDelete={deleteSection}
+                            onUpdate={isReadonly ? undefined : updateSection}
+                            onAdd={isReadonly ? undefined : addSection}
+                            onDelete={isReadonly ? undefined : deleteSection}
+                            onChordClick={handleChordClick}
                         />
                     </div>
                 </div>
@@ -156,22 +376,24 @@ export function SongView({ song, onChange }: SongViewProps) {
                             onReorder={handleReorder}
                         />
 
-                        <div className="mt-4 pt-4 border-t border-slate-100 overflow-y-auto flex-none max-h-[40%]">
-                            <span className="text-xs font-medium text-slate-500 block mb-2 uppercase tracking-wider">
-                                Legg til i arrangement
-                            </span>
-                            <div className="flex flex-wrap gap-2">
-                                {song.sections.map(s => (
-                                    <button
-                                        key={s.id}
-                                        onClick={() => addToArrangement(s.id)}
-                                        className="text-xs px-2 py-1.5 rounded bg-slate-100 hover:bg-slate-200 text-slate-700 transition border border-slate-200"
-                                    >
-                                        + {s.label}
-                                    </button>
-                                ))}
+                        {!isReadonly && (
+                            <div className="mt-4 pt-4 border-t border-slate-100 overflow-y-auto flex-none max-h-[40%]">
+                                <span className="text-xs font-medium text-slate-500 block mb-2 uppercase tracking-wider">
+                                    Legg til i arrangement
+                                </span>
+                                <div className="flex flex-wrap gap-2">
+                                    {song.sections.map(s => (
+                                        <button
+                                            key={s.id}
+                                            onClick={() => addToArrangement(s.id)}
+                                            className="text-xs px-2 py-1.5 rounded bg-slate-100 hover:bg-slate-200 text-slate-700 transition border border-slate-200"
+                                        >
+                                            + {s.label}
+                                        </button>
+                                    ))}
+                                </div>
                             </div>
-                        </div>
+                        )}
                     </div>
                 </div>
             </div>

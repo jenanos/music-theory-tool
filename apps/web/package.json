@@ -14,6 +14,8 @@
     "@dnd-kit/core": "^6.3.1",
     "@dnd-kit/sortable": "^10.0.0",
     "@dnd-kit/utilities": "^3.2.2",
+    "@libsql/client": "^0.15.15",
+    "@repo/db": "workspace:*",
     "@repo/theory": "workspace:*",
     "@repo/ui": "workspace:*",
     "@repo/voicings": "workspace:*",

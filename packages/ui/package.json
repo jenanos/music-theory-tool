@@ -34,6 +34,7 @@
     "typescript": "5.9.2"
   },
   "dependencies": {
+    "@repo/theory": "workspace:*",
     "clsx": "^2.1.1",
     "tailwind-merge": "^3.4.0"
   }

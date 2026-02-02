@@ -4,6 +4,7 @@ import type { SubstitutionSuggestion } from "@repo/theory";
 
 type SubstitutionPanelProps = {
   substitutions: SubstitutionSuggestion[];
+  onSelect?: (substitution: SubstitutionSuggestion) => void;
 };
 
 const CATEGORIES = {
@@ -16,7 +17,7 @@ const CATEGORIES = {
 
 type CategoryKey = keyof typeof CATEGORIES;
 
-export function SubstitutionPanel({ substitutions }: SubstitutionPanelProps) {
+export function SubstitutionPanel({ substitutions, onSelect }: SubstitutionPanelProps) {
   const [filters, setFilters] = useState<CategoryKey[]>([
     "basic", "functional", "jazz", "modal_interchange", "chromatic"
   ]);
@@ -66,11 +67,12 @@ export function SubstitutionPanel({ substitutions }: SubstitutionPanelProps) {
           <p className="col-span-full text-sm text-slate-500">Ingen resultater med valgte filtre.</p>
         ) : (
           filtered.map((item, idx) => (
-            <div
-              className="flex flex-col justify-between rounded-xl border border-slate-200 bg-white p-4 text-sm text-slate-700 shadow-sm transition-all hover:border-indigo-200"
+            <button
+              className="flex flex-col justify-between rounded-xl border border-slate-200 bg-white p-4 text-sm text-slate-700 shadow-sm transition-all hover:border-indigo-200 hover:bg-slate-50 text-left"
               key={`${item.substituteSymbol}-${idx}`}
+              onClick={() => onSelect?.(item)}
             >
-              <div>
+              <div className="w-full">
                 <div className="flex items-center justify-between mb-1">
                   <div className="flex items-center gap-2">
                     <span className="font-bold text-lg text-indigo-600">
@@ -81,7 +83,7 @@ export function SubstitutionPanel({ substitutions }: SubstitutionPanelProps) {
                     </span>
                   </div>
                   {item.score > 3 && (
-                    <span className="text-xs text-amber-600 font-medium" title="Høy match score">★ Anbefalt</span>
+                    <span className="text-[9px] font-medium px-1.5 py-0.5 rounded bg-emerald-100 text-emerald-700">Anbefalt</span>
                   )}
                 </div>
 
@@ -95,7 +97,7 @@ export function SubstitutionPanel({ substitutions }: SubstitutionPanelProps) {
                   {item.sharedTones} felles ton{item.sharedTones !== 1 && "er"}
                 </p>
               )}
-            </div>
+            </button>
           ))
         )}
       </div>

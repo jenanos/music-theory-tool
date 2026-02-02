@@ -426,23 +426,36 @@ export default function ProgressionsPage() {
                                     key={prog.data.id}
                                     className="group relative flex flex-col rounded-lg border border-slate-200 bg-white p-3 shadow-sm transition-all hover:border-indigo-300 hover:shadow-md"
                                 >
-                                    <div className="mb-2 flex items-start justify-between">
-                                        <div>
-                                            <h3 className="font-semibold text-slate-800 text-sm group-hover:text-indigo-700">
+                                    <div className="mb-2 flex items-start justify-between gap-2">
+                                        <div className="min-w-0 flex-1">
+                                            <h3 className="font-semibold text-slate-800 text-sm group-hover:text-indigo-700 truncate">
                                                 {prog.data.name}
                                             </h3>
                                             {prog.data.description && (
                                                 <p className="text-[10px] text-slate-500 line-clamp-2">{prog.data.description}</p>
                                             )}
                                             {prog.data.usageExamples && (
-                                                <p className="mt-1 text-[9px] text-indigo-500 font-medium whitespace-nowrap overflow-hidden text-ellipsis">
+                                                <p className="mt-1 text-[9px] text-indigo-500 font-medium line-clamp-1">
                                                     <span className="opacity-70">Eksempel:</span> {prog.data.usageExamples}
                                                 </p>
                                             )}
                                         </div>
-                                        <div className="flex text-amber-400 text-[10px]">
-                                            {"★".repeat(Math.min(5, Math.ceil(prog.data.weight / 2)))}
-                                        </div>
+                                        <span className={`shrink-0 text-[9px] font-medium px-1.5 py-0.5 rounded ${prog.data.weight >= 9
+                                                ? "bg-emerald-100 text-emerald-700"
+                                                : prog.data.weight >= 7
+                                                    ? "bg-blue-100 text-blue-700"
+                                                    : prog.data.weight >= 5
+                                                        ? "bg-slate-100 text-slate-600"
+                                                        : "bg-purple-100 text-purple-700"
+                                            }`}>
+                                            {prog.data.weight >= 9
+                                                ? "Klassiker"
+                                                : prog.data.weight >= 7
+                                                    ? "Vanlig"
+                                                    : prog.data.weight >= 5
+                                                        ? "Sjelden"
+                                                        : "Eksperimentell"}
+                                        </span>
                                     </div>
 
                                     <div className="flex flex-wrap gap-1.5 mb-2">

@@ -1,5 +1,5 @@
 // Database Client
-export { db, sqlite } from "./client";
+export { db, client } from "./client";
 
 // Schema
 export * from "./schema";

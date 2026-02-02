@@ -7,15 +7,18 @@
     "scripts": {
         "db:push": "drizzle-kit push",
         "db:studio": "drizzle-kit studio",
-        "db:seed": "tsx src/seed.ts"
+        "db:seed": "tsx src/seed.ts",
+        "test": "vitest run"
     },
     "dependencies": {
         "@libsql/client": "^0.15.4",
         "drizzle-orm": "^0.38.4"
     },
     "devDependencies": {
+        "@types/node": "^25.2.0",
         "drizzle-kit": "^0.30.4",
         "tsx": "^4.19.3",
-        "typescript": "5.9.2"
+        "typescript": "5.9.2",
+        "vitest": "^3.2.4"
     }
 }

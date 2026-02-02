@@ -1,6 +1,6 @@
 
-import { ModeId, ScaleDefinition } from "./types";
-import { noteName, parseNoteName, prefersFlats } from "./utils";
+import { ModeId, ScaleDefinition } from "./types.js";
+import { noteName, parseNoteName, prefersFlats } from "./utils.js";
 
 // ============================================================================
 // Types & Interfaces
@@ -331,7 +331,7 @@ export function parseChord(chordSymbol: string): { rootPc: number, tones: number
 export function getScaleNotes(tonicPc: number, scaleId: string): number[] {
     const scale = SCALES.find(s => s.id === scaleId);
     if (!scale) return [];
-    return scale.intervals.map(i => (tonicPc + i) % 12);
+    return scale.intervals.map((i: number) => (tonicPc + i) % 12);
 }
 
 /**
@@ -360,7 +360,7 @@ export function matchScales(
             // In strict pop, maybe skip. But let's score instead.
         }
 
-        const scalePcs = scaleDef.intervals.map(i => (rootPc + i) % 12);
+        const scalePcs = scaleDef.intervals.map((i: number) => (rootPc + i) % 12);
 
         // 1. Check constraints
         const chordTonesInScale = chordTones.every(ct => scalePcs.includes(ct % 12));
@@ -395,10 +395,10 @@ export function matchScales(
             const contextTonicPc = parseNoteName(context.tonic);
             const contextScaleDef = SCALES.find(s => s.id === context.mode);
             if (contextScaleDef) {
-                const contextPcs = contextScaleDef.intervals.map(i => (contextTonicPc + i) % 12);
+                const contextPcs = contextScaleDef.intervals.map((i: number) => (contextTonicPc + i) % 12);
 
                 // How many notes of our candidate scale are in the context scale?
-                const intersection = scalePcs.filter(p => contextPcs.includes(p));
+                const intersection = scalePcs.filter((p: number) => contextPcs.includes(p));
                 const fraction = intersection.length / scalePcs.length;
 
                 if (fraction === 1) {
@@ -409,7 +409,7 @@ export function matchScales(
         }
 
         // Style filtering / Penalties
-        const hasDiscouragedTag = scaleDef.tags.some(t => profile.discourage_tags.includes(t));
+        const hasDiscouragedTag = scaleDef.tags.some((t: string) => profile.discourage_tags.includes(t));
         if (hasDiscouragedTag && style === "pop") {
             score += CHORD_SCALE_RULES.scoring_weights.advanced_style_penalty_in_pop_mode;
             explanation.push("Mindre vanlig i pop");
@@ -419,7 +419,7 @@ export function matchScales(
             scaleId: scaleDef.id,
             scaleName: scaleDef.name,
             score,
-            notes: scalePcs.map(p => noteName(p, useFlats)),
+            notes: scalePcs.map((p: number) => noteName(p, useFlats)),
             explanation,
             tags: scaleDef.tags
         });

@@ -1,25 +1,39 @@
-export * from "./progressions";
-export * from "./substitutions";
-export * from "./data";
-export * from "./utils";
-export * from "./types";
-export * from "./scales";
+export * from "./progressions.js";
+export * from "./substitutions.js";
+export * from "./data.js";
+export * from "./utils.js";
+export * from "./types.js";
+export * from "./scales.js";
+
+import {
+  noteName,
+  parseNoteName,
+  prefersFlats
+} from "./utils.js";
+import {
+  DiatonicChord,
+  ModeId,
+  HarmonicFunction,
+  ScaleDefinition
+} from "./types.js";
 
 import {
   MODES,
   MODE_DIATONIC_7THS,
   FUNCTION_GROUPS
-} from "./data";
-import {
-  noteName,
-  parseNoteName,
-  prefersFlats
-} from "./utils";
-import {
-  DiatonicChord,
-  ModeId,
-  HarmonicFunction
-} from "./types";
+} from "./data.js";
+
+export {
+  type ChordProgression,
+  type TransposedProgression
+} from "./progressions.js";
+export {
+  suggestSubstitutions
+} from "./substitutions.js";
+export {
+  getChordDegree,
+  getChordSuggestions
+} from "./chords.js";
 
 // Re-export common constants for convenience
 export const TONIC_OPTIONS = [
@@ -37,11 +51,11 @@ const INTERVAL_NAMES: Record<number, string> = {
   7: "5", 8: "#5", 9: "6", 10: "b7", 11: "7",
 };
 
-import { SCALES } from "./scales";
+import { SCALES } from "./scales.js";
 
 export function getScale(tonic: string, mode: ModeId) {
   // Use SCALES for lookup, fallback to MODES if needed (though SCALES should have all)
-  const scaleDef = SCALES.find(s => s.id === mode);
+  const scaleDef = SCALES.find((s: ScaleDefinition) => s.id === mode);
 
   if (!scaleDef) {
     // Fallback to old behavior for backward compat or if passed from strictly typed ModeId
@@ -51,8 +65,8 @@ export function getScale(tonic: string, mode: ModeId) {
     }
     const tonicPc = parseNoteName(tonic);
     const useFlats = prefersFlats(tonic);
-    const pcs = fallback.intervals.map((interval) => (tonicPc + interval) % 12);
-    const noteNames = pcs.map((pc) => noteName(pc, useFlats));
+    const pcs = fallback.intervals.map((interval: number) => (tonicPc + interval) % 12);
+    const noteNames = pcs.map((pc: number) => noteName(pc, useFlats));
     return {
       scale: fallback,
       tonic,
@@ -65,8 +79,8 @@ export function getScale(tonic: string, mode: ModeId) {
 
   const tonicPc = parseNoteName(tonic);
   const useFlats = prefersFlats(tonic);
-  const pcs = scaleDef.intervals.map((interval) => (tonicPc + interval) % 12);
-  const noteNames = pcs.map((pc) => noteName(pc, useFlats));
+  const pcs = scaleDef.intervals.map((interval: number) => (tonicPc + interval) % 12);
+  const noteNames = pcs.map((pc: number) => noteName(pc, useFlats));
 
   return {
     scale: scaleDef,
@@ -88,7 +102,7 @@ export function buildDiatonicChords(
   // Get predefined qualities for this mode
   const qualities = includeSevenths
     ? MODE_DIATONIC_7THS[mode]
-    : MODE_DIATONIC_7THS[mode]?.map(q => {
+    : MODE_DIATONIC_7THS[mode]?.map((q: string) => {
       // Stripping 7th part for triads - simplistic heuristic
       if (q.startsWith("maj7")) return "maj";
       if (q === "m7") return "m";
@@ -149,7 +163,7 @@ export function buildDiatonicChords(
     return r;
   };
 
-  return pcs.map((rootPc, index) => {
+  return pcs.map((rootPc: number, index: number) => {
     let quality = qualities ? qualities[index] : "maj";
     if (!quality) quality = "maj";
 

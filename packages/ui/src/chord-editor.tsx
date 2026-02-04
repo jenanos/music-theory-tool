@@ -3,6 +3,10 @@
 
 import { useState, useEffect, useMemo, useRef } from "react";
 import { getChordSuggestions, getChordDegree } from "@repo/theory";
+import { Button } from "./button";
+import { Label } from "./label";
+import { Textarea } from "./textarea";
+import { cn } from "./utils";
 
 interface ChordEditorProps {
     initialChords: string;
@@ -59,15 +63,9 @@ export function ChordEditor({ initialChords, songKey, onSave, onCancel }: ChordE
         // Find the "word" at the cursor
         // Look back for separator
         const textBefore = value.substring(0, selectionStart);
-        const lastSeparator = textBefore.search(/[\s|\-]+$/);
-        // This is tricky. Let's just suggest based on the LAST chord typed if at end, 
-        // or the chord "we are in".
 
         // Simplified: Just suggest based on the Key directly (Palette)
         // AND maybe context if we could parse the previous chord.
-
-        // For now, static suggestions based on Key are better than nothing.
-        // We can create a "next" suggestion if we identify the previous chord.
 
         // Let's identify the *previous* chord token before cursor
         const tokens = textBefore.trim().split(/[\s|-|\|]+/);
@@ -118,22 +116,23 @@ export function ChordEditor({ initialChords, songKey, onSave, onCancel }: ChordE
     };
 
     return (
-        <div className="flex flex-col gap-4 p-4 bg-white rounded-lg border border-slate-200 shadow-sm">
+        <div className="flex flex-col gap-4 p-4 bg-card rounded-xl border border-border shadow-sm">
 
             {/* Suggestions Toolbar */}
             <div className="flex flex-col gap-2">
-                <span className="text-xs font-semibold text-slate-500 uppercase tracking-wider">
+                <span className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">
                     Forslag ({validKey})
                 </span>
                 <div className="flex flex-wrap gap-2">
                     {suggestions.map((chord: string) => (
-                        <button
+                        <Button
                             key={chord}
                             onClick={() => insertChord(chord)}
-                            className="px-3 py-1.5 text-sm font-medium bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-md transition-colors border border-slate-200"
+                            variant="secondary"
+                            size="sm"
                         >
                             {chord}
-                        </button>
+                        </Button>
                     ))}
                 </div>
             </div>
@@ -141,10 +140,14 @@ export function ChordEditor({ initialChords, songKey, onSave, onCancel }: ChordE
             {/* Editor Area */}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div className="flex flex-col gap-2">
-                    <label className="text-sm font-medium text-slate-700">Akkorder</label>
-                    <textarea
+                    <Label htmlFor="chord-input">Akkorder</Label>
+                    <Textarea
                         ref={textareaRef}
-                        className="w-full h-48 p-3 font-mono text-sm text-slate-900 bg-slate-50 border border-slate-300 rounded-md focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 resize-none"
+                        id="chord-input"
+                        className={cn(
+                            "h-48 font-mono resize-none",
+                            "bg-background"
+                        )}
                         value={chordText}
                         onChange={(e) => {
                             setChordText(e.target.value);
@@ -158,12 +161,15 @@ export function ChordEditor({ initialChords, songKey, onSave, onCancel }: ChordE
 
                 <div className="flex flex-col gap-2">
                     <div className="flex items-center justify-between">
-                        <label className="text-sm font-medium text-slate-700">Trinn (Automatisk)</label>
-                        <span className="text-xs text-slate-400">Genereres automatisk</span>
+                        <Label>Trinn (Automatisk)</Label>
+                        <span className="text-xs text-muted-foreground">Genereres automatisk</span>
                     </div>
-                    <textarea
+                    <Textarea
                         readOnly
-                        className="w-full h-48 p-3 font-mono text-sm bg-slate-100 border border-slate-200 rounded-md text-slate-600 resize-none focus:outline-none"
+                        className={cn(
+                            "h-48 font-mono resize-none",
+                            "bg-muted text-muted-foreground cursor-not-allowed"
+                        )}
                         value={degreesText}
                         placeholder="Trinn vises her..."
                     />
@@ -171,19 +177,13 @@ export function ChordEditor({ initialChords, songKey, onSave, onCancel }: ChordE
             </div>
 
             {/* Footer Actions */}
-            <div className="flex items-center justify-end gap-3 mt-2 border-t border-slate-100 pt-4">
-                <button
-                    onClick={onCancel}
-                    className="px-4 py-2 text-sm font-medium text-slate-700 bg-white border border-slate-300 rounded-md hover:bg-slate-50"
-                >
+            <div className="flex items-center justify-end gap-3 mt-2 border-t border-border pt-4">
+                <Button variant="outline" onClick={onCancel}>
                     Avbryt
-                </button>
-                <button
-                    onClick={handleSave}
-                    className="px-4 py-2 text-sm font-medium text-white bg-indigo-600 rounded-md hover:bg-indigo-700"
-                >
+                </Button>
+                <Button onClick={handleSave}>
                     Lagre
-                </button>
+                </Button>
             </div>
         </div>
     );

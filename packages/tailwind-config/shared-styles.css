@@ -197,6 +197,7 @@
   --color-indigo-50: var(--accent);
   --color-indigo-100: var(--accent);
   --color-indigo-200: var(--accent);
+  --color-indigo-300: var(--primary);
   --color-indigo-400: var(--primary);
   --color-indigo-500: var(--primary);
   --color-indigo-600: var(--primary);

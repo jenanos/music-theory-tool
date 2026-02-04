@@ -12,7 +12,7 @@ import {
     type ModeId,
     MODAL_SIGNATURES,
     MODE_DIATONIC_7THS,
-} from "./index.js";
+} from "./index";
 
 // ============================================================================
 // Types

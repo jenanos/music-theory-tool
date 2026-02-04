@@ -5,12 +5,14 @@ import { useEffect, useState } from "react";
 import { Song } from "./data";
 import { SongSelector } from "./components/SongSelector";
 import { SongView } from "./components/SongView";
+import { CreateSongModal } from "@repo/ui/create-song-modal";
 
 export default function ChartsPage() {
     const [songs, setSongs] = useState<Song[]>([]);
     const [selectedSongId, setSelectedSongId] = useState<string | undefined>();
     const [isLoading, setIsLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
+    const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
 
     // Fetch songs from API on mount
     useEffect(() => {
@@ -59,6 +61,34 @@ export default function ChartsPage() {
         }
     };
 
+    const handleCreateSong = async (data: { title: string; artist: string; key: string }) => {
+        const response = await fetch("/api/songs", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify(data),
+        });
+
+        if (!response.ok) {
+            throw new Error("Failed to create song");
+        }
+
+        const result = await response.json();
+
+        if (result.success && result.id) {
+            const newSong: Song = {
+                id: result.id,
+                title: data.title,
+                artist: data.artist,
+                key: data.key,
+                sections: [],
+                arrangement: [],
+            };
+
+            setSongs((prev) => [...prev, newSong]);
+            setSelectedSongId(result.id);
+        }
+    };
+
     if (isLoading) {
         return (
             <div className="flex h-full w-full items-center justify-center bg-slate-50">
@@ -87,11 +117,18 @@ export default function ChartsPage() {
     }
 
     return (
-        <div className="flex h-full w-full overflow-hidden bg-slate-50">
+        <div className="flex h-full w-full overflow-hidden bg-slate-50 relative">
+            <CreateSongModal
+                isOpen={isCreateModalOpen}
+                onClose={() => setIsCreateModalOpen(false)}
+                onSave={handleCreateSong}
+            />
+
             <SongSelector
                 songs={songs}
                 onSelectSong={setSelectedSongId}
                 selectedSongId={selectedSongId}
+                onAddSong={() => setIsCreateModalOpen(true)}
             />
             <div className="flex-1 overflow-hidden">
                 {selectedSong ? (

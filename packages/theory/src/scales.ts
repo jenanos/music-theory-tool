@@ -1,6 +1,6 @@
 
-import { ModeId, ScaleDefinition } from "./types.js";
-import { noteName, parseNoteName, prefersFlats } from "./utils.js";
+import { ModeId, ScaleDefinition } from "./types";
+import { noteName, parseNoteName, prefersFlats } from "./utils";
 
 // ============================================================================
 // Types & Interfaces

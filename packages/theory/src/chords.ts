@@ -1,7 +1,7 @@
 
-import { buildDiatonicChords, getScale, type ModeId, type DiatonicChord } from "./index.js";
-import { CHORD_PROGRESSIONS } from "./progressions.js";
-import { parseNoteName } from "./utils.js";
+import { buildDiatonicChords, getScale, type ModeId, type DiatonicChord } from "./index";
+import { CHORD_PROGRESSIONS } from "./progressions";
+import { parseNoteName } from "./utils";
 
 /**
  * Calculates the Roman numeral degree of a chord in a given key.
@@ -67,7 +67,28 @@ export function getChordDegree(chordSymbol: string, key: string): string | null 
         return dcRootMatch && dcRootMatch[1] === rootNote;
     });
 
-    if (match) return match.roman;
+    if (match) {
+        // Check if we need to adjust the case (Borrowed chord logic)
+        // e.g. User types "Bb" (Major) in Fm key (where diatonic is Bbm / iv).
+        // We matched the root, but the quality differs. We should return "IV" instead of "iv".
+
+        // Simple quality check
+        const isInputMinor = (chordSymbol.includes("m") && !chordSymbol.includes("maj")) || chordSymbol.includes("dim");
+        // We can inspect the match quality from its symbol or roman
+        const isMatchMinor = (match.symbol.includes("m") && !match.symbol.includes("maj")) || match.symbol.includes("dim");
+
+        let content = match.roman;
+
+        if (!isInputMinor && isMatchMinor) {
+            // Input is Major, Match is Minor -> Force Uppercase
+            content = content.toUpperCase();
+        } else if (isInputMinor && !isMatchMinor) {
+            // Input is Minor, Match is Major -> Force Lowercase
+            content = content.toLowerCase();
+        }
+
+        return content;
+    }
 
     return null;
 }

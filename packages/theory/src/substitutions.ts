@@ -6,9 +6,9 @@ import {
     FUNCTION_GROUPS,
     MODES,
     type SubstitutionRule
-} from "./data.js";
-import { DiatonicChord, SubstitutionSuggestion, ModeId } from "./types.js";
-import { parseNoteName, noteName, prefersFlats } from "./utils.js";
+} from "./data";
+import { DiatonicChord, SubstitutionSuggestion, ModeId } from "./types";
+import { parseNoteName, noteName, prefersFlats } from "./utils";
 
 // Helper to determine chord intervals from quality string
 function getQualityIntervals(quality: string): number[] {

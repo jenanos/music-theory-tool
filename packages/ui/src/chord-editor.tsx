@@ -144,7 +144,7 @@ export function ChordEditor({ initialChords, songKey, onSave, onCancel }: ChordE
                     <label className="text-sm font-medium text-slate-700">Akkorder</label>
                     <textarea
                         ref={textareaRef}
-                        className="w-full h-48 p-3 font-mono text-sm bg-slate-50 border border-slate-300 rounded-md focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 resize-none"
+                        className="w-full h-48 p-3 font-mono text-sm text-slate-900 bg-slate-50 border border-slate-300 rounded-md focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 resize-none"
                         value={chordText}
                         onChange={(e) => {
                             setChordText(e.target.value);

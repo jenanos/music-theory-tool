@@ -9,6 +9,7 @@ import {
     suggestSubstitutions,
     buildDiatonicChords,
     getScale,
+    parseKey,
     type ModeId,
     type SubstitutionSuggestion,
     type DiatonicChord
@@ -28,44 +29,6 @@ interface TimelineItem {
 // Simple ID generator that works everywhere
 function generateId() {
     return Math.random().toString(36).substring(2, 9);
-}
-
-// Helper to parse key string into tonic and mode
-function parseKey(keyString: string): { tonic: string; mode: ModeId } | null {
-    if (!keyString) return null;
-
-    // Normalize spaces
-    const parts = keyString.trim().split(/\s+/);
-    if (parts.length === 0) return null;
-
-    let tonic = parts[0];
-    if (!tonic) return null;
-
-    let mode: ModeId = "ionian"; // Default to major
-
-    // Check for minor suffix in tonic (e.g. "Fm", "Cm")
-    if (tonic.endsWith("m") && !tonic.includes("maj") && !tonic.includes("dim")) {
-        tonic = tonic.substring(0, tonic.length - 1);
-        mode = "aeolian";
-    }
-
-    // Check second part for mode name
-    if (parts.length > 1) {
-        const modeInput = parts[1];
-        if (modeInput) {
-            const inputLower = modeInput.toLowerCase();
-            if (inputLower.includes("dur") || inputLower === "major") mode = "ionian";
-            else if (inputLower.includes("moll") || inputLower === "minor") mode = "aeolian";
-            else if (inputLower.includes("dorisk") || inputLower === "dorian") mode = "dorian";
-            else if (inputLower.includes("frygisk") || inputLower === "phrygian") mode = "phrygian";
-            else if (inputLower.includes("lydisk") || inputLower === "lydian") mode = "lydian";
-            else if (inputLower.includes("mikso") || inputLower === "mixolydian") mode = "mixolydian";
-            else if (inputLower.includes("eolisk") || inputLower === "aeolian") mode = "aeolian";
-            else if (inputLower.includes("lokrisk") || inputLower === "locrian") mode = "locrian";
-        }
-    }
-
-    return { tonic, mode };
 }
 
 export function SongView({ song, onChange }: SongViewProps) {

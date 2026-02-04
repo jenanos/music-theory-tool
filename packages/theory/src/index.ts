@@ -1,39 +1,40 @@
-export * from "./progressions.js";
-export * from "./substitutions.js";
-export * from "./data.js";
-export * from "./utils.js";
-export * from "./types.js";
-export * from "./scales.js";
+export * from "./progressions";
+export * from "./substitutions";
+export * from "./data";
+export * from "./utils";
+export * from "./types";
+export * from "./scales";
 
 import {
   noteName,
   parseNoteName,
-  prefersFlats
-} from "./utils.js";
+  prefersFlats,
+  parseKey
+} from "./utils";
 import {
   DiatonicChord,
   ModeId,
   HarmonicFunction,
   ScaleDefinition
-} from "./types.js";
+} from "./types";
 
 import {
   MODES,
   MODE_DIATONIC_7THS,
   FUNCTION_GROUPS
-} from "./data.js";
+} from "./data";
 
 export {
   type ChordProgression,
   type TransposedProgression
-} from "./progressions.js";
+} from "./progressions";
 export {
   suggestSubstitutions
-} from "./substitutions.js";
+} from "./substitutions";
 export {
   getChordDegree,
   getChordSuggestions
-} from "./chords.js";
+} from "./chords";
 
 // Re-export common constants for convenience
 export const TONIC_OPTIONS = [
@@ -51,7 +52,7 @@ const INTERVAL_NAMES: Record<number, string> = {
   7: "5", 8: "#5", 9: "6", 10: "b7", 11: "7",
 };
 
-import { SCALES } from "./scales.js";
+import { SCALES } from "./scales";
 
 export function getScale(tonic: string, mode: ModeId) {
   // Use SCALES for lookup, fallback to MODES if needed (though SCALES should have all)

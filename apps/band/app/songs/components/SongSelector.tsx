@@ -8,9 +8,10 @@ interface SongSelectorProps {
     songs: Song[];
     onSelectSong: (songId: string) => void;
     selectedSongId?: string;
+    onAddSong?: () => void;
 }
 
-export function SongSelector({ songs, onSelectSong, selectedSongId }: SongSelectorProps) {
+export function SongSelector({ songs, onSelectSong, selectedSongId, onAddSong }: SongSelectorProps) {
     const [search, setSearch] = useState("");
 
     const filteredSongs = songs.filter((song) =>
@@ -20,7 +21,20 @@ export function SongSelector({ songs, onSelectSong, selectedSongId }: SongSelect
     return (
         <div className="flex w-64 flex-col border-r border-slate-200 bg-slate-50 h-full">
             <div className="p-4 border-b border-slate-200">
-                <h2 className="mb-2 font-semibold text-slate-800">Låter</h2>
+                <div className="flex items-center justify-between mb-2">
+                    <h2 className="font-semibold text-slate-800">Låter</h2>
+                    {onAddSong && (
+                        <button
+                            onClick={onAddSong}
+                            className="p-1 text-slate-400 hover:text-indigo-600 hover:bg-indigo-50 rounded transition-colors"
+                            title="Ny låt"
+                        >
+                            <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                                <path fillRule="evenodd" d="M10 3a1 1 0 011 1v5h5a1 1 0 110 2h-5v5a1 1 0 11-2 0v-5H4a1 1 0 110-2h5V4a1 1 0 011-1z" clipRule="evenodd" />
+                            </svg>
+                        </button>
+                    )}
+                </div>
                 <input
                     type="text"
                     placeholder="Søk..."

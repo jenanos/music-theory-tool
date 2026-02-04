@@ -8,8 +8,9 @@
     "dist"
   ],
   "exports": {
-    "./styles.css": "./dist/index.css",
-    "./*": "./dist/*.js"
+    "./styles.css": "./src/styles.css",
+    "./utils": "./src/utils.ts",
+    "./*": "./src/*.tsx"
   },
   "license": "MIT",
   "scripts": {

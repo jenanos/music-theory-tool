@@ -7,125 +7,125 @@
 /* Warm Summer Color Palette 🌅 */
 :root {
   /* Core Colors */
-  --background: oklch(0.995 0.005 90);
-  --foreground: oklch(0.18 0.02 50);
+  --background: oklch(0.99 0.015 80);
+  --foreground: oklch(0.17 0.03 40);
 
   /* Card / Elevated surfaces */
-  --card: oklch(1 0 0);
-  --card-foreground: oklch(0.18 0.02 50);
+  --card: oklch(0.985 0.02 85);
+  --card-foreground: oklch(0.17 0.03 40);
 
   /* Popover */
-  --popover: oklch(1 0 0);
-  --popover-foreground: oklch(0.18 0.02 50);
+  --popover: oklch(0.985 0.02 85);
+  --popover-foreground: oklch(0.17 0.03 40);
 
   /* Primary - Coral */
-  --primary: oklch(0.65 0.18 35);
+  --primary: oklch(0.62 0.23 32);
   --primary-foreground: oklch(0.99 0.01 90);
 
   /* Secondary - Sand */
-  --secondary: oklch(0.94 0.04 85);
-  --secondary-foreground: oklch(0.25 0.04 50);
+  --secondary: oklch(0.92 0.07 95);
+  --secondary-foreground: oklch(0.20 0.04 45);
 
   /* Muted - Pale Sand */
-  --muted: oklch(0.96 0.02 85);
-  --muted-foreground: oklch(0.50 0.03 50);
+  --muted: oklch(0.95 0.03 85);
+  --muted-foreground: oklch(0.42 0.05 45);
 
   /* Accent - Sunset Orange */
-  --accent: oklch(0.92 0.06 70);
-  --accent-foreground: oklch(0.25 0.04 50);
+  --accent: oklch(0.88 0.12 70);
+  --accent-foreground: oklch(0.20 0.04 45);
 
   /* Destructive - Deep Red */
-  --destructive: oklch(0.55 0.22 25);
+  --destructive: oklch(0.58 0.24 25);
   --destructive-foreground: oklch(0.98 0.01 90);
 
   /* Borders and inputs */
-  --border: oklch(0.90 0.03 85);
-  --input: oklch(0.90 0.03 85);
-  --ring: oklch(0.65 0.18 35);
+  --border: oklch(0.84 0.04 85);
+  --input: oklch(0.84 0.04 85);
+  --ring: oklch(0.62 0.23 32);
 
   /* Chart colors - Summer vibes */
-  --chart-1: oklch(0.65 0.18 35);
+  --chart-1: oklch(0.62 0.23 32);
   /* Coral */
-  --chart-2: oklch(0.70 0.12 195);
+  --chart-2: oklch(0.68 0.17 195);
   /* Turquoise */
-  --chart-3: oklch(0.75 0.17 55);
+  --chart-3: oklch(0.72 0.20 55);
   /* Sunset Orange */
-  --chart-4: oklch(0.85 0.08 85);
+  --chart-4: oklch(0.82 0.10 95);
   /* Sand */
-  --chart-5: oklch(0.70 0.15 350);
+  --chart-5: oklch(0.66 0.20 350);
   /* Rose */
 
   /* Radius */
   --radius: 0.625rem;
 
   /* Sidebar */
-  --sidebar: oklch(0.985 0.005 90);
-  --sidebar-foreground: oklch(0.18 0.02 50);
-  --sidebar-primary: oklch(0.65 0.18 35);
+  --sidebar: oklch(0.975 0.02 85);
+  --sidebar-foreground: oklch(0.17 0.03 40);
+  --sidebar-primary: oklch(0.62 0.23 32);
   --sidebar-primary-foreground: oklch(0.99 0.01 90);
-  --sidebar-accent: oklch(0.92 0.06 70);
-  --sidebar-accent-foreground: oklch(0.25 0.04 50);
-  --sidebar-border: oklch(0.90 0.03 85);
-  --sidebar-ring: oklch(0.65 0.18 35);
+  --sidebar-accent: oklch(0.88 0.12 70);
+  --sidebar-accent-foreground: oklch(0.20 0.04 45);
+  --sidebar-border: oklch(0.84 0.04 85);
+  --sidebar-ring: oklch(0.62 0.23 32);
 }
 
 /* Dark Mode - Warm Evening */
 .dark {
-  --background: oklch(0.16 0.02 50);
-  --foreground: oklch(0.96 0.01 90);
+  --background: oklch(0.18 0.03 45);
+  --foreground: oklch(0.97 0.01 95);
 
-  --card: oklch(0.20 0.02 50);
-  --card-foreground: oklch(0.96 0.01 90);
+  --card: oklch(0.22 0.03 45);
+  --card-foreground: oklch(0.97 0.01 95);
 
-  --popover: oklch(0.20 0.02 50);
-  --popover-foreground: oklch(0.96 0.01 90);
+  --popover: oklch(0.22 0.03 45);
+  --popover-foreground: oklch(0.97 0.01 95);
 
   /* Primary - Brighter Coral for dark mode */
-  --primary: oklch(0.72 0.18 35);
-  --primary-foreground: oklch(0.15 0.02 50);
+  --primary: oklch(0.75 0.22 32);
+  --primary-foreground: oklch(0.13 0.03 40);
 
   /* Secondary */
-  --secondary: oklch(0.28 0.04 50);
-  --secondary-foreground: oklch(0.96 0.01 90);
+  --secondary: oklch(0.30 0.06 55);
+  --secondary-foreground: oklch(0.97 0.01 95);
 
   /* Muted */
-  --muted: oklch(0.28 0.02 50);
-  --muted-foreground: oklch(0.70 0.02 50);
+  --muted: oklch(0.30 0.03 45);
+  --muted-foreground: oklch(0.78 0.02 60);
 
   /* Accent */
-  --accent: oklch(0.32 0.06 55);
-  --accent-foreground: oklch(0.96 0.01 90);
+  --accent: oklch(0.36 0.10 60);
+  --accent-foreground: oklch(0.97 0.01 95);
 
   /* Destructive */
-  --destructive: oklch(0.45 0.20 25);
-  --destructive-foreground: oklch(0.96 0.01 90);
+  --destructive: oklch(0.48 0.22 25);
+  --destructive-foreground: oklch(0.97 0.01 95);
 
   /* Borders and inputs */
-  --border: oklch(0.30 0.03 50);
-  --input: oklch(0.30 0.03 50);
-  --ring: oklch(0.72 0.18 35);
+  --border: oklch(0.34 0.04 50);
+  --input: oklch(0.34 0.04 50);
+  --ring: oklch(0.75 0.22 32);
 
   /* Chart colors - Evening summer */
-  --chart-1: oklch(0.72 0.18 35);
+  --chart-1: oklch(0.75 0.22 32);
   /* Coral */
-  --chart-2: oklch(0.65 0.14 195);
+  --chart-2: oklch(0.70 0.18 195);
   /* Turquoise */
-  --chart-3: oklch(0.70 0.17 55);
+  --chart-3: oklch(0.74 0.20 55);
   /* Sunset Orange */
-  --chart-4: oklch(0.55 0.10 85);
+  --chart-4: oklch(0.60 0.12 95);
   /* Sand */
-  --chart-5: oklch(0.65 0.17 350);
+  --chart-5: oklch(0.70 0.20 350);
   /* Rose */
 
   /* Sidebar */
-  --sidebar: oklch(0.20 0.02 50);
-  --sidebar-foreground: oklch(0.96 0.01 90);
-  --sidebar-primary: oklch(0.72 0.18 35);
-  --sidebar-primary-foreground: oklch(0.15 0.02 50);
-  --sidebar-accent: oklch(0.32 0.06 55);
-  --sidebar-accent-foreground: oklch(0.96 0.01 90);
-  --sidebar-border: oklch(0.30 0.03 50);
-  --sidebar-ring: oklch(0.72 0.18 35);
+  --sidebar: oklch(0.22 0.03 45);
+  --sidebar-foreground: oklch(0.97 0.01 95);
+  --sidebar-primary: oklch(0.75 0.22 32);
+  --sidebar-primary-foreground: oklch(0.13 0.03 40);
+  --sidebar-accent: oklch(0.36 0.10 60);
+  --sidebar-accent-foreground: oklch(0.97 0.01 95);
+  --sidebar-border: oklch(0.34 0.04 50);
+  --sidebar-ring: oklch(0.75 0.22 32);
 }
 
 /* Register theme colors with Tailwind v4 */
@@ -181,6 +181,27 @@
   --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
   --color-sidebar-border: var(--sidebar-border);
   --color-sidebar-ring: var(--sidebar-ring);
+
+  /* Legacy palette mapping for existing app styles */
+  --color-slate-50: var(--background);
+  --color-slate-100: var(--muted);
+  --color-slate-200: var(--border);
+  --color-slate-300: var(--border);
+  --color-slate-400: var(--muted-foreground);
+  --color-slate-500: var(--muted-foreground);
+  --color-slate-600: var(--foreground);
+  --color-slate-700: var(--foreground);
+  --color-slate-800: var(--foreground);
+  --color-slate-900: var(--foreground);
+
+  --color-indigo-50: var(--accent);
+  --color-indigo-100: var(--accent);
+  --color-indigo-200: var(--accent);
+  --color-indigo-400: var(--primary);
+  --color-indigo-500: var(--primary);
+  --color-indigo-600: var(--primary);
+  --color-indigo-700: var(--primary);
+  --color-indigo-800: var(--primary);
 }
 
 /* Base layer styles */

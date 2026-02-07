@@ -37,8 +37,8 @@ export function Fretboard({
   const rootTone = chordTones[0] !== undefined ? chordTones[0] % 12 : undefined;
 
   return (
-    <div className="overflow-x-auto rounded-xl border border-slate-200 bg-white p-4 shadow-sm">
-      <div className="grid grid-cols-[40px_repeat(13,minmax(32px,1fr))] gap-1 text-xs text-slate-500">
+    <div className="overflow-x-auto rounded-xl border border-border bg-card p-4 shadow-sm">
+      <div className="grid grid-cols-[40px_repeat(13,minmax(32px,1fr))] gap-1 text-xs text-muted-foreground">
         <div />
         {FRETS.map((fret) => (
           <div className="text-center select-none" key={`fret-${fret}`}>
@@ -50,7 +50,7 @@ export function Fretboard({
             className="contents"
             key={`string-${string.name}-${string.pc}`}
           >
-            <div className="flex items-center justify-center font-semibold text-slate-600 select-none">
+            <div className="flex items-center justify-center font-semibold text-foreground select-none">
               {string.name}
             </div>
             {FRETS.map((fret) => {
@@ -68,7 +68,7 @@ export function Fretboard({
                 // Layer 1: Chord Tones (Strongest)
                 content = (
                   <span
-                    className={`inline-flex h-6 w-6 items-center justify-center rounded-full text-[10px] font-bold text-white shadow-sm transition-transform hover:scale-110 ${isRoot ? "bg-indigo-600 ring-2 ring-indigo-100" : "bg-emerald-500"
+                    className={`inline-flex h-6 w-6 items-center justify-center rounded-full text-[10px] font-bold text-primary-foreground shadow-sm transition-transform hover:scale-110 ${isRoot ? "bg-primary ring-2 ring-primary/40" : "bg-accent"
                       }`}
                   >
                     {noteName(pitchClass, useFlats)}
@@ -77,7 +77,7 @@ export function Fretboard({
               } else if (isOutside) {
                 // Layer 2: Outside (Overlay but NOT in harmony scale) - "Blue note" etc
                 content = (
-                  <span className="inline-flex h-6 w-6 items-center justify-center rounded-full border-2 border-amber-400 bg-amber-50 text-[10px] font-semibold text-amber-700">
+                  <span className="inline-flex h-6 w-6 items-center justify-center rounded-full border-2 border-destructive/60 bg-destructive/20 text-[10px] font-semibold text-destructive">
                     {noteName(pitchClass, useFlats)}
                   </span>
                 );
@@ -86,20 +86,20 @@ export function Fretboard({
                 // If it's overlay BUT NOT outside, it's inside the harmony too (usually), or just valid overlay.
                 // We show these significantly.
                 content = (
-                  <span className="inline-flex h-5 w-5 items-center justify-center rounded-full bg-slate-200 text-[10px] font-medium text-slate-700">
+                  <span className="inline-flex h-5 w-5 items-center justify-center rounded-full bg-muted text-[10px] font-medium text-foreground">
                     {noteName(pitchClass, useFlats)}
                   </span>
                 );
               } else if (showHarmony && isHarmony) {
                 // Layer 4: Harmony Scale (Background context)
                 content = (
-                  <span className="h-1.5 w-1.5 rounded-full bg-slate-200" />
+                  <span className="h-1.5 w-1.5 rounded-full bg-muted" />
                 );
               }
 
               return (
                 <div
-                  className="relative flex h-8 items-center justify-center rounded-md border border-slate-100 bg-slate-50/30"
+                  className="relative flex h-8 items-center justify-center rounded-md border border-border bg-muted/40"
                   key={`cell-${string.name}-${fret}`}
                 >
                   {content}

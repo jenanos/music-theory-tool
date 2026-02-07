@@ -22,7 +22,7 @@ export function SectionItem({ section, songKey, onUpdate, onDelete, onChordClick
 
     return (
         <div
-            className="group relative rounded-lg border border-slate-200 bg-white p-4 shadow-sm transition-shadow hover:shadow-md"
+            className="group relative rounded-lg border border-border bg-card p-4 shadow-sm transition-shadow hover:shadow-md"
         >
             <div className="flex flex-col gap-4 md:flex-row md:items-start md:gap-6">
                 {/* Left side: Label and controls */}
@@ -30,13 +30,13 @@ export function SectionItem({ section, songKey, onUpdate, onDelete, onChordClick
                     <div className="flex items-start justify-between gap-2">
                         <div className="flex flex-col w-full">
                             {isReadonly ? (
-                                <span className="min-w-0 flex-1 px-0 py-1 font-semibold text-slate-900">
+                                <span className="min-w-0 flex-1 px-0 py-1 font-semibold text-foreground">
                                     {section.label}
                                 </span>
                             ) : (
                                 <input
                                     type="text"
-                                    className="min-w-0 flex-1 rounded border-0 border-b border-transparent bg-transparent px-0 py-1 font-semibold text-slate-900 focus:border-indigo-600 focus:ring-0 group-hover:border-slate-300"
+                                    className="min-w-0 flex-1 rounded border-0 border-b border-transparent bg-transparent px-0 py-1 font-semibold text-foreground focus:border-primary focus:ring-0 group-hover:border-border placeholder:text-muted-foreground"
                                     value={section.label}
                                     onChange={(e) => onUpdate(section.id, { label: e.target.value })}
                                     placeholder="Seksjonsnavn"
@@ -46,7 +46,7 @@ export function SectionItem({ section, songKey, onUpdate, onDelete, onChordClick
                             {section.notes && !isEditing && (
                                 <button
                                     onClick={() => setShowNotes(!showNotes)}
-                                    className="self-start mt-1 flex items-center gap-1 text-xs font-medium text-slate-500 hover:text-indigo-600 transition-colors"
+                                    className="self-start mt-1 flex items-center gap-1 text-xs font-medium text-muted-foreground hover:text-primary transition-colors"
                                     title={showNotes ? "Skjul notater" : "Vis notater"}
                                 >
                                     <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16" fill="currentColor" className="w-3.5 h-3.5">
@@ -61,7 +61,7 @@ export function SectionItem({ section, songKey, onUpdate, onDelete, onChordClick
                             <div className="flex shrink-0 items-center gap-1">
                                 <button
                                     onClick={() => setIsEditing(!isEditing)}
-                                    className={`p-1 text-slate-400 hover:text-indigo-600 ${isEditing ? 'text-indigo-600' : 'opacity-0 group-hover:opacity-100'}`}
+                                    className={`p-1 text-muted-foreground hover:text-primary ${isEditing ? 'text-primary' : 'opacity-0 group-hover:opacity-100'}`}
                                     title={isEditing ? "Ferdig" : "Rediger"}
                                 >
                                     {isEditing ? (
@@ -81,7 +81,7 @@ export function SectionItem({ section, songKey, onUpdate, onDelete, onChordClick
                                                 onDelete(section.id);
                                             }
                                         }}
-                                        className="p-1 text-slate-400 opacity-0 hover:text-red-500 group-hover:opacity-100"
+                                        className="p-1 text-muted-foreground opacity-0 hover:text-destructive group-hover:opacity-100"
                                         title="Slett seksjon"
                                     >
                                         <svg
@@ -121,9 +121,9 @@ export function SectionItem({ section, songKey, onUpdate, onDelete, onChordClick
                             />
 
                             <div>
-                                <label className="mb-1 block text-sm font-medium text-slate-700">Notater (valgfritt)</label>
+                                <label className="mb-1 block text-sm font-medium text-muted-foreground">Notater (valgfritt)</label>
                                 <textarea
-                                    className="w-full resize-y rounded-md border-0 bg-slate-50 p-3 text-sm text-slate-700 shadow-inner focus:ring-2 focus:ring-indigo-600"
+                                    className="w-full resize-y rounded-md border-0 bg-muted p-3 text-sm text-foreground shadow-inner focus:ring-2 focus:ring-primary"
                                     value={section.notes || ""}
                                     onChange={(e) => onUpdate(section.id, { notes: e.target.value })}
                                     placeholder="Notater for denne seksjonen..."
@@ -140,7 +140,7 @@ export function SectionItem({ section, songKey, onUpdate, onDelete, onChordClick
                                 onChordClick={onChordClick ? (c, li, ci, d) => onChordClick(c, section.id, li, ci, d) : undefined}
                             />
                             {section.notes && showNotes && (
-                                <div className="text-sm text-slate-600 italic px-3 py-2 bg-slate-50 rounded border border-slate-100">
+                                <div className="text-sm text-muted-foreground italic px-3 py-2 bg-muted rounded border border-border">
                                     {section.notes}
                                 </div>
                             )}

@@ -18,29 +18,29 @@ export default function RootLayout({
   children: React.ReactNode;
 }) {
   return (
-    <html lang="no">
+    <html lang="no" className="dark">
       <body className={geist.className}>
-        <nav className="border-b border-slate-200 bg-white shrink-0">
+        <nav className="border-b border-border bg-card shrink-0">
           <div className="mx-auto flex w-full max-w-[1920px] items-center justify-between px-6 py-3">
-            <Link href="/" className="font-semibold text-slate-800">
+            <Link href="/" className="font-semibold text-foreground">
               🎸 Gitarist-støtteapp
             </Link>
             <div className="flex gap-4 text-sm">
               <Link
                 href="/"
-                className="text-slate-600 hover:text-indigo-600 hover:underline"
+                className="text-muted-foreground hover:text-primary hover:underline"
               >
                 Akkorder
               </Link>
               <Link
                 href="/progressions"
-                className="text-slate-600 hover:text-indigo-600 hover:underline"
+                className="text-muted-foreground hover:text-primary hover:underline"
               >
                 Progresjoner
               </Link>
               <Link
                 href="/charts"
-                className="text-slate-600 hover:text-indigo-600 hover:underline"
+                className="text-muted-foreground hover:text-primary hover:underline"
               >
                 Blekker
               </Link>
@@ -54,4 +54,3 @@ export default function RootLayout({
     </html>
   );
 }
-

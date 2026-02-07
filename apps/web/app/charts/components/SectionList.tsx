@@ -18,11 +18,11 @@ export function SectionList({ sections, songKey, onUpdate, onAdd, onDelete, onCh
     return (
         <div className="space-y-6">
             <div className="flex items-center justify-between">
-                <h2 className="text-lg font-semibold text-slate-900">Seksjoner (Akkorder)</h2>
+                <h2 className="text-lg font-semibold text-foreground">Seksjoner (Akkorder)</h2>
                 {onAdd && (
                     <button
                         onClick={onAdd}
-                        className="rounded-md bg-indigo-600 px-3 py-1.5 text-sm font-semibold text-white shadow-sm hover:bg-indigo-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600"
+                        className="rounded-md bg-primary px-3 py-1.5 text-sm font-semibold text-primary-foreground shadow-sm hover:bg-primary/90 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"
                     >
                         + Ny seksjon
                     </button>

@@ -238,18 +238,18 @@ export function SongView({ song, onChange }: SongViewProps) {
     }, [selectedChord, song.sections, updateSection]);
 
     return (
-        <div className="flex flex-col h-full overflow-hidden bg-white relative">
+        <div className="flex flex-col h-full overflow-hidden bg-background relative">
             {/* Modal / Overlay for Substitutions */}
             {selectedChord && (
-                <div className="absolute inset-0 z-50 flex items-center justify-center bg-slate-900/20 backdrop-blur-sm p-4 animate-in fade-in duration-200">
-                    <div className="bg-white rounded-xl shadow-xl border border-slate-200 w-full max-w-2xl max-h-[80vh] flex flex-col overflow-hidden">
-                        <div className="flex items-center justify-between p-4 border-b border-slate-100 bg-slate-50">
-                            <h3 className="font-bold text-lg text-slate-800">
-                                Substitusjoner for <span className="text-indigo-600">{selectedChord.symbol}</span>
+                <div className="absolute inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4 animate-in fade-in duration-200">
+                    <div className="bg-card rounded-xl shadow-xl border border-border w-full max-w-2xl max-h-[80vh] flex flex-col overflow-hidden">
+                        <div className="flex items-center justify-between p-4 border-b border-border bg-muted">
+                            <h3 className="font-bold text-lg text-foreground">
+                                Substitusjoner for <span className="text-primary">{selectedChord.symbol}</span>
                             </h3>
                             <button
                                 onClick={() => setSelectedChord(null)}
-                                className="p-1 rounded-full hover:bg-slate-200 text-slate-400 hover:text-slate-600 transition"
+                                className="p-1 rounded-full hover:bg-muted/80 text-muted-foreground hover:text-foreground transition"
                             >
                                 <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
@@ -272,24 +272,24 @@ export function SongView({ song, onChange }: SongViewProps) {
             )}
 
             {/* Header */}
-            <div className="border-b border-slate-200 bg-white px-6 py-4 flex-none relative z-10">
+            <div className="border-b border-border bg-card px-6 py-4 flex-none relative z-10">
                 <div className="flex items-center gap-4">
                     {isReadonly ? (
                         <>
-                            <span className="text-2xl font-bold text-slate-800">{displaySong.title}</span>
-                            <span className="text-sm font-medium text-slate-500">{displaySong.artist || ''}</span>
-                            <span className="text-xs text-amber-600 bg-amber-50 px-2 py-1 rounded-full border border-amber-200">Originalversjon (skrivebeskyttet)</span>
+                            <span className="text-2xl font-bold text-foreground">{displaySong.title}</span>
+                            <span className="text-sm font-medium text-muted-foreground">{displaySong.artist || ''}</span>
+                            <span className="text-xs text-accent-foreground bg-accent/20 px-2 py-1 rounded-full border border-accent/40">Originalversjon (skrivebeskyttet)</span>
                         </>
                     ) : (
                         <>
                             <input
-                                className="text-2xl font-bold text-slate-800 placeholder-slate-300 focus:outline-none focus:ring-2 focus:ring-indigo-500 rounded px-1"
+                                className="text-2xl font-bold text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary rounded px-1 bg-transparent"
                                 value={song.title}
                                 onChange={(e) => updateTitle(e.target.value)}
                                 placeholder="Låttittel"
                             />
                             <input
-                                className="text-sm font-medium text-slate-500 placeholder-slate-300 focus:outline-none focus:ring-2 focus:ring-indigo-500 rounded px-1"
+                                className="text-sm font-medium text-muted-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary rounded px-1 bg-transparent"
                                 value={song.artist || ""}
                                 onChange={(e) => updateArtist(e.target.value)}
                                 placeholder="Artist"
@@ -299,12 +299,12 @@ export function SongView({ song, onChange }: SongViewProps) {
 
                     <div className="ml-auto flex items-center gap-3">
                         {/* Version Toggle */}
-                        <div className="flex items-center gap-1 bg-slate-100 rounded-lg p-0.5">
+                        <div className="flex items-center gap-1 bg-muted rounded-lg p-0.5">
                             <button
                                 onClick={() => setShowOriginal(false)}
                                 className={`px-3 py-1.5 text-xs font-medium rounded-md transition-colors ${!showOriginal
-                                    ? 'bg-white text-slate-800 shadow-sm'
-                                    : 'text-slate-500 hover:text-slate-700'
+                                    ? 'bg-card text-foreground shadow-sm'
+                                    : 'text-muted-foreground hover:text-foreground'
                                     }`}
                             >
                                 Nåværende
@@ -313,15 +313,15 @@ export function SongView({ song, onChange }: SongViewProps) {
                                 onClick={() => setShowOriginal(true)}
                                 disabled={isLoadingOriginal}
                                 className={`px-3 py-1.5 text-xs font-medium rounded-md transition-colors ${showOriginal
-                                    ? 'bg-white text-slate-800 shadow-sm'
-                                    : 'text-slate-500 hover:text-slate-700'
+                                    ? 'bg-card text-foreground shadow-sm'
+                                    : 'text-muted-foreground hover:text-foreground'
                                     } disabled:opacity-50`}
                             >
                                 {isLoadingOriginal ? 'Laster...' : 'Opprinnelig'}
                             </button>
                         </div>
 
-                        <span className="text-xs text-slate-300">
+                        <span className="text-xs text-muted-foreground/60">
                             {displaySong.key ? `Key: ${displaySong.key}` : "No key"}
                         </span>
 
@@ -329,7 +329,7 @@ export function SongView({ song, onChange }: SongViewProps) {
                         {displaySong.notes && (
                             <button
                                 onClick={() => setShowNotes(!showNotes)}
-                                className={`p-1.5 rounded-full transition-colors ${showNotes ? 'bg-indigo-100 text-indigo-600' : 'text-slate-400 hover:text-indigo-600 hover:bg-slate-100'}`}
+                                className={`p-1.5 rounded-full transition-colors ${showNotes ? 'bg-primary/20 text-primary' : 'text-muted-foreground hover:text-primary hover:bg-muted'}`}
                                 title={showNotes ? "Skjul låtnotater" : "Vis låtnotater"}
                             >
                                 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" className="w-5 h-5">
@@ -342,8 +342,8 @@ export function SongView({ song, onChange }: SongViewProps) {
 
                 {/* Expandable Notes Section */}
                 {displaySong.notes && showNotes && (
-                    <div className="mt-4 text-sm text-slate-600 bg-slate-50 p-3 rounded-md border border-slate-200 animate-in fade-in slide-in-from-top-1 duration-200">
-                        <div className="font-medium text-slate-900 mb-1">Notater</div>
+                    <div className="mt-4 text-sm text-muted-foreground bg-muted p-3 rounded-md border border-border animate-in fade-in slide-in-from-top-1 duration-200">
+                        <div className="font-medium text-foreground mb-1">Notater</div>
                         {displaySong.notes}
                     </div>
                 )}
@@ -351,15 +351,15 @@ export function SongView({ song, onChange }: SongViewProps) {
 
             <div className="flex flex-1 overflow-hidden">
                 {/* Main Content: Sections */}
-                <div className="flex-1 overflow-y-auto p-6 bg-slate-50">
+                <div className="flex-1 overflow-y-auto p-6 bg-background">
                     <div className="max-w-3xl mx-auto space-y-6">
                         <div className="flex items-center justify-end">
-                            <label className="flex items-center gap-2 text-sm text-slate-600 cursor-pointer select-none">
+                            <label className="flex items-center gap-2 text-sm text-muted-foreground cursor-pointer select-none">
                                 <input
                                     type="checkbox"
                                     checked={showUniqueSections}
                                     onChange={(e) => setShowUniqueSections(e.target.checked)}
-                                    className="rounded border-slate-300 text-indigo-600 focus:ring-indigo-600"
+                                    className="rounded border-border text-primary focus:ring-primary"
                                 />
                                 Vis unike seksjoner
                             </label>
@@ -377,7 +377,7 @@ export function SongView({ song, onChange }: SongViewProps) {
                 </div>
 
                 {/* Sidebar: Timeline */}
-                <div className="w-80 border-l border-slate-200 bg-white flex flex-col">
+                <div className="w-80 border-l border-border bg-card flex flex-col">
                     <div className="p-4 flex-1 overflow-hidden flex flex-col">
                         <Timeline
                             items={timelineItems}
@@ -386,8 +386,8 @@ export function SongView({ song, onChange }: SongViewProps) {
                         />
 
                         {!isReadonly && (
-                            <div className="mt-4 pt-4 border-t border-slate-100 overflow-y-auto flex-none max-h-[40%]">
-                                <span className="text-xs font-medium text-slate-500 block mb-2 uppercase tracking-wider">
+                            <div className="mt-4 pt-4 border-t border-border overflow-y-auto flex-none max-h-[40%]">
+                                <span className="text-xs font-medium text-muted-foreground block mb-2 uppercase tracking-wider">
                                     Legg til i arrangement
                                 </span>
                                 <div className="flex flex-wrap gap-2">
@@ -395,7 +395,7 @@ export function SongView({ song, onChange }: SongViewProps) {
                                         <button
                                             key={s.id}
                                             onClick={() => addToArrangement(s.id)}
-                                            className="text-xs px-2 py-1.5 rounded bg-slate-100 hover:bg-slate-200 text-slate-700 transition border border-slate-200"
+                                            className="text-xs px-2 py-1.5 rounded bg-muted hover:bg-muted/80 text-foreground transition border border-border"
                                         >
                                             + {s.label}
                                         </button>

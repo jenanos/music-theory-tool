@@ -4,69 +4,64 @@
 /* Dark mode variant for Tailwind v4 */
 @custom-variant dark (&:is(.dark *));
 
-/* Midnight Prism Color Palette 🌌 */
+/* Light Mode - Clean & Bright ☀️ */
 :root {
   /* Core Colors */
-  --background: oklch(0.16 0.02 255);
-  --foreground: oklch(0.92 0.01 255);
+  --background: oklch(0.98 0.005 255);
+  --foreground: oklch(0.15 0.02 255);
 
   /* Card / Elevated surfaces */
-  --card: oklch(0.20 0.03 255);
-  --card-foreground: oklch(0.92 0.01 255);
+  --card: oklch(1.00 0 0);
+  --card-foreground: oklch(0.15 0.02 255);
 
   /* Popover */
-  --popover: oklch(0.20 0.03 255);
-  --popover-foreground: oklch(0.92 0.01 255);
+  --popover: oklch(1.00 0 0);
+  --popover-foreground: oklch(0.15 0.02 255);
 
   /* Primary - Electric Blue */
-  --primary: oklch(0.72 0.17 255);
-  --primary-foreground: oklch(0.13 0.02 255);
+  --primary: oklch(0.55 0.20 255);
+  --primary-foreground: oklch(0.98 0.005 255);
 
   /* Secondary - Slate */
-  --secondary: oklch(0.40 0.03 255);
-  --secondary-foreground: oklch(0.98 0.01 255);
+  --secondary: oklch(0.93 0.01 255);
+  --secondary-foreground: oklch(0.25 0.02 255);
 
-  /* Muted - Deep Steel */
-  --muted: oklch(0.24 0.02 255);
-  --muted-foreground: oklch(0.80 0.03 255);
+  /* Muted - Light Gray */
+  --muted: oklch(0.95 0.005 255);
+  --muted-foreground: oklch(0.45 0.02 255);
 
   /* Accent - Aurora Teal */
-  --accent: oklch(0.60 0.14 175);
-  --accent-foreground: oklch(0.12 0.02 255);
+  --accent: oklch(0.92 0.04 175);
+  --accent-foreground: oklch(0.20 0.04 175);
 
   /* Destructive - Ember */
   --destructive: oklch(0.56 0.21 28);
-  --destructive-foreground: oklch(0.96 0.01 255);
+  --destructive-foreground: oklch(0.98 0.005 255);
 
   /* Borders and inputs */
-  --border: oklch(0.32 0.03 255);
-  --input: oklch(0.32 0.03 255);
-  --ring: oklch(0.72 0.17 255);
+  --border: oklch(0.87 0.01 255);
+  --input: oklch(0.87 0.01 255);
+  --ring: oklch(0.55 0.20 255);
 
-  /* Chart colors - Midnight prism */
-  --chart-1: oklch(0.72 0.17 255);
-  /* Electric blue */
-  --chart-2: oklch(0.64 0.15 175);
-  /* Teal */
-  --chart-3: oklch(0.72 0.18 110);
-  /* Lime */
-  --chart-4: oklch(0.66 0.18 310);
-  /* Violet */
-  --chart-5: oklch(0.66 0.20 30);
-  /* Ember */
+  /* Chart colors */
+  --chart-1: oklch(0.55 0.20 255);
+  --chart-2: oklch(0.50 0.15 175);
+  --chart-3: oklch(0.55 0.18 110);
+  --chart-4: oklch(0.50 0.18 310);
+  --chart-5: oklch(0.50 0.20 30);
 
   /* Radius */
   --radius: 0.625rem;
 
   /* Sidebar */
-  --sidebar: oklch(0.18 0.02 255);
-  --sidebar-foreground: oklch(0.92 0.01 255);
-  --sidebar-primary: oklch(0.72 0.17 255);
-  --sidebar-primary-foreground: oklch(0.13 0.02 255);
-  --sidebar-accent: oklch(0.60 0.14 175);
-  --sidebar-accent-foreground: oklch(0.12 0.02 255);
-  --sidebar-border: oklch(0.30 0.03 255);
-  --sidebar-ring: oklch(0.72 0.17 255);
+  --sidebar: oklch(0.96 0.005 255);
+  --sidebar-foreground: oklch(0.15 0.02 255);
+  --sidebar-primary: oklch(0.55 0.20 255);
+  --sidebar-primary-foreground: oklch(0.98 0.005 255);
+  --sidebar-accent: oklch(0.92 0.04 175);
+  --sidebar-accent-foreground: oklch(0.20 0.04 175);
+  --sidebar-border: oklch(0.87 0.01 255);
+  --sidebar-ring: oklch(0.55 0.20 255);
 }
 
 /* Dark Mode - Midnight Prism */

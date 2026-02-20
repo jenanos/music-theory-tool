@@ -57,7 +57,7 @@ function SortableItem(props: {
             style={style}
             {...attributes}
             {...listeners}
-            className={`flex-shrink-0 cursor-grab rounded-md border border-slate-300 bg-white px-3 py-2 text-sm font-medium text-slate-700 shadow-sm hover:border-indigo-400 active:cursor-grabbing ${isDragging ? "opacity-50 z-50 ring-2 ring-indigo-500" : ""
+            className={`flex-shrink-0 cursor-grab rounded-md border border-border bg-card px-3 py-2 text-sm font-medium text-foreground shadow-sm hover:border-primary/50 active:cursor-grabbing ${isDragging ? "opacity-50 z-50 ring-2 ring-primary" : ""
                 }`}
         >
             {props.label}
@@ -90,12 +90,12 @@ export function Timeline({ items, sections, onReorder }: TimelineProps) {
     };
 
     return (
-        <div className="flex flex-col h-full overflow-hidden rounded-lg border border-slate-200 bg-slate-50">
-            <div className="flex-none p-4 border-b border-slate-200">
-                <h3 className="text-xs font-semibold uppercase tracking-wider text-slate-500">
+        <div className="flex flex-col h-full overflow-hidden rounded-lg border border-border bg-muted">
+            <div className="flex-none p-4 border-b border-border">
+                <h3 className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
                     Arrangement
                 </h3>
-                <div className="mt-1 text-xs text-slate-400">
+                <div className="mt-1 text-xs text-muted-foreground">
                     Dra og slipp for å endre rekkefølge.
                 </div>
             </div>

@@ -91,10 +91,10 @@ export default function ChartsPage() {
 
     if (isLoading) {
         return (
-            <div className="flex h-full w-full items-center justify-center bg-slate-50">
+            <div className="flex h-full w-full items-center justify-center bg-background">
                 <div className="flex flex-col items-center gap-3">
-                    <div className="h-8 w-8 animate-spin rounded-full border-4 border-indigo-200 border-t-indigo-600" />
-                    <span className="text-sm text-slate-500">Laster sanger...</span>
+                    <div className="h-8 w-8 animate-spin rounded-full border-4 border-primary/30 border-t-primary" />
+                    <span className="text-sm text-muted-foreground">Laster sanger...</span>
                 </div>
             </div>
         );
@@ -102,12 +102,12 @@ export default function ChartsPage() {
 
     if (error) {
         return (
-            <div className="flex h-full w-full items-center justify-center bg-slate-50">
-                <div className="rounded-lg border border-red-200 bg-red-50 p-6 text-center">
-                    <p className="text-red-600">{error}</p>
+            <div className="flex h-full w-full items-center justify-center bg-background">
+                <div className="rounded-lg border border-destructive/30 bg-destructive/10 p-6 text-center">
+                    <p className="text-destructive">{error}</p>
                     <button
                         onClick={() => window.location.reload()}
-                        className="mt-4 rounded bg-red-600 px-4 py-2 text-sm text-white hover:bg-red-700"
+                        className="mt-4 rounded bg-destructive px-4 py-2 text-sm text-destructive-foreground hover:bg-destructive/90"
                     >
                         Prøv igjen
                     </button>
@@ -117,7 +117,7 @@ export default function ChartsPage() {
     }
 
     return (
-        <div className="flex h-full w-full overflow-hidden bg-slate-50 relative">
+        <div className="flex h-full w-full overflow-hidden bg-background relative">
             <CreateSongModal
                 isOpen={isCreateModalOpen}
                 onClose={() => setIsCreateModalOpen(false)}
@@ -138,7 +138,7 @@ export default function ChartsPage() {
                         onChange={handleUpdateSong}
                     />
                 ) : (
-                    <div className="flex h-full items-center justify-center text-slate-400">
+                    <div className="flex h-full items-center justify-center text-muted-foreground">
                         Velg en låt fra listen til venstre for å begynne.
                     </div>
                 )}

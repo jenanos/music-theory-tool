@@ -17,7 +17,7 @@ FROM base AS builder
 WORKDIR /app
 
 RUN pnpm --filter practice run build
-RUN pnpm prune --prod
+RUN CI=true pnpm prune --prod
 
 FROM node:20-slim AS runner
 ENV NODE_ENV=production

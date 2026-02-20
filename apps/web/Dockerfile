@@ -20,7 +20,6 @@ WORKDIR /app
 
 RUN pnpm --filter @repo/db run db:generate
 RUN pnpm --filter web run build
-RUN CI=true pnpm prune --prod
 
 FROM node:20-slim AS runner
 ENV NODE_ENV=production

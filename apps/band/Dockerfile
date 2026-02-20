@@ -46,4 +46,4 @@ WORKDIR /app/apps/band
 EXPOSE 3000
 
 ENTRYPOINT ["/usr/local/bin/docker-entrypoint.sh"]
-CMD ["pnpm", "start", "--", "-p", "3000", "-H", "0.0.0.0"]
+CMD ["pnpm", "exec", "next", "start", "-p", "3000", "-H", "0.0.0.0"]

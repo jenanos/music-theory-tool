@@ -4,6 +4,13 @@
   "scripts": {
     "build": "turbo run build",
     "dev": "turbo run dev",
+    "dev:db:up": "docker compose -f compose.dev.yml --env-file .env.dev up -d",
+    "dev:db:down": "docker compose -f compose.dev.yml --env-file .env.dev down",
+    "dev:db:logs": "docker compose -f compose.dev.yml --env-file .env.dev logs -f postgres",
+    "db:generate": "pnpm --filter @repo/db run db:generate",
+    "db:migrate:dev": "pnpm --filter @repo/db run db:migrate:dev",
+    "db:migrate:deploy": "pnpm --filter @repo/db run db:migrate:deploy",
+    "db:seed": "pnpm --filter @repo/db run db:seed",
     "lint": "turbo run lint",
     "check-types": "turbo run check-types",
     "test": "turbo run test",
@@ -20,8 +27,10 @@
   },
   "pnpm": {
     "onlyBuiltDependencies": [
-      "better-sqlite3",
-      "esbuild"
+      "@prisma/client",
+      "@prisma/engines",
+      "esbuild",
+      "prisma"
     ]
   }
 }

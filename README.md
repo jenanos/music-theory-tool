@@ -10,10 +10,23 @@ Installer avhengigheter og start web-appen:
 
 ```sh
 pnpm install
+cp .env.dev.example .env.dev
+cp apps/web/.env.local.example apps/web/.env.local
+cp apps/band/.env.local.example apps/band/.env.local
+pnpm dev:db:up
 pnpm --filter web dev
 ```
 
 Web-appen kjører da på `http://localhost:3001`.
+
+Band-appen kjører på `http://localhost:3002` med `pnpm --filter band dev`.
+
+Initialiser databasen med:
+
+```sh
+pnpm --filter @repo/db db:migrate:dev
+pnpm --filter @repo/db db:seed
+```
 
 ## Funksjonalitet
 

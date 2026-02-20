@@ -3,8 +3,7 @@
  * Run with: pnpm db:seed
  */
 
-import { db } from "./client";
-import { songs, sections, originalSongs, originalSections } from "./schema";
+import { prisma } from "./client";
 
 // Initial songs data (migrated from apps/web/app/charts/data.ts)
 const initialSongs = [
@@ -360,60 +359,75 @@ const initialSongs = [
 ];
 
 async function seed() {
+    const seedOnlyIfEmpty = process.argv.includes("--if-empty");
     console.log("🌱 Seeding database...");
 
-    // Clear existing data
-    console.log("  Clearing existing data...");
-    await db.delete(sections);
-    await db.delete(songs);
-    await db.delete(originalSections);
-    await db.delete(originalSongs);
-
-    // Insert songs and sections (both current and original)
-    for (const song of initialSongs) {
-        console.log(`  Adding song: ${song.title}`);
-
-        const songData = {
-            id: song.id,
-            title: song.title,
-            artist: song.artist,
-            key: song.key,
-            notes: song.notes,
-            arrangement: song.arrangement,
-        };
-
-        // Insert into current tables
-        await db.insert(songs).values(songData);
-
-        // Insert into original tables (immutable snapshot)
-        await db.insert(originalSongs).values(songData);
-
-        // Insert sections into both tables
-        for (let i = 0; i < song.sections.length; i++) {
-            const section = song.sections[i];
-            const sectionData = {
-                id: `${song.id}-${section.id}`,
-                songId: song.id,
-                label: section.label,
-                chordLines: section.chordLines,
-                degreeLines: section.degreeLines,
-                notes: section.notes,
-                orderIndex: i,
-            };
-
-            // Insert into current sections
-            await db.insert(sections).values(sectionData);
-
-            // Insert into original sections (immutable snapshot)
-            await db.insert(originalSections).values(sectionData);
+    if (seedOnlyIfEmpty) {
+        const existingSongs = await prisma.song.count();
+        if (existingSongs > 0) {
+            console.log("⏭️  Seed skipped (songs table already has data).");
+            await prisma.$disconnect();
+            process.exit(0);
         }
     }
 
+    await prisma.$transaction(async (tx) => {
+        console.log("  Clearing existing data...");
+        await tx.section.deleteMany();
+        await tx.song.deleteMany();
+        await tx.originalSection.deleteMany();
+        await tx.originalSong.deleteMany();
+
+        for (const song of initialSongs) {
+            console.log(`  Adding song: ${song.title}`);
+
+            const songData = {
+                id: song.id,
+                title: song.title,
+                artist: song.artist ?? null,
+                key: song.key ?? null,
+                notes: song.notes ?? null,
+                arrangement: song.arrangement ?? [],
+            };
+
+            await tx.song.create({ data: songData });
+            await tx.originalSong.create({ data: songData });
+
+            if (song.sections.length > 0) {
+                await tx.section.createMany({
+                    data: song.sections.map((section, index) => ({
+                        id: `${song.id}-${section.id}`,
+                        songId: song.id,
+                        label: section.label,
+                        chordLines: section.chordLines ?? [],
+                        degreeLines: section.degreeLines ?? [],
+                        notes: section.notes ?? null,
+                        orderIndex: index,
+                    })),
+                });
+
+                await tx.originalSection.createMany({
+                    data: song.sections.map((section, index) => ({
+                        id: `${song.id}-${section.id}`,
+                        songId: song.id,
+                        label: section.label,
+                        chordLines: section.chordLines ?? [],
+                        degreeLines: section.degreeLines ?? [],
+                        notes: section.notes ?? null,
+                        orderIndex: index,
+                    })),
+                });
+            }
+        }
+    });
+
     console.log("✅ Seeding complete!");
+    await prisma.$disconnect();
     process.exit(0);
 }
 
-seed().catch((err) => {
+seed().catch(async (err) => {
     console.error("❌ Seeding failed:", err);
+    await prisma.$disconnect();
     process.exit(1);
 });

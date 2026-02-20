@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
-import { db, songs, sections, eq, asc } from "@repo/db";
+import { prisma, songUpdateSchema, toSongResponse, type Prisma } from "@repo/db";
+import { ZodError } from "zod";
 
 type Params = Promise<{ id: string }>;
 
@@ -8,33 +9,20 @@ export async function GET(request: Request, { params }: { params: Params }) {
     try {
         const { id } = await params;
 
-        const [song] = await db.select().from(songs).where(eq(songs.id, id));
+        const song = await prisma.song.findUnique({
+            where: { id },
+            include: {
+                sections: {
+                    orderBy: { orderIndex: "asc" },
+                },
+            },
+        });
 
         if (!song) {
             return NextResponse.json({ error: "Song not found" }, { status: 404 });
         }
 
-        const songSections = await db
-            .select()
-            .from(sections)
-            .where(eq(sections.songId, id))
-            .orderBy(asc(sections.orderIndex));
-
-        return NextResponse.json({
-            id: song.id,
-            title: song.title,
-            artist: song.artist,
-            key: song.key,
-            notes: song.notes,
-            arrangement: song.arrangement ?? [],
-            sections: songSections.map((s) => ({
-                id: s.id.replace(`${song.id}-`, ""),
-                label: s.label,
-                chordLines: s.chordLines ?? [],
-                degreeLines: s.degreeLines ?? [],
-                notes: s.notes,
-            })),
-        });
+        return NextResponse.json(toSongResponse(song));
     } catch (error) {
         console.error("Error fetching song:", error);
         return NextResponse.json(
@@ -49,60 +37,70 @@ export async function PUT(request: Request, { params }: { params: Params }) {
     try {
         const { id } = await params;
         const body = await request.json();
-        const {
-            title,
-            artist,
-            key,
-            notes,
-            arrangement,
-            sections: updatedSections,
-        } = body;
+        const parsed = songUpdateSchema.parse(body);
 
         // Check if song exists
-        const [existingSong] = await db
-            .select()
-            .from(songs)
-            .where(eq(songs.id, id));
+        const existingSong = await prisma.song.findUnique({
+            where: { id },
+            select: { id: true },
+        });
 
         if (!existingSong) {
             return NextResponse.json({ error: "Song not found" }, { status: 404 });
         }
 
-        // Update song
-        await db
-            .update(songs)
-            .set({
-                title: title ?? existingSong.title,
-                artist: artist ?? existingSong.artist,
-                key: key ?? existingSong.key,
-                notes: notes ?? existingSong.notes,
-                arrangement: arrangement ?? existingSong.arrangement,
-                updatedAt: new Date(),
-            })
-            .where(eq(songs.id, id));
+        const hasSongFieldUpdate =
+            parsed.title !== undefined ||
+            parsed.artist !== undefined ||
+            parsed.key !== undefined ||
+            parsed.notes !== undefined ||
+            parsed.arrangement !== undefined;
 
-        // Update sections if provided
-        if (updatedSections && Array.isArray(updatedSections)) {
-            // Delete existing sections
-            await db.delete(sections).where(eq(sections.songId, id));
+        await prisma.$transaction(async (tx) => {
+            if (hasSongFieldUpdate) {
+                const updateData: Prisma.SongUpdateInput = {};
 
-            // Insert updated sections
-            for (let i = 0; i < updatedSections.length; i++) {
-                const section = updatedSections[i];
-                await db.insert(sections).values({
-                    id: `${id}-${section.id}`,
-                    songId: id,
-                    label: section.label,
-                    chordLines: section.chordLines ?? [],
-                    degreeLines: section.degreeLines ?? [],
-                    notes: section.notes,
-                    orderIndex: i,
+                if (parsed.title !== undefined) updateData.title = parsed.title;
+                if (parsed.artist !== undefined) updateData.artist = parsed.artist;
+                if (parsed.key !== undefined) updateData.key = parsed.key;
+                if (parsed.notes !== undefined) updateData.notes = parsed.notes;
+                if (parsed.arrangement !== undefined) {
+                    updateData.arrangement = parsed.arrangement;
+                }
+
+                await tx.song.update({
+                    where: { id },
+                    data: updateData,
                 });
             }
-        }
+
+            if (parsed.sections !== undefined) {
+                await tx.section.deleteMany({ where: { songId: id } });
+
+                if (parsed.sections.length > 0) {
+                    await tx.section.createMany({
+                        data: parsed.sections.map((section, index) => ({
+                            id: `${id}-${section.id}`,
+                            songId: id,
+                            label: section.label,
+                            chordLines: section.chordLines ?? [],
+                            degreeLines: section.degreeLines ?? [],
+                            notes: section.notes ?? null,
+                            orderIndex: index,
+                        })),
+                    });
+                }
+            }
+        });
 
         return NextResponse.json({ success: true });
     } catch (error) {
+        if (error instanceof ZodError) {
+            return NextResponse.json(
+                { error: "Invalid request body", issues: error.issues },
+                { status: 400 }
+            );
+        }
         console.error("Error updating song:", error);
         return NextResponse.json(
             { error: "Failed to update song" },
@@ -120,17 +118,17 @@ export async function DELETE(
         const { id } = await params;
 
         // Check if song exists
-        const [existingSong] = await db
-            .select()
-            .from(songs)
-            .where(eq(songs.id, id));
+        const existingSong = await prisma.song.findUnique({
+            where: { id },
+            select: { id: true },
+        });
 
         if (!existingSong) {
             return NextResponse.json({ error: "Song not found" }, { status: 404 });
         }
 
         // Delete song (sections are deleted automatically due to cascade)
-        await db.delete(songs).where(eq(songs.id, id));
+        await prisma.song.delete({ where: { id } });
 
         return NextResponse.json({ success: true });
     } catch (error) {

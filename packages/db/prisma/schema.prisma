@@ -1,0 +1,75 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model Song {
+  id          String    @id
+  title       String
+  artist      String?
+  key         String?
+  notes       String?
+  arrangement String[]  @default([])
+  createdAt   DateTime  @default(now()) @map("created_at")
+  updatedAt   DateTime  @updatedAt @map("updated_at")
+  sections    Section[]
+
+  @@map("songs")
+}
+
+model Section {
+  id         String   @id
+  songId     String   @map("song_id")
+  label      String
+  chordLines String[] @default([]) @map("chord_lines")
+  degreeLines String[] @default([]) @map("degree_lines")
+  notes      String?
+  orderIndex Int      @map("order_index")
+  song       Song     @relation(fields: [songId], references: [id], onDelete: Cascade)
+
+  @@index([songId, orderIndex])
+  @@map("sections")
+}
+
+model OriginalSong {
+  id          String            @id
+  title       String
+  artist      String?
+  key         String?
+  notes       String?
+  arrangement String[]          @default([])
+  createdAt   DateTime          @default(now()) @map("created_at")
+  sections    OriginalSection[]
+
+  @@map("original_songs")
+}
+
+model OriginalSection {
+  id         String       @id
+  songId     String       @map("song_id")
+  label      String
+  chordLines String[]     @default([]) @map("chord_lines")
+  degreeLines String[]    @default([]) @map("degree_lines")
+  notes      String?
+  orderIndex Int          @map("order_index")
+  song       OriginalSong @relation(fields: [songId], references: [id], onDelete: Cascade)
+
+  @@index([songId, orderIndex])
+  @@map("original_sections")
+}
+
+model SavedProgression {
+  id        String   @id
+  name      String
+  tonic     String
+  mode      String
+  sequence  String[] @default([])
+  createdAt DateTime @default(now()) @map("created_at")
+
+  @@index([createdAt])
+  @@map("saved_progressions")
+}

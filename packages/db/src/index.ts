@@ -1,8 +1,17 @@
-// Database Client
-export { db, client } from "./client";
-
-// Schema
-export * from "./schema";
-
-// Re-export drizzle-orm utilities
-export { eq, and, or, desc, asc } from "drizzle-orm";
+export { prisma } from "./client";
+export {
+    songCreateSchema,
+    songUpdateSchema,
+    progressionCreateSchema,
+    sectionInputSchema,
+} from "./validation";
+export { toSongResponse, toOriginalSongResponse } from "./serializers";
+export type { SongResponse, SongSectionResponse } from "./serializers";
+export type {
+    Prisma,
+    Song,
+    Section,
+    OriginalSong,
+    OriginalSection,
+    SavedProgression,
+} from "@prisma/client";

@@ -1,0 +1,24 @@
+name: music-theory-dev
+
+volumes:
+  postgres-dev-data:
+    name: music-theory-postgres-dev-data
+
+services:
+  postgres:
+    image: postgres:alpine
+    container_name: music-theory-postgres-dev
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: ${DEV_POSTGRES_DB}
+      POSTGRES_USER: ${DEV_POSTGRES_USER}
+      POSTGRES_PASSWORD: ${DEV_POSTGRES_PASSWORD}
+    ports:
+      - "${DEV_POSTGRES_PORT:-5433}:5432"
+    volumes:
+      - postgres-dev-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${DEV_POSTGRES_USER} -d ${DEV_POSTGRES_DB}"]
+      interval: 10s
+      timeout: 5s
+      retries: 10

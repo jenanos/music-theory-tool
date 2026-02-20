@@ -1,2 +1,4 @@
-better-sqlite3
+@prisma/client
+@prisma/engines
 esbuild
+prisma

@@ -11,7 +11,7 @@
     },
     "include": [
         "src/**/*",
-        "drizzle.config.ts"
+        "prisma/**/*.ts"
     ],
     "exclude": [
         "node_modules",

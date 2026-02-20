@@ -1,24 +1,15 @@
 import { NextResponse } from "next/server";
-import { db, savedProgressions, eq, desc } from "@repo/db";
+import { prisma, progressionCreateSchema } from "@repo/db";
+import { ZodError } from "zod";
 
 // GET /api/progressions - Fetch all saved progressions
 export async function GET() {
     try {
-        const progressions = await db
-            .select()
-            .from(savedProgressions)
-            .orderBy(desc(savedProgressions.createdAt));
+        const progressions = await prisma.savedProgression.findMany({
+            orderBy: { createdAt: "desc" },
+        });
 
-        return NextResponse.json(
-            progressions.map((p) => ({
-                id: p.id,
-                name: p.name,
-                tonic: p.tonic,
-                mode: p.mode,
-                sequence: p.sequence ?? [],
-                createdAt: p.createdAt,
-            }))
-        );
+        return NextResponse.json(progressions);
     } catch (error) {
         console.error("Error fetching progressions:", error);
         return NextResponse.json(
@@ -32,27 +23,28 @@ export async function GET() {
 export async function POST(request: Request) {
     try {
         const body = await request.json();
-        const { name, tonic, mode, sequence } = body;
-
-        if (!name || !tonic || !mode || !sequence) {
-            return NextResponse.json(
-                { error: "Missing required fields: name, tonic, mode, sequence" },
-                { status: 400 }
-            );
-        }
+        const parsed = progressionCreateSchema.parse(body);
 
         const id = crypto.randomUUID();
 
-        await db.insert(savedProgressions).values({
-            id,
-            name,
-            tonic,
-            mode,
-            sequence,
+        await prisma.savedProgression.create({
+            data: {
+                id,
+                name: parsed.name,
+                tonic: parsed.tonic,
+                mode: parsed.mode,
+                sequence: parsed.sequence,
+            },
         });
 
         return NextResponse.json({ id, success: true }, { status: 201 });
     } catch (error) {
+        if (error instanceof ZodError) {
+            return NextResponse.json(
+                { error: "Invalid request body", issues: error.issues },
+                { status: 400 }
+            );
+        }
         console.error("Error saving progression:", error);
         return NextResponse.json(
             { error: "Failed to save progression" },
@@ -65,7 +57,7 @@ export async function POST(request: Request) {
 export async function DELETE(request: Request) {
     try {
         const { searchParams } = new URL(request.url);
-        const id = searchParams.get("id");
+        const id = searchParams.get("id")?.trim();
 
         if (!id) {
             return NextResponse.json(
@@ -74,7 +66,7 @@ export async function DELETE(request: Request) {
             );
         }
 
-        await db.delete(savedProgressions).where(eq(savedProgressions.id, id));
+        await prisma.savedProgression.deleteMany({ where: { id } });
 
         return NextResponse.json({ success: true });
     } catch (error) {

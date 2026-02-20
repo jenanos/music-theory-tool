@@ -50,6 +50,9 @@ importers:
       react-dom:
         specifier: ^19.1.0
         version: 19.2.4(react@19.2.4)
+      zod:
+        specifier: ^3.24.2
+        version: 3.25.76
     devDependencies:
       '@next/eslint-plugin-next':
         specifier: ^15.4.6
@@ -184,6 +187,9 @@ importers:
       react-dom:
         specifier: ^19.1.0
         version: 19.2.4(react@19.2.4)
+      zod:
+        specifier: ^3.24.2
+        version: 3.25.76
     devDependencies:
       '@next/eslint-plugin-next':
         specifier: ^15.4.6

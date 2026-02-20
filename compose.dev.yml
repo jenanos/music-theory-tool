@@ -14,7 +14,7 @@ services:
       POSTGRES_USER: ${DEV_POSTGRES_USER}
       POSTGRES_PASSWORD: ${DEV_POSTGRES_PASSWORD}
     ports:
-      - "${DEV_POSTGRES_PORT:-5433}:5432"
+      - "${DEV_POSTGRES_PORT:-5434}:5432"
     volumes:
       - postgres-dev-data:/var/lib/postgresql/data
     healthcheck:

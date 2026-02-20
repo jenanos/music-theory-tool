@@ -21,7 +21,8 @@
         "@repo/voicings": "workspace:*",
         "next": "16.0.10",
         "react": "^19.2.0",
-        "react-dom": "^19.1.0"
+        "react-dom": "^19.1.0",
+        "zod": "^3.24.2"
     },
     "devDependencies": {
         "@next/eslint-plugin-next": "^15.4.6",

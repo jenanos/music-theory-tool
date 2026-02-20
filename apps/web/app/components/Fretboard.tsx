@@ -77,7 +77,7 @@ export function Fretboard({
               } else if (isOutside) {
                 // Layer 2: Outside (Overlay but NOT in harmony scale) - "Blue note" etc
                 content = (
-                  <span className="inline-flex h-6 w-6 items-center justify-center rounded-full border-2 border-destructive/60 bg-destructive/20 text-[10px] font-semibold text-destructive">
+                  <span className="inline-flex h-6 w-6 items-center justify-center rounded-full border-2 border-destructive/60 bg-destructive/20 text-[10px] font-bold text-white">
                     {noteName(pitchClass, useFlats)}
                   </span>
                 );
@@ -86,7 +86,7 @@ export function Fretboard({
                 // If it's overlay BUT NOT outside, it's inside the harmony too (usually), or just valid overlay.
                 // We show these significantly.
                 content = (
-                  <span className="inline-flex h-5 w-5 items-center justify-center rounded-full bg-muted text-[10px] font-medium text-foreground">
+                  <span className="inline-flex h-5 w-5 items-center justify-center rounded-full bg-secondary ring-1 ring-white/40 text-[10px] font-bold text-white">
                     {noteName(pitchClass, useFlats)}
                   </span>
                 );

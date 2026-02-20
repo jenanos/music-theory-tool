@@ -206,7 +206,7 @@ export default function Page() {
 
             <section className="rounded-xl border border-accent/40 bg-accent/15 p-4 text-sm text-accent-foreground">
               <h3 className="mb-2 font-semibold">Tips</h3>
-              <ul className="list-disc space-y-1 pl-4 text-accent-foreground/80">
+              <ul className="list-disc space-y-1 pl-4 text-foreground/90">
                 <li>Klikk på en rad for detaljer.</li>
                 <li>
                   Prøv å endre <strong>Overlay</strong> til Blues eller Pentaton for å se sammenhenger på gripebrettet.

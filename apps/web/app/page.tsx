@@ -61,12 +61,15 @@ export default function Page() {
   const selectedChord =
     chords.find((chord) => chord.degree === selectedDegree) ?? chords[0];
 
+  const substitutionProfile: "triad" | "seventh" = includeSevenths ? "seventh" : "triad";
+
   const substitutions = selectedChord
     ? suggestSubstitutions({
       tonic,
       mode,
       chord: selectedChord,
       allChords: chords,
+      profile: substitutionProfile,
     })
     : [];
   const useFlats = prefersFlats(tonic);

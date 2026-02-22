@@ -24,9 +24,7 @@ export default function ChartsPage() {
                 }
                 const data = await response.json();
                 setSongs(data);
-                if (data.length > 0 && !selectedSongId) {
-                    setSelectedSongId(data[0].id);
-                }
+                setSelectedSongId((prev) => prev ?? data[0]?.id);
             } catch (err) {
                 setError(err instanceof Error ? err.message : "Unknown error");
             } finally {

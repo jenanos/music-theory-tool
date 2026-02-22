@@ -82,7 +82,7 @@ describe("substitution engine", () => {
         });
 
         const symbols = suggestions.map((suggestion) => suggestion.substituteSymbol);
-        expect(symbols).toContain("Bdim");
+        expect(symbols).toContain("Bdim7");
         expect(symbols).toContain("Db7");
     });
 
@@ -170,5 +170,67 @@ describe("substitution engine", () => {
         );
 
         expect(hasSharpEnharmonics).toBe(false);
+    });
+
+    test("triad profile avoids random seventh mixing", () => {
+        const tonic = "C";
+        const mode: ModeId = "ionian";
+        const chords = buildDiatonicChords(tonic, mode, true);
+
+        const suggestions = suggestSubstitutions({
+            tonic,
+            mode,
+            chord: getChord(chords, 1),
+            allChords: chords,
+            sourceSymbol: "C",
+            profile: "triad",
+            includeSpice: true,
+        });
+
+        const hasSeventhSymbols = suggestions.some((entry) => /maj7|m7|[^0-9]7/.test(entry.substituteSymbol));
+        expect(hasSeventhSymbols).toBe(false);
+    });
+
+    test("jazz profile exposes richer variants on tritone substitutions", () => {
+        const tonic = "C";
+        const mode: ModeId = "ionian";
+        const chords = buildDiatonicChords(tonic, mode, true);
+
+        const suggestions = suggestSubstitutions({
+            tonic,
+            mode,
+            chord: getChord(chords, 5),
+            allChords: chords,
+            sourceSymbol: "G7",
+            includeSpice: true,
+            profile: "jazz",
+        });
+
+        const tritone = suggestions.find((entry) => entry.substituteSymbol === "Db7");
+        expect(tritone).toBeDefined();
+        const variantSymbols = tritone?.variants?.map((variant) => variant.symbol) ?? [];
+        expect(variantSymbols).toContain("Db9");
+        expect(variantSymbols).toContain("Db13");
+    });
+
+    test("minor dominant suggestions include altered options when spice is enabled", () => {
+        const tonic = "G";
+        const mode: ModeId = "aeolian";
+        const chords = buildDiatonicChords(tonic, mode, true);
+
+        const suggestions = suggestSubstitutions({
+            tonic,
+            mode,
+            chord: getChord(chords, 5),
+            allChords: chords,
+            sourceSymbol: "D7",
+            includeSpice: true,
+            profile: "jazz",
+        });
+
+        const dominant = suggestions.find((entry) => entry.substituteSymbol === "D7");
+        const dominantVariants = dominant?.variants?.map((variant) => variant.symbol) ?? [];
+        expect(dominantVariants).toContain("D7(b9)");
+        expect(dominantVariants).toContain("D7(#9)");
     });
 });

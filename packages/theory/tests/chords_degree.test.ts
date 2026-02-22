@@ -31,7 +31,7 @@ describe("chromatic chord degree analysis", () => {
 
 describe("sequence-based chord suggestions", () => {
     it("includes common C major continuations among top results", () => {
-        const suggestions = getNextChordSuggestionsFromSequence(["C"], "C Major");
+        const suggestions = getNextChordSuggestionsFromSequence(["C"], "C Major", { profile: "seventh" });
         const topChords = suggestions.slice(0, 8).map((s) => s.chord);
 
         expect(topChords).toContain("Fmaj7");
@@ -62,8 +62,8 @@ describe("sequence-based chord suggestions", () => {
     });
 
     it("changes output with sequence context", () => {
-        const afterC = getNextChordSuggestionsFromSequence(["C"], "C Major").slice(0, 5);
-        const afterAm = getNextChordSuggestionsFromSequence(["Am"], "C Major").slice(0, 5);
+        const afterC = getNextChordSuggestionsFromSequence(["C"], "C Major", { profile: "triad" }).slice(0, 5);
+        const afterAm = getNextChordSuggestionsFromSequence(["Am"], "C Major", { profile: "triad" }).slice(0, 5);
 
         expect(afterC).not.toEqual(afterAm);
     });
@@ -92,8 +92,34 @@ describe("sequence-based chord suggestions", () => {
 
     it("triad profile keeps minor quality for i6 suggestions", () => {
         const suggestions = getNextChordSuggestionsFromSequence(["E7"], "A Minor", { profile: "triad", useSpice: true });
-        const i6 = suggestions.find((s) => s.roman === "i6");
-        expect(i6).toBeDefined();
-        expect(i6?.chord).toBe("Am");
+        const tonic = suggestions.find((s) => s.roman === "i");
+        expect(tonic).toBeDefined();
+        expect(tonic?.chord).toBe("Am");
+    });
+
+    it("uses the same base transition logic for G, G7, G9 and G13 in C major", () => {
+        const fromTriad = getNextChordSuggestionsFromSequence(["G"], "C Major", { profile: "triad" }).map((s) => s.roman);
+        const from7 = getNextChordSuggestionsFromSequence(["G7"], "C Major", { profile: "triad" }).map((s) => s.roman);
+        const from9 = getNextChordSuggestionsFromSequence(["G9"], "C Major", { profile: "triad" }).map((s) => s.roman);
+        const from13 = getNextChordSuggestionsFromSequence(["G13"], "C Major", { profile: "triad" }).map((s) => s.roman);
+
+        expect(from7).toEqual(fromTriad);
+        expect(from9).toEqual(fromTriad);
+        expect(from13).toEqual(fromTriad);
+    });
+
+    it("jazz profile exposes dominant variants after tonic in C major", () => {
+        const suggestions = getNextChordSuggestionsFromSequence(["C"], "C Major", { profile: "jazz", useSpice: true });
+        const dominant = suggestions.find((s) => s.roman === "V");
+
+        expect(dominant?.chord).toBe("G7");
+        expect(dominant?.variants).toContain("G9");
+        expect(dominant?.variants).toContain("G13");
+    });
+
+    it("handles extended slash chords as inversion when bass is a chord tone", () => {
+        const slash = analyzeSlashChord("G7(b9)/B");
+        expect(slash.type).toBe("inversion");
+        expect(getChordDegree("G7(b9)/B", "C")).toBe("V65");
     });
 });

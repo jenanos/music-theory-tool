@@ -4,15 +4,14 @@ import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import {
     filterProgressions,
-    getAllTags,
     transposeProgression,
-    suggestNextChords,
-    getStartingChords,
+    getNextChordSuggestionsFromSequence,
     romanToChord,
+    toProfileBaseChordSymbol,
+    DEFAULT_CHORD_RICHNESS_PROFILE,
     SCALES,
     TONIC_OPTIONS,
-    type TransposedProgression,
-    type NextChordSuggestion,
+    type ChordRichnessProfile,
     type ModeId,
     findMatchingProgressions,
 } from "@repo/theory";
@@ -135,6 +134,7 @@ export default function ProgressionsPage() {
     const [chordType, setChordType] = useState<"triad" | "seventh" | "all">("all");
     const [selectedTags, setSelectedTags] = useState<string[]>([]);
     const [useSpice, setUseSpice] = useState(false);
+    const [profile, setProfile] = useState<ChordRichnessProfile>(DEFAULT_CHORD_RICHNESS_PROFILE);
 
     // Sequence builder state
     const [sequenceItems, setSequenceItems] = useState<{ id: string; roman: string }[]>([]);
@@ -173,6 +173,13 @@ export default function ProgressionsPage() {
             const matches = findMatchingProgressions(currentSeq, filtered);
             return matches.map(m => ({
                 data: transposeProgression(m.progression, tonic),
+                displayChords: m.progression.roman.map((roman) =>
+                    toProfileBaseChordSymbol(
+                        romanToChord(roman, tonic, m.progression.mode),
+                        profile,
+                        { roman }
+                    )
+                ),
                 matchedIndices: m.matchedIndices
             }));
         }
@@ -180,23 +187,27 @@ export default function ProgressionsPage() {
         // Default behavior if no sequence
         return filtered.map((p) => ({
             data: transposeProgression(p, tonic),
+            displayChords: p.roman.map((roman) =>
+                toProfileBaseChordSymbol(
+                    romanToChord(roman, tonic, p.mode),
+                    profile,
+                    { roman }
+                )
+            ),
             matchedIndices: [] as number[]
         }));
-    }, [tonic, modeId, selectedTags, chordType, sequenceItems]);
+    }, [tonic, modeId, selectedTags, chordType, sequenceItems, profile]);
 
     const sequenceRomans = sequenceItems.map(i => i.roman);
 
     const nextChordSuggestions = useMemo(() => {
-        if (sequenceRomans.length === 0) {
-            return getStartingChords(modeId, tonic, { useSpice });
-        }
-        return suggestNextChords(
-            sequenceRomans,
-            tonic,
-            modeId,
-            { useSpice }
+        const sequenceSymbols = sequenceRomans.map((roman) => romanToChord(roman, tonic, modeId));
+        return getNextChordSuggestionsFromSequence(
+            sequenceSymbols,
+            `${tonic} ${modeId}`,
+            { useSpice, profile }
         );
-    }, [sequenceRomans, tonic, modeId, useSpice]);
+    }, [sequenceRomans, tonic, modeId, useSpice, profile]);
 
     // Handlers
     const toggleTag = (tag: string) => {
@@ -329,12 +340,24 @@ export default function ProgressionsPage() {
                             <label className="text-[10px] uppercase font-bold text-muted-foreground mb-0.5">Akkordtype</label>
                             <select
                                 className="rounded-md border border-border bg-muted px-3 py-1.5 text-sm font-medium focus:ring-2 focus:ring-primary"
-                                onChange={(e) => setChordType(e.target.value as any)}
+                                onChange={(e) => setChordType(e.target.value as "triad" | "seventh" | "all")}
                                 value={chordType}
                             >
                                 <option value="all">Alle</option>
                                 <option value="triad">Triader</option>
                                 <option value="seventh">Septim</option>
+                            </select>
+                        </div>
+                        <div className="flex flex-col">
+                            <label className="text-[10px] uppercase font-bold text-muted-foreground mb-0.5">Profil</label>
+                            <select
+                                className="rounded-md border border-border bg-muted px-3 py-1.5 text-sm font-medium focus:ring-2 focus:ring-primary"
+                                onChange={(e) => setProfile(e.target.value as ChordRichnessProfile)}
+                                value={profile}
+                            >
+                                <option value="triad">Triad</option>
+                                <option value="seventh">Seventh</option>
+                                <option value="jazz">Jazz</option>
                             </select>
                         </div>
                     </div>
@@ -430,7 +453,7 @@ export default function ProgressionsPage() {
                                     </div>
 
                                     <div className="flex flex-wrap gap-1.5 mb-2">
-                                        {prog.data.chords.map((c, i) => {
+                                        {prog.displayChords.map((c, i) => {
                                             const isMatched = prog.matchedIndices.includes(i);
                                             return (
                                                 <div
@@ -525,7 +548,11 @@ export default function ProgressionsPage() {
                                                         <SortableChordItem
                                                             id={item.id}
                                                             roman={item.roman}
-                                                            chordSymbol={romanToChord(item.roman, tonic, modeId)}
+                                                            chordSymbol={toProfileBaseChordSymbol(
+                                                                romanToChord(item.roman, tonic, modeId),
+                                                                profile,
+                                                                { roman: item.roman }
+                                                            )}
                                                         />
                                                         <button
                                                             onClick={() => removeSequenceItem(item.id)}
@@ -575,6 +602,11 @@ export default function ProgressionsPage() {
                                         {s.secondaryLabel && (
                                             <span className="mt-1 text-[9px] text-muted-foreground group-hover:text-foreground italic block leading-none">
                                                 {s.secondaryLabel}
+                                            </span>
+                                        )}
+                                        {s.variants && s.variants.length > 0 && (
+                                            <span className="mt-1 text-[9px] text-muted-foreground leading-tight">
+                                                {s.variants.slice(0, 3).join(" · ")}
                                             </span>
                                         )}
                                     </button>

@@ -102,6 +102,11 @@ export function SubstitutionPanel({ substitutions, onSelect }: SubstitutionPanel
                       {item.tags.join(" · ")}
                     </p>
                   )}
+                  {item.variants && item.variants.length > 0 && (
+                    <p className="text-xs">
+                      Varianter: {item.variants.map((variant) => variant.symbol).join(" · ")}
+                    </p>
+                  )}
                 </div>
               </div>
 

@@ -1,5 +1,13 @@
 import { FUNCTION_GROUPS } from "./data";
-import { DiatonicChord, ModeId, SubstitutionSuggestion } from "./types";
+import {
+    DEFAULT_CHORD_RICHNESS_PROFILE,
+    generateChordVariants,
+    getChordCorePitchClasses,
+    normalizeChordSymbol,
+    parseChordSymbol,
+    toProfileBaseChordSymbol,
+} from "./chord_richness";
+import type { ChordRichnessProfile, DiatonicChord, ModeId, SubstitutionSuggestion } from "./types";
 import { noteName, parseNoteName, prefersFlatsForKey } from "./utils";
 
 type SubstitutionCategory = SubstitutionSuggestion["category"];
@@ -43,7 +51,7 @@ const CATEGORY_ORDER: Record<SubstitutionCategory, number> = {
 };
 
 function normalizeSymbol(symbol: string): string {
-    return symbol.trim().replace(/\s+/g, "");
+    return normalizeChordSymbol(symbol);
 }
 
 function parseRoot(symbol: string): { root: string; rootPc: number } | null {
@@ -60,45 +68,16 @@ function parseRoot(symbol: string): { root: string; rootPc: number } | null {
 
 function parseChord(symbol: string): ParsedChord | null {
     const normalized = normalizeSymbol(symbol);
-    const upper = normalized.split("/")[0] ?? normalized;
-    const rootInfo = parseRoot(upper);
-    if (!rootInfo) return null;
-
-    const body = upper.replace(/^([A-Ga-g][b#]?)/, "");
-    const lower = body.toLowerCase();
-
-    let intervals = [0, 4, 7];
-    let isSeventhChord = false;
-
-    if (lower.includes("m7b5") || lower.includes("ø")) {
-        intervals = [0, 3, 6, 10];
-        isSeventhChord = true;
-    } else if (lower.includes("dim7") || lower.includes("°7")) {
-        intervals = [0, 3, 6, 9];
-        isSeventhChord = true;
-    } else if (lower.includes("dim") || lower.includes("°")) {
-        intervals = [0, 3, 6];
-    } else if (lower.startsWith("m") && !lower.startsWith("maj")) {
-        intervals = [0, 3, 7];
-        if (lower.includes("7") || lower.includes("9") || lower.includes("11") || lower.includes("13")) {
-            intervals = [0, 3, 7, 10];
-            isSeventhChord = true;
-        }
-    } else if (lower.includes("maj7")) {
-        intervals = [0, 4, 7, 11];
-        isSeventhChord = true;
-    } else if (lower.includes("7") || lower.includes("9") || lower.includes("11") || lower.includes("13")) {
-        intervals = [0, 4, 7, 10];
-        isSeventhChord = true;
-    }
+    const parsed = parseChordSymbol(normalized);
+    if (!parsed) return null;
 
     return {
         symbol: normalized,
-        root: rootInfo.root,
-        rootPc: rootInfo.rootPc,
-        body,
-        tones: intervals.map((i) => (rootInfo.rootPc + i) % 12),
-        isSeventhChord,
+        root: parsed.root,
+        rootPc: parsed.rootPc,
+        body: parsed.body,
+        tones: getChordCorePitchClasses(parsed),
+        isSeventhChord: parsed.seventhType !== "none",
     };
 }
 
@@ -302,6 +281,7 @@ export function suggestSubstitutions(
         preserveBass?: boolean;
         includeSpice?: boolean;
         includeApproach?: boolean;
+        profile?: ChordRichnessProfile;
     },
 ): SubstitutionSuggestion[] {
     const {
@@ -313,6 +293,7 @@ export function suggestSubstitutions(
         sourceSymbol,
         preserveBass = false,
         includeSpice = true,
+        profile = DEFAULT_CHORD_RICHNESS_PROFILE,
     } = context;
 
     const includeApproach = context.includeApproach ?? Boolean(nextChord);
@@ -323,6 +304,7 @@ export function suggestSubstitutions(
     const sourceParsed = parseChord(sourceSymbol ?? chord.symbol);
     const sourceTones = sourceParsed?.tones ?? chord.tones;
     const sourceDisplaySymbol = normalizeSymbol(sourceSymbol ?? chord.symbol);
+    const sourceProfileSymbol = toProfileBaseChordSymbol(sourceDisplaySymbol, profile, { roman: chord.roman });
     const slash = analyzeSlash(sourceDisplaySymbol);
 
     const functionGroup = getFunctionGroup(mode, chord.degree);
@@ -380,21 +362,15 @@ export function suggestSubstitutions(
 
     // === BASIC: richer versions of same harmony ===
     const rootName = noteName(rootPc, useFlats);
-    const sourceLower = (sourceSymbol ?? chord.symbol).toLowerCase();
-    const sameChordVariants = new Set<string>();
-
-    if (sourceLower.includes("m") && !sourceLower.includes("maj")) {
-        sameChordVariants.add(`${rootName}m7`);
-        sameChordVariants.add(`${rootName}m9`);
-    } else if (sourceLower.includes("7") || functionGroup === "dominant") {
-        sameChordVariants.add(`${rootName}7`);
-        sameChordVariants.add(`${rootName}9`);
-        sameChordVariants.add(`${rootName}13`);
-    } else {
-        sameChordVariants.add(`${rootName}maj7`);
-        sameChordVariants.add(`${rootName}6`);
-        sameChordVariants.add(`${rootName}add9`);
-    }
+    const sameChordVariants = new Set(
+        generateChordVariants({
+            baseSymbol: sourceProfileSymbol,
+            profile,
+            roman: chord.roman,
+            useSpice: includeSpice,
+            maxVariants: 6,
+        }).map((variant) => variant.symbol)
+    );
 
     const thirdPc = chord.tones[1];
     if (thirdPc !== undefined) {
@@ -402,7 +378,7 @@ export function suggestSubstitutions(
     }
 
     for (const variant of sameChordVariants) {
-        if (normalizeSymbol(variant) === sourceDisplaySymbol) continue;
+        if (normalizeSymbol(variant) === normalizeSymbol(sourceProfileSymbol)) continue;
 
         addSuggestion(drafts, {
             symbol: variant,
@@ -616,15 +592,50 @@ export function suggestSubstitutions(
         }
     }
 
-    const suggestions: SubstitutionSuggestion[] = Array.from(drafts.values())
+    const profiledDrafts = new Map<string, SuggestionDraft>();
+    for (const draft of drafts.values()) {
+        const profiledSymbol = toProfileBaseChordSymbol(draft.symbol, profile, { roman: draft.roman });
+        const normalizedSymbol = normalizeSymbol(profiledSymbol);
+        const key = `${draft.category}:${normalizedSymbol}`;
+        const sharedTones = inferSharedTones(profiledSymbol, sourceTones);
+
+        const existing = profiledDrafts.get(key);
+        if (!existing) {
+            profiledDrafts.set(key, {
+                ...draft,
+                symbol: profiledSymbol,
+                sharedTones,
+            });
+            continue;
+        }
+
+        for (const tag of draft.tags) {
+            existing.tags.add(tag);
+        }
+        if (draft.roman && !existing.roman) {
+            existing.roman = draft.roman;
+        }
+        existing.score = Math.max(existing.score, draft.score);
+        existing.sharedTones = Math.max(existing.sharedTones, sharedTones);
+        existing.requiresContext = existing.requiresContext || draft.requiresContext;
+    }
+
+    const suggestions: SubstitutionSuggestion[] = Array.from(profiledDrafts.values())
         .map((draft) => {
             const tags = Array.from(draft.tags);
             tags.sort((a, b) => a.localeCompare(b));
 
             const requiresContext = draft.category === "approach" || draft.requiresContext;
+            const variants = generateChordVariants({
+                baseSymbol: draft.symbol,
+                profile,
+                roman: draft.roman,
+                useSpice: includeSpice,
+                maxVariants: 4,
+            });
 
             return {
-                targetSymbol: sourceDisplaySymbol,
+                targetSymbol: sourceProfileSymbol,
                 substituteSymbol: draft.symbol,
                 symbol: draft.symbol,
                 roman: draft.roman,
@@ -635,6 +646,7 @@ export function suggestSubstitutions(
                 score: draft.score,
                 sharedTones: draft.sharedTones,
                 requirements: requiresContext ? ["next chord context"] : [],
+                variants: variants.length > 0 ? variants : undefined,
             };
         })
         .sort((a, b) => {

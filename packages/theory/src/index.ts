@@ -4,6 +4,7 @@ export * from "./data";
 export * from "./utils";
 export * from "./types";
 export * from "./scales";
+export * from "./chord_richness";
 
 import {
   noteName,

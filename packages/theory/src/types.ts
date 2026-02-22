@@ -11,6 +11,31 @@ export type ModeId =
 
 export type ChordQuality = "major" | "minor" | "diminished" | "augmented" | "half-diminished";
 
+export type ChordRichnessProfile = "triad" | "seventh" | "jazz";
+
+export type ChordBaseQuality = "major" | "minor" | "diminished" | "half-diminished" | "suspended";
+
+export type ChordSeventhType = "none" | "7" | "maj7" | "ø7" | "°7";
+
+export type ChordExtensionToken =
+    | "6"
+    | "add9"
+    | "9"
+    | "11"
+    | "13"
+    | "sus2"
+    | "sus4"
+    | "b9"
+    | "#9"
+    | "#11"
+    | "b13";
+
+export interface ChordVariantOption {
+    symbol: string;
+    score: number;
+    family: string;
+}
+
 export type HarmonicFunction = "tonic" | "predominant" | "dominant" | "subdominant" | "variable";
 
 export interface DiatonicChord {
@@ -39,6 +64,7 @@ export interface SubstitutionSuggestion {
     score: number;
     sharedTones: number;
     requirements?: string[];
+    variants?: ChordVariantOption[];
 }
 
 export type SlashChordType = "none" | "inversion" | "non_chord_bass";

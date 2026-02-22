@@ -6,6 +6,7 @@ import {
     getStartingChords,
     getAllTags,
     findMatchingProgressions,
+    normalizeRomanForTransition,
     CHORD_PROGRESSIONS,
     romanToChord,
 } from "../src/progressions";
@@ -113,6 +114,20 @@ describe("chord progressions", () => {
         });
     });
 
+    describe("roman normalization", () => {
+        it.each([
+            { input: "V", expected: "V" },
+            { input: "V7", expected: "V" },
+            { input: "V13", expected: "V" },
+            { input: "V65", expected: "V" },
+            { input: "Imaj7", expected: "I" },
+            { input: "iiø7", expected: "iiø" },
+            { input: "vii°7/V", expected: "vii°/V" },
+        ])("normalizes $input -> $expected", ({ input, expected }) => {
+            expect(normalizeRomanForTransition(input)).toBe(expected);
+        });
+    });
+
     describe("suggestNextChords", () => {
         it("returns suggestions after I", () => {
             const suggestions = suggestNextChords(["I"], "C");
@@ -147,6 +162,15 @@ describe("chord progressions", () => {
             const first = suggestNextChords(["I", "V"], "C", "ionian", { useSpice: true });
             const second = suggestNextChords(["I", "V"], "C", "ionian", { useSpice: true });
             expect(second).toEqual(first);
+        });
+
+        it("treats V, V7 and V13 as the same transition state", () => {
+            const fromV = suggestNextChords(["V"], "C", "ionian", { useSpice: true }).map((entry) => entry.roman);
+            const fromV7 = suggestNextChords(["V7"], "C", "ionian", { useSpice: true }).map((entry) => entry.roman);
+            const fromV13 = suggestNextChords(["V13"], "C", "ionian", { useSpice: true }).map((entry) => entry.roman);
+
+            expect(fromV7).toEqual(fromV);
+            expect(fromV13).toEqual(fromV);
         });
     });
 

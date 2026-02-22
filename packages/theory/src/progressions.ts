@@ -1209,7 +1209,7 @@ function parseRomanNumeral(roman: string): {
     extension: string;
 } {
     const match = roman.match(
-        /^([b#]?)([iIvV]+|[iI]{1,3}|[vV]{1,3})([°øø+]?)(maj7|7|6)?$/
+        /^([b#]?)([iIvV]+|[iI]{1,3}|[vV]{1,3})([°ø+]?)(maj13|maj11|maj9|maj7|13|11|9|7|6)?$/
     );
 
     if (!match) {
@@ -1246,6 +1246,34 @@ function parseRomanNumeral(roman: string): {
     if (qualityMark === "+") quality = "augmented";
 
     return { degree, quality, accidental, extension };
+}
+
+function normalizeRomanSegmentForTransition(segment: string): string {
+    if (!segment) return segment;
+
+    const withoutInversion = segment.replace(/(65|64|43|42)$/i, "");
+    return withoutInversion
+        .replace(/ø7$/i, "ø")
+        .replace(/°7$/i, "°")
+        .replace(/maj(?:13|11|9|7)$/i, "")
+        .replace(/(?:13|11|9|7|6)$/i, "");
+}
+
+/**
+ * Normalize roman numerals so the progression engine works on base-harmony level.
+ * Example: V, V7, V9, V13 and V65 all normalize to V.
+ */
+export function normalizeRomanForTransition(roman: string): string {
+    const trimmed = roman.trim();
+    if (!trimmed) return trimmed;
+
+    const [head, ...tail] = trimmed.split("/");
+    const normalizedHead = normalizeRomanSegmentForTransition(head ?? "");
+
+    if (tail.length === 0) return normalizedHead;
+
+    const normalizedTail = tail.map((segment) => normalizeRomanSegmentForTransition(segment));
+    return [normalizedHead, ...normalizedTail].join("/");
 }
 
 /**
@@ -1391,8 +1419,9 @@ function buildTransitionMap(): Map<string, Map<string, { count: number; progress
 
     for (const prog of CHORD_PROGRESSIONS) {
         for (let i = 0; i < prog.roman.length - 1; i++) {
-            const from = prog.roman[i]!;
-            const to = prog.roman[i + 1]!;
+            const from = normalizeRomanForTransition(prog.roman[i] ?? "");
+            const to = normalizeRomanForTransition(prog.roman[i + 1] ?? "");
+            if (!from || !to) continue;
 
             if (!transitions.has(from)) {
                 transitions.set(from, new Map());
@@ -1469,7 +1498,8 @@ export function suggestNextChords(
     }
 
     // Get the last chord in the sequence
-    const lastChord = partialSequence[partialSequence.length - 1]!;
+    const lastChord = normalizeRomanForTransition(partialSequence[partialSequence.length - 1] ?? "");
+    if (!lastChord) return [];
 
     // Look up transitions from this chord
     const fromMap = transitionMap.get(lastChord);
@@ -1493,7 +1523,7 @@ export function suggestNextChords(
 
     // Ensure Signature Chords are present even if not in transition map
     // (If the user just started or data is sparse)
-    const signatures = MODAL_SIGNATURES[mode] || [];
+    const signatures = (MODAL_SIGNATURES[mode] || []).map((roman) => normalizeRomanForTransition(roman));
     for (const sig of signatures) {
         if (!seenRomans.has(sig)) {
             suggestions.push({
@@ -1508,7 +1538,9 @@ export function suggestNextChords(
     }
 
     // Also ensure Tonic is present (Back to Home)
-    const tonicRoman = (mode === "ionian" || mode === "lydian" || mode === "mixolydian") ? "I" : "i";
+    const tonicRoman = normalizeRomanForTransition(
+        (mode === "ionian" || mode === "lydian" || mode === "mixolydian") ? "I" : "i"
+    );
     if (!seenRomans.has(tonicRoman)) {
         suggestions.push({
             roman: tonicRoman,
@@ -1551,7 +1583,10 @@ export function suggestNextChords(
     });
 
     // Sort by frequency
-    return processed.sort((a, b) => b.frequency - a.frequency);
+    return processed.sort((a, b) => {
+        if (b.frequency !== a.frequency) return b.frequency - a.frequency;
+        return a.roman.localeCompare(b.roman);
+    });
 }
 
 /**
@@ -1577,7 +1612,7 @@ export function getStartingChords(
             (mode === "minor" && prog.mode === "aeolian");
 
         if (progModeIsCompatible) {
-            const first = prog.roman[0];
+            const first = normalizeRomanForTransition(prog.roman[0] ?? "");
             if (first) {
                 starters.set(first, (starters.get(first) || 0) + prog.weight);
             }
@@ -1585,10 +1620,12 @@ export function getStartingChords(
     }
 
     // 2. Ensure Tonic and Signatures are present
-    const tonicRoman = (actualMode === "ionian" || actualMode === "lydian" || actualMode === "mixolydian") ? "I" : "i";
+    const tonicRoman = normalizeRomanForTransition(
+        (actualMode === "ionian" || actualMode === "lydian" || actualMode === "mixolydian") ? "I" : "i"
+    );
     if (!starters.has(tonicRoman)) starters.set(tonicRoman, 10);
 
-    const signatures = MODAL_SIGNATURES[actualMode] || [];
+    const signatures = (MODAL_SIGNATURES[actualMode] || []).map((roman) => normalizeRomanForTransition(roman));
     for (const sig of signatures) {
         if (!starters.has(sig)) starters.set(sig, 5); // Decent weight
     }
@@ -1610,7 +1647,10 @@ export function getStartingChords(
         });
     }
 
-    return results.sort((a, b) => b.frequency - a.frequency);
+    return results.sort((a, b) => {
+        if (b.frequency !== a.frequency) return b.frequency - a.frequency;
+        return a.roman.localeCompare(b.roman);
+    });
 }
 
 /**
@@ -1680,4 +1720,3 @@ export function findMatchingProgressions(
         return b.progression.weight - a.progression.weight;
     });
 }
-

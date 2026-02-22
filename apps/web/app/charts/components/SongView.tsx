@@ -1,7 +1,7 @@
 
 "use client";
 
-import { useState, useCallback, useMemo, useEffect } from "react";
+import { useState, useCallback, useEffect } from "react";
 import { Song, Section } from "../data";
 import { Timeline } from "./Timeline";
 import { SectionList } from "./SectionList";
@@ -10,8 +10,10 @@ import {
     buildDiatonicChords,
     getChordDegree,
     parseKey,
+    DEFAULT_CHORD_RICHNESS_PROFILE,
     type SubstitutionSuggestion,
-    type DiatonicChord
+    type DiatonicChord,
+    type ChordRichnessProfile,
 } from "@repo/theory";
 import { SubstitutionPanel } from "../../components/SubstitutionPanel";
 
@@ -53,12 +55,12 @@ export function SongView({ song, onChange }: SongViewProps) {
         [song, onChange]
     );
 
-    const updateSection = (id: string, updates: Partial<Section>) => {
+    const updateSection = useCallback((id: string, updates: Partial<Section>) => {
         const newSections = song.sections.map((s) =>
             s.id === id ? { ...s, ...updates } : s
         );
         onChange({ ...song, sections: newSections });
-    };
+    }, [song, onChange]);
 
     const addSection = () => {
         const id = `section-${Date.now()}`;
@@ -104,6 +106,7 @@ export function SongView({ song, onChange }: SongViewProps) {
 
     const [showUniqueSections, setShowUniqueSections] = useState(true);
     const [showNotes, setShowNotes] = useState(false);
+    const [richnessProfile, setRichnessProfile] = useState<ChordRichnessProfile>(DEFAULT_CHORD_RICHNESS_PROFILE);
 
     // Version history state
     const [showOriginal, setShowOriginal] = useState(false);
@@ -222,6 +225,7 @@ export function SongView({ song, onChange }: SongViewProps) {
                 preserveBass: true,
                 includeApproach: Boolean(nextChord),
                 includeSpice: true,
+                profile: richnessProfile,
             });
             setSelectedChord({
                 symbol: chordSymbol,
@@ -240,11 +244,11 @@ export function SongView({ song, onChange }: SongViewProps) {
                 suggestions: []
             });
         }
-    }, [song.key, song.sections]);
+    }, [song.key, song.sections, richnessProfile]);
 
     const handleApplySubstitution = useCallback((substitution: SubstitutionSuggestion) => {
         if (!selectedChord) return;
-        const { sectionId, lineIndex, chordIndex, symbol } = selectedChord;
+        const { sectionId, lineIndex, chordIndex } = selectedChord;
 
         const section = song.sections.find(s => s.id === sectionId);
         if (!section) return;
@@ -373,6 +377,19 @@ export function SongView({ song, onChange }: SongViewProps) {
                         <span className="text-xs text-muted-foreground/60">
                             {displaySong.key ? `Key: ${displaySong.key}` : "No key"}
                         </span>
+
+                        <div className="flex items-center gap-2">
+                            <span className="text-xs text-muted-foreground/70">Profil</span>
+                            <select
+                                value={richnessProfile}
+                                onChange={(e) => setRichnessProfile(e.target.value as ChordRichnessProfile)}
+                                className="rounded border border-border bg-background px-2 py-1 text-xs text-foreground focus:border-primary focus:outline-none"
+                            >
+                                <option value="triad">Triad</option>
+                                <option value="seventh">Seventh</option>
+                                <option value="jazz">Jazz</option>
+                            </select>
+                        </div>
 
                         {/* Info / Notes Toggle */}
                         {displaySong.notes && (

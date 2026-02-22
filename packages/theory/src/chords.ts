@@ -2,122 +2,67 @@
 import { getScale } from "./index";
 import {
     getStartingChords,
+    normalizeRomanForTransition,
     suggestNextChords,
     type NextChordSuggestion,
 } from "./progressions";
-import { parseKey, parseNoteName } from "./utils";
-import type { SlashChordAnalysis } from "./types";
+import {
+    DEFAULT_CHORD_RICHNESS_PROFILE,
+    generateChordVariants,
+    getChordCorePitchClasses,
+    inferProfileFromSequence,
+    normalizeChordSymbol,
+    parseChordSymbol,
+    toProfileBaseChordSymbol,
+} from "./chord_richness";
+import { parseKey } from "./utils";
+import type { ChordRichnessProfile, ChordVariantOption, SlashChordAnalysis } from "./types";
 
 const LETTERS = ["C", "D", "E", "F", "G", "A", "B"] as const;
 const ROMANS = ["I", "II", "III", "IV", "V", "VI", "VII"] as const;
-
-type SuggestionProfile = "triad" | "seventh" | "jazz";
 
 export interface SequenceSuggestion {
     roman: string;
     chord: string;
     variants?: string[];
+    variantOptions?: ChordVariantOption[];
+    profile: ChordRichnessProfile;
     frequency: number;
     isDiatonic: boolean;
     secondaryLabel?: string;
 }
 
 function parseChordRoot(chordSymbol: string): { root: string; letter: string; rootPc: number } | null {
-    const rootMatch = chordSymbol.trim().match(/^([A-Ga-g])([b#]?)/);
-    if (!rootMatch) return null;
-
-    const letter = rootMatch[1]!.toUpperCase();
-    const accidental = rootMatch[2] ?? "";
-    const root = `${letter}${accidental}`;
-
-    try {
-        return { root, letter, rootPc: parseNoteName(root) };
-    } catch {
-        return null;
-    }
-}
-
-function detectChordQualityFromBody(body: string): "major" | "minor" | "diminished" | "half-diminished" {
-    const lower = body.toLowerCase();
-
-    if (lower.includes("m7b5") || lower.includes("ø")) {
-        return "half-diminished";
-    }
-    if (lower.includes("dim") || lower.includes("°")) {
-        return "diminished";
-    }
-    if (lower.startsWith("m") && !lower.startsWith("maj")) {
-        return "minor";
-    }
-
-    return "major";
+    const parsed = parseChordSymbol(chordSymbol);
+    if (!parsed) return null;
+    return { root: parsed.root, letter: parsed.letter, rootPc: parsed.rootPc };
 }
 
 function detectChordQuality(chordSymbol: string): "major" | "minor" | "diminished" | "half-diminished" {
-    const cleaned = chordSymbol.trim().split("/")[0] ?? chordSymbol;
-    const body = cleaned.replace(/^([A-Ga-g][b#]?)/, "");
-    return detectChordQualityFromBody(body);
+    const parsed = parseChordSymbol(chordSymbol);
+    if (!parsed) return "major";
+
+    if (parsed.baseQuality === "minor") return "minor";
+    if (parsed.baseQuality === "diminished") return "diminished";
+    if (parsed.baseQuality === "half-diminished") return "half-diminished";
+    return "major";
 }
 
 function detectExtension(chordSymbol: string): "maj7" | "7" | "none" {
-    const cleaned = chordSymbol.trim().split("/")[0] ?? chordSymbol;
-    const body = cleaned.replace(/^([A-Ga-g][b#]?)/, "");
-    const lower = body.toLowerCase();
-    if (lower.includes("maj7")) return "maj7";
-    if (
-        lower.includes("°7")
-        || lower.includes("m7")
-        || lower.includes("7")
-        || lower.includes("9")
-        || lower.includes("11")
-        || lower.includes("13")
-    ) {
-        return "7";
-    }
+    const parsed = parseChordSymbol(chordSymbol);
+    if (!parsed) return "none";
+    if (parsed.seventhType === "maj7") return "maj7";
+    if (parsed.seventhType === "7" || parsed.seventhType === "ø7" || parsed.seventhType === "°7") return "7";
     return "none";
 }
 
 function detectChordTones(chordSymbol: string): { tones: number[]; isSeventhChord: boolean } | null {
-    const cleaned = chordSymbol.trim().split("/")[0] ?? chordSymbol;
-    const rootInfo = parseChordRoot(cleaned);
-    if (!rootInfo) return null;
-
-    const body = cleaned.replace(/^([A-Ga-g][b#]?)/, "");
-    const lower = body.toLowerCase();
-    const quality = detectChordQualityFromBody(body);
-
-    let intervals = [0, 4, 7];
-    let isSeventhChord = false;
-
-    if (quality === "half-diminished") {
-        intervals = [0, 3, 6, 10];
-        isSeventhChord = true;
-    } else if (quality === "diminished") {
-        if (lower.includes("dim7") || lower.includes("°7")) {
-            intervals = [0, 3, 6, 9];
-            isSeventhChord = true;
-        } else {
-            intervals = [0, 3, 6];
-        }
-    } else if (quality === "minor") {
-        intervals = [0, 3, 7];
-        if (detectExtension(cleaned) !== "none") {
-            intervals = [0, 3, 7, 10];
-            isSeventhChord = true;
-        }
-    } else {
-        if (lower.includes("maj7")) {
-            intervals = [0, 4, 7, 11];
-            isSeventhChord = true;
-        } else if (detectExtension(cleaned) === "7") {
-            intervals = [0, 4, 7, 10];
-            isSeventhChord = true;
-        }
-    }
+    const parsed = parseChordSymbol(chordSymbol);
+    if (!parsed) return null;
 
     return {
-        tones: intervals.map((interval) => (rootInfo.rootPc + interval) % 12),
-        isSeventhChord,
+        tones: getChordCorePitchClasses(parsed),
+        isSeventhChord: parsed.seventhType !== "none",
     };
 }
 
@@ -132,17 +77,17 @@ function getInversionFigure(index: number, isSeventhChord: boolean): string {
 }
 
 export function analyzeSlashChord(chordSymbol: string): SlashChordAnalysis {
-    const trimmed = chordSymbol.trim();
-    const slashIndex = trimmed.indexOf("/");
-    const upperStructure = slashIndex >= 0 ? trimmed.slice(0, slashIndex).trim() : trimmed;
-    const bassPart = slashIndex >= 0 ? trimmed.slice(slashIndex + 1).trim() : undefined;
+    const normalized = normalizeChordSymbol(chordSymbol);
+    const slashIndex = normalized.indexOf("/");
+    const upperStructure = slashIndex >= 0 ? normalized.slice(0, slashIndex).trim() : normalized;
+    const bassPart = slashIndex >= 0 ? normalized.slice(slashIndex + 1).trim() : undefined;
 
     const toneInfo = detectChordTones(upperStructure);
     const rootInfo = parseChordRoot(upperStructure);
     if (!toneInfo || !rootInfo) {
         return {
             type: "none",
-            chordSymbol: trimmed,
+            chordSymbol: normalized,
             upperStructure,
             bassSymbol: bassPart,
             chordTones: [],
@@ -153,7 +98,7 @@ export function analyzeSlashChord(chordSymbol: string): SlashChordAnalysis {
     if (!bassPart) {
         return {
             type: "none",
-            chordSymbol: trimmed,
+            chordSymbol: normalized,
             upperStructure,
             rootPc: rootInfo.rootPc,
             chordTones: toneInfo.tones,
@@ -165,7 +110,7 @@ export function analyzeSlashChord(chordSymbol: string): SlashChordAnalysis {
     if (!bassInfo) {
         return {
             type: "none",
-            chordSymbol: trimmed,
+            chordSymbol: normalized,
             upperStructure,
             rootPc: rootInfo.rootPc,
             chordTones: toneInfo.tones,
@@ -177,7 +122,7 @@ export function analyzeSlashChord(chordSymbol: string): SlashChordAnalysis {
     if (inversionIndex >= 0 && inversionIndex <= (toneInfo.isSeventhChord ? 3 : 2)) {
         return {
             type: "inversion",
-            chordSymbol: trimmed,
+            chordSymbol: normalized,
             upperStructure,
             bassSymbol: bassInfo.root,
             rootPc: rootInfo.rootPc,
@@ -190,7 +135,7 @@ export function analyzeSlashChord(chordSymbol: string): SlashChordAnalysis {
 
     return {
         type: "non_chord_bass",
-        chordSymbol: trimmed,
+        chordSymbol: normalized,
         upperStructure,
         bassSymbol: bassInfo.root,
         rootPc: rootInfo.rootPc,
@@ -208,54 +153,6 @@ function accidentalFromPcDifference(diff: number): string | null {
     if (normalized === 11) return "b";
     if (normalized === 10) return "bb";
     return null;
-}
-
-function toProfileChord(chord: string, profile: SuggestionProfile): string {
-    if (profile === "jazz") return chord;
-    const rootMatch = chord.match(/^([A-G][b#]?)/);
-    if (!rootMatch) return chord;
-    const root = rootMatch[1]!;
-    const body = chord.slice(root.length);
-    const lowerBody = body.toLowerCase();
-
-    if (profile === "triad") {
-        if (lowerBody.includes("m7b5")) return `${root}dim`;
-        if (lowerBody.includes("dim7")) return `${root}dim`;
-        if (lowerBody.includes("maj7")) return root;
-        if (lowerBody.startsWith("m") && !lowerBody.startsWith("maj")) return `${root}m`;
-        if (/(^|[^a-z])7(?![0-9])/i.test(body) || lowerBody.endsWith("7")) return root;
-        return chord.replace(/(maj|m)?(6|7|9|11|13).*$/i, "").trim() || chord;
-    }
-
-    if (lowerBody.includes("m7b5")) return `${root}m7b5`;
-    if (lowerBody.includes("dim")) return `${root}dim7`;
-    if (lowerBody.includes("maj7")) return `${root}maj7`;
-    if (lowerBody.startsWith("m") && !lowerBody.startsWith("maj")) return `${root}m7`;
-    if (/(^|[^a-z])7(?![0-9])/i.test(body) || lowerBody.endsWith("7")) return `${root}7`;
-    return `${root}maj7`;
-}
-
-function buildJazzVariants(chord: string, useSpice: boolean): string[] {
-    const rootMatch = chord.match(/^([A-G][b#]?)/);
-    if (!rootMatch) return [];
-    const root = rootMatch[1]!;
-    const lower = chord.toLowerCase();
-
-    if (lower.includes("maj7")) {
-        return [`${root}maj9`];
-    }
-    if (lower.includes("m7") && !lower.includes("m7b5")) {
-        return [`${root}m9`, `${root}m11`];
-    }
-    if (lower.includes("7")) {
-        const variants = [`${root}9`, `${root}13`];
-        if (useSpice) {
-            variants.push(`${root}7b9`, `${root}7#9`);
-        }
-        return variants;
-    }
-
-    return [];
 }
 
 /**
@@ -339,7 +236,7 @@ export function getChordSuggestions(currentChord: string, key: string): string[]
     const result = getNextChordSuggestionsFromSequence(
         currentChord ? [currentChord] : [],
         key,
-        { profile: "seventh" }
+        { profile: DEFAULT_CHORD_RICHNESS_PROFILE }
     );
     return result.map((s) => s.chord);
 }
@@ -347,33 +244,42 @@ export function getChordSuggestions(currentChord: string, key: string): string[]
 export function getNextChordSuggestionsFromSequence(
     sequence: string[],
     key: string,
-    options: { useSpice?: boolean; profile?: SuggestionProfile } = {}
+    options: { useSpice?: boolean; profile?: ChordRichnessProfile } = {}
 ): SequenceSuggestion[] {
     const parsed = parseKey(key);
     if (!parsed) return [];
 
     const { tonic, mode } = parsed;
-    const profile = options.profile ?? "seventh";
+    const profile = options.profile ?? inferProfileFromSequence(sequence, DEFAULT_CHORD_RICHNESS_PROFILE);
     const useSpice = options.useSpice ?? false;
 
     const romanSequence = sequence
         .map((symbol) => getChordDegree(symbol, key))
-        .filter((roman): roman is string => Boolean(roman));
+        .filter((roman): roman is string => Boolean(roman))
+        .map((roman) => normalizeRomanForTransition(roman));
 
     const source: NextChordSuggestion[] = romanSequence.length > 0
         ? suggestNextChords(romanSequence, tonic, mode, { useSpice })
         : getStartingChords(mode, tonic, { useSpice });
 
     return source.map((suggestion) => {
-        const baseChord = toProfileChord(suggestion.chord, profile);
-        const variants = profile === "jazz"
-            ? buildJazzVariants(baseChord, useSpice)
-            : [];
+        const baseRoman = normalizeRomanForTransition(suggestion.roman);
+        const baseChord = toProfileBaseChordSymbol(suggestion.chord, profile, { roman: baseRoman });
+        const variantOptions = generateChordVariants({
+            baseSymbol: baseChord,
+            profile,
+            roman: baseRoman,
+            useSpice,
+            maxVariants: 6,
+        });
+        const variants = variantOptions.map((variant) => variant.symbol);
 
         return {
-            roman: suggestion.roman,
+            roman: baseRoman,
             chord: baseChord,
             variants: variants.length > 0 ? variants : undefined,
+            variantOptions: variantOptions.length > 0 ? variantOptions : undefined,
+            profile,
             frequency: suggestion.frequency,
             isDiatonic: suggestion.isDiatonic,
             secondaryLabel: suggestion.secondaryLabel,

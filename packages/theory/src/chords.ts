@@ -1,7 +1,128 @@
 
-import { buildDiatonicChords, getScale, type ModeId, type DiatonicChord } from "./index";
-import { CHORD_PROGRESSIONS } from "./progressions";
-import { parseNoteName } from "./utils";
+import { getScale } from "./index";
+import {
+    getStartingChords,
+    suggestNextChords,
+    type NextChordSuggestion,
+} from "./progressions";
+import { parseKey, parseNoteName } from "./utils";
+
+const LETTERS = ["C", "D", "E", "F", "G", "A", "B"] as const;
+const ROMANS = ["I", "II", "III", "IV", "V", "VI", "VII"] as const;
+
+type SuggestionProfile = "triad" | "seventh" | "jazz";
+
+export interface SequenceSuggestion {
+    roman: string;
+    chord: string;
+    variants?: string[];
+    frequency: number;
+    isDiatonic: boolean;
+    secondaryLabel?: string;
+}
+
+function parseChordRoot(chordSymbol: string): { root: string; letter: string; rootPc: number } | null {
+    const rootMatch = chordSymbol.trim().match(/^([A-Ga-g])([b#]?)/);
+    if (!rootMatch) return null;
+
+    const letter = rootMatch[1]!.toUpperCase();
+    const accidental = rootMatch[2] ?? "";
+    const root = `${letter}${accidental}`;
+
+    try {
+        return { root, letter, rootPc: parseNoteName(root) };
+    } catch {
+        return null;
+    }
+}
+
+function detectChordQuality(chordSymbol: string): "major" | "minor" | "diminished" | "half-diminished" {
+    const cleaned = chordSymbol.trim().split("/")[0] ?? chordSymbol;
+    const body = cleaned.replace(/^([A-Ga-g][b#]?)/, "");
+    const lower = body.toLowerCase();
+
+    if (lower.includes("m7b5") || lower.includes("ø")) {
+        return "half-diminished";
+    }
+    if (lower.includes("dim") || lower.includes("°")) {
+        return "diminished";
+    }
+    if (lower.includes("maj")) {
+        return "major";
+    }
+    if (lower.startsWith("m") && !lower.startsWith("maj")) {
+        return "minor";
+    }
+
+    return "major";
+}
+
+function detectExtension(chordSymbol: string): "maj7" | "7" | "none" {
+    const cleaned = chordSymbol.trim().split("/")[0] ?? chordSymbol;
+    const body = cleaned.replace(/^([A-Ga-g][b#]?)/, "");
+    const lower = body.toLowerCase();
+    if (lower.includes("maj7")) return "maj7";
+    if (lower.includes("7") || lower.includes("9") || lower.includes("11") || lower.includes("13")) return "7";
+    return "none";
+}
+
+function accidentalFromPcDifference(diff: number): string | null {
+    const normalized = ((diff % 12) + 12) % 12;
+    if (normalized === 0) return "";
+    if (normalized === 1) return "#";
+    if (normalized === 2) return "##";
+    if (normalized === 11) return "b";
+    if (normalized === 10) return "bb";
+    return null;
+}
+
+function toProfileChord(chord: string, profile: SuggestionProfile): string {
+    if (profile === "jazz") return chord;
+    const rootMatch = chord.match(/^([A-G][b#]?)/);
+    if (!rootMatch) return chord;
+    const root = rootMatch[1]!;
+    const body = chord.slice(root.length);
+    const lowerBody = body.toLowerCase();
+
+    if (profile === "triad") {
+        if (lowerBody.includes("m7b5")) return `${root}dim`;
+        if (lowerBody.includes("dim7")) return `${root}dim`;
+        if (lowerBody.includes("maj7")) return root;
+        if (lowerBody.startsWith("m") && !lowerBody.startsWith("maj")) return `${root}m`;
+        if (/(^|[^a-z])7(?![0-9])/i.test(body) || lowerBody.endsWith("7")) return root;
+        return chord.replace(/(maj|m)?(6|7|9|11|13).*$/i, "").trim() || chord;
+    }
+
+    if (lowerBody.includes("m7b5")) return `${root}m7b5`;
+    if (lowerBody.includes("dim")) return `${root}dim7`;
+    if (lowerBody.includes("maj7")) return `${root}maj7`;
+    if (lowerBody.startsWith("m") && !lowerBody.startsWith("maj")) return `${root}m7`;
+    if (/(^|[^a-z])7(?![0-9])/i.test(body) || lowerBody.endsWith("7")) return `${root}7`;
+    return `${root}maj7`;
+}
+
+function buildJazzVariants(chord: string, useSpice: boolean): string[] {
+    const rootMatch = chord.match(/^([A-G][b#]?)/);
+    if (!rootMatch) return [];
+    const root = rootMatch[1]!;
+    const lower = chord.toLowerCase();
+
+    if (lower.includes("maj7")) {
+        return [`${root}maj9`];
+    }
+    if (lower.includes("m7") && !lower.includes("m7b5")) {
+        return [`${root}m9`, `${root}m11`];
+    }
+    if (lower.includes("7")) {
+        const variants = [`${root}9`, `${root}13`];
+        if (useSpice) {
+            variants.push(`${root}7b9`, `${root}7#9`);
+        }
+        return variants;
+    }
+
+    return [];
+}
 
 /**
  * Calculates the Roman numeral degree of a chord in a given key.
@@ -12,85 +133,50 @@ import { parseNoteName } from "./utils";
  */
 export function getChordDegree(chordSymbol: string, key: string): string | null {
     if (!key || !chordSymbol) return null;
+    const parsedKey = parseKey(key);
+    if (!parsedKey) return null;
 
-    // Parse key
-    const parts = key.trim().split(/\s+/);
-    if (parts.length === 0) return null;
+    const { tonic, mode } = parsedKey;
+    const slashRoot = chordSymbol.split("/")[0]?.trim() ?? chordSymbol;
+    const rootInfo = parseChordRoot(slashRoot);
+    if (!rootInfo) return null;
 
-    let tonic: string | undefined = parts[0];
-    if (!tonic) return null;
+    const tonicLetter = tonic[0]?.toUpperCase();
+    if (!tonicLetter || !LETTERS.includes(tonicLetter as (typeof LETTERS)[number])) return null;
 
-    let mode: ModeId = "ionian";
+    const scale = getScale(tonic, mode);
 
-    if (tonic.endsWith("m") && !tonic.includes("maj") && !tonic.includes("dim")) {
-        tonic = tonic.substring(0, tonic.length - 1);
-        mode = "aeolian";
+    const tonicLetterIndex = LETTERS.indexOf(tonicLetter as (typeof LETTERS)[number]);
+    const chordLetterIndex = LETTERS.indexOf(rootInfo.letter as (typeof LETTERS)[number]);
+    if (tonicLetterIndex < 0 || chordLetterIndex < 0) return null;
+
+    const degreeIndex = (chordLetterIndex - tonicLetterIndex + 7) % 7;
+    const degreePc = scale.pcs[degreeIndex];
+    if (degreePc === undefined) return null;
+
+    const accidental = accidentalFromPcDifference(rootInfo.rootPc - degreePc);
+    if (accidental === null) return null;
+
+    const quality = detectChordQuality(chordSymbol);
+    const extension = detectExtension(chordSymbol);
+
+    let romanBase = ROMANS[degreeIndex]!;
+    if (quality === "minor" || quality === "diminished" || quality === "half-diminished") {
+        romanBase = romanBase.toLowerCase() as (typeof ROMANS)[number];
     }
 
-    if (parts.length > 1) {
-        const modeInput = parts[1]!.toLowerCase();
-        if (modeInput.includes("dur") || modeInput === "major") mode = "ionian";
-        else if (modeInput.includes("moll") || modeInput === "minor") mode = "aeolian";
-        else if (modeInput.includes("dorisk") || modeInput === "dorian") mode = "dorian";
-        else if (modeInput.includes("frygisk") || modeInput === "phrygian") mode = "phrygian";
-        else if (modeInput.includes("lydisk") || modeInput === "lydian") mode = "lydian";
-        else if (modeInput.includes("mikso") || modeInput === "mixolydian") mode = "mixolydian";
-        else if (modeInput.includes("eolisk") || modeInput === "aeolian") mode = "aeolian";
-        else if (modeInput.includes("lokrisk") || modeInput === "locrian") mode = "locrian";
+    let suffix = "";
+    if (quality === "diminished") {
+        suffix = extension === "7" ? "°7" : "°";
+    } else if (quality === "half-diminished") {
+        suffix = "ø7";
+    } else if (extension === "maj7") {
+        suffix = "maj7";
+    } else if (extension === "7") {
+        suffix = "7";
     }
 
-    // Heuristics for degree matching:
-    // 1. Try exact match in Diatonic 7ths (most precise)
-    const diatonic7 = buildDiatonicChords(tonic, mode, true);
-    const exact7 = diatonic7.find((c: DiatonicChord | undefined) => c && c.symbol === chordSymbol);
-    if (exact7) return exact7.roman;
-
-    // 2. Try exact match in Diatonic Triads (simple "I", "vi" etc)
-    const diatonic3 = buildDiatonicChords(tonic, mode, false);
-    const exact3 = diatonic3.find((c: DiatonicChord | undefined) => c && c.symbol === chordSymbol);
-    if (exact3) return exact3.roman;
-
-    // 3. Fallback: match by Root
-    // Extract root from chordSymbol (e.g. C from C/E, C from Cmaj7)
-    const rootMatch = chordSymbol.match(/^([A-G][b#]?)/);
-    if (!rootMatch) return null;
-    const rootNote = rootMatch[1];
-
-    // Decide which set to target based on input complexity
-    const is7th = chordSymbol.includes("7");
-    const targetSet = is7th ? diatonic7 : diatonic3;
-
-    // Find chord in target set with same root
-    const match = targetSet.find((dc: DiatonicChord | undefined) => {
-        if (!dc) return false;
-        const dcRootMatch = dc.symbol.match(/^([A-G][b#]?)/);
-        return dcRootMatch && dcRootMatch[1] === rootNote;
-    });
-
-    if (match) {
-        // Check if we need to adjust the case (Borrowed chord logic)
-        // e.g. User types "Bb" (Major) in Fm key (where diatonic is Bbm / iv).
-        // We matched the root, but the quality differs. We should return "IV" instead of "iv".
-
-        // Simple quality check
-        const isInputMinor = (chordSymbol.includes("m") && !chordSymbol.includes("maj")) || chordSymbol.includes("dim");
-        // We can inspect the match quality from its symbol or roman
-        const isMatchMinor = (match.symbol.includes("m") && !match.symbol.includes("maj")) || match.symbol.includes("dim");
-
-        let content = match.roman;
-
-        if (!isInputMinor && isMatchMinor) {
-            // Input is Major, Match is Minor -> Force Uppercase
-            content = content.toUpperCase();
-        } else if (isInputMinor && !isMatchMinor) {
-            // Input is Minor, Match is Major -> Force Lowercase
-            content = content.toLowerCase();
-        }
-
-        return content;
-    }
-
-    return null;
+    return `${accidental}${romanBase}${suffix}`;
 }
 
 /**
@@ -101,46 +187,47 @@ export function getChordDegree(chordSymbol: string, key: string): string | null 
  * @returns Array of suggested chord symbols
  */
 export function getChordSuggestions(currentChord: string, key: string): string[] {
-    if (!key) return [];
+    const result = getNextChordSuggestionsFromSequence(
+        currentChord ? [currentChord] : [],
+        key,
+        { profile: "seventh" }
+    );
+    return result.map((s) => s.chord);
+}
 
-    // Parse key to get mode
-    const parts = key.trim().split(/\s+/);
+export function getNextChordSuggestionsFromSequence(
+    sequence: string[],
+    key: string,
+    options: { useSpice?: boolean; profile?: SuggestionProfile } = {}
+): SequenceSuggestion[] {
+    const parsed = parseKey(key);
+    if (!parsed) return [];
 
-    const tonicPart = parts[0];
-    if (!tonicPart) return [];
-    let tonic = tonicPart;
+    const { tonic, mode } = parsed;
+    const profile = options.profile ?? "seventh";
+    const useSpice = options.useSpice ?? false;
 
-    let mode: ModeId = "ionian";
+    const romanSequence = sequence
+        .map((symbol) => getChordDegree(symbol, key))
+        .filter((roman): roman is string => Boolean(roman));
 
-    if (parts.length > 1) {
-        const modeInput = parts[1]!.toLowerCase();
-        if (['moll', 'minor', 'aeolian'].some(k => modeInput.includes(k))) mode = 'aeolian';
-        else if (['dorisk', 'dorian'].some(k => modeInput.includes(k))) mode = 'dorian';
-        else if (['frygisk', 'phrygian'].some(k => modeInput.includes(k))) mode = 'phrygian';
-        else if (['lydisk', 'lydian'].some(k => modeInput.includes(k))) mode = 'lydian';
-        else if (['mikso', 'mixolydian'].some(k => modeInput.includes(k))) mode = 'mixolydian';
-        else if (['lokrisk', 'locrian'].some(k => modeInput.includes(k))) mode = 'locrian';
-    } else if (parts[0] && parts[0].endsWith("m")) {
-        mode = 'aeolian';
-        if (tonic.endsWith("m") && !tonic.includes("maj")) {
-            tonic = tonic.substring(0, tonic.length - 1);
-        }
-    } else {
-        if (tonic.endsWith("m") && !tonic.includes("maj")) {
-            tonic = tonic.substring(0, tonic.length - 1);
-            mode = 'aeolian'; // Infer minor from tonic notation matching
-        }
-    }
+    const source: NextChordSuggestion[] = romanSequence.length > 0
+        ? suggestNextChords(romanSequence, tonic, mode, { useSpice })
+        : getStartingChords(mode, tonic, { useSpice });
 
-    // Filter progressions by the current mode
-    // const relevantProgressions = CHORD_PROGRESSIONS.filter(p => p.mode === mode);
+    return source.map((suggestion) => {
+        const baseChord = toProfileChord(suggestion.chord, profile);
+        const variants = profile === "jazz"
+            ? buildJazzVariants(baseChord, useSpice)
+            : [];
 
-    // This is a placeholder for more advanced Markov-chain like suggestions.
-    // For now, we just return the most common diatonic chords in this mode
-    // because "context-aware" suggestion requires knowing the *previous* chords.
-
-    // We return 7th chords by default as they are richer, but user can edit down
-    const diatonicChords = buildDiatonicChords(tonic, mode, true);
-
-    return diatonicChords.map((c: DiatonicChord): string => c.symbol);
+        return {
+            roman: suggestion.roman,
+            chord: baseChord,
+            variants: variants.length > 0 ? variants : undefined,
+            frequency: suggestion.frequency,
+            isDiatonic: suggestion.isDiatonic,
+            secondaryLabel: suggestion.secondaryLabel,
+        };
+    });
 }

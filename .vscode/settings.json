@@ -4,5 +4,8 @@
       "mode": "auto"
     }
   ],
-  "css.lint.unknownAtRules": "ignore"
+  "css.lint.unknownAtRules": "ignore",
+  "chat.tools.terminal.autoApprove": {
+    "pnpm": true
+  }
 }

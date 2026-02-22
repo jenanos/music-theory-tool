@@ -1,5 +1,6 @@
 
 import { MODES } from "./data";
+import { ModeId } from "./types";
 
 export const SHARP_NOTES = [
     "C", "C#", "D", "D#", "E", "F", "F#", "G", "G#", "A", "A#", "B"
@@ -34,6 +35,38 @@ export function prefersFlats(note: string): boolean {
     return FLAT_PREFERRED_TONICS.has(note);
 }
 
+const MODE_TO_RELATIVE_IONIAN_SHIFT: Record<ModeId, number> = {
+    ionian: 0,
+    dorian: -2,
+    phrygian: -4,
+    lydian: -5,
+    mixolydian: -7,
+    aeolian: -9,
+    locrian: -11,
+    harmonic_minor: -9,
+};
+
+function isFlatPreferredTonic(tonicName: string): boolean {
+    return FLAT_PREFERRED_TONICS.has(tonicName);
+}
+
+export function prefersFlatsForKey(tonic: string, mode: ModeId): boolean {
+    if (tonic.includes("b")) return true;
+    if (tonic.includes("#")) return false;
+
+    const tonicPc = parseNoteName(tonic);
+    const shift = MODE_TO_RELATIVE_IONIAN_SHIFT[mode] ?? 0;
+    const relativeIonianPc = ((tonicPc + shift) % 12 + 12) % 12;
+
+    const relativeIonianFlatName = noteName(relativeIonianPc, true);
+    if (isFlatPreferredTonic(relativeIonianFlatName)) {
+        return true;
+    }
+
+    const relativeIonianSharpName = noteName(relativeIonianPc, false);
+    return isFlatPreferredTonic(relativeIonianSharpName);
+}
+
 export function noteName(pc: number, useFlats: boolean): string {
     const nameSet = useFlats ? FLAT_NOTES : SHARP_NOTES;
     return nameSet[((pc % 12) + 12) % 12]!;
@@ -42,8 +75,6 @@ export function noteName(pc: number, useFlats: boolean): string {
 export function getScaleIntervals(modeId: string): number[] {
     return MODES[modeId]?.intervals || MODES.ionian!.intervals;
 }
-
-import { ModeId } from "./types";
 
 /**
  * Robustly parses a key string into tonic and mode.
@@ -65,13 +96,13 @@ export function parseKey(keyString: string): { tonic: string; mode: ModeId } | n
     const match = input.match(/^([A-Ga-g])(#|b|flat)?(.*)$/i);
     if (!match) return null;
 
-    let tonicBase = match[1]!.toUpperCase();
+    const tonicBase = match[1]!.toUpperCase();
     let accidental = match[2] || "";
-    let rest = match[3] || "";
+    const rest = match[3] || "";
 
     // Normalize accidental
     if (accidental.toLowerCase() === "flat") accidental = "b";
-    let tonic = tonicBase + accidental;
+    const tonic = tonicBase + accidental;
 
     let mode: ModeId = "ionian"; // Default
 

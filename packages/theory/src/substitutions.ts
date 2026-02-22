@@ -8,7 +8,7 @@ import {
     type SubstitutionRule
 } from "./data";
 import { DiatonicChord, SubstitutionSuggestion, ModeId } from "./types";
-import { parseNoteName, noteName, prefersFlats } from "./utils";
+import { parseNoteName, noteName, prefersFlatsForKey } from "./utils";
 
 // Helper to determine chord intervals from quality string
 function getQualityIntervals(quality: string): number[] {
@@ -92,7 +92,7 @@ export function suggestSubstitutions(
 ): SubstitutionSuggestion[] {
     const { tonic, mode, chord, allChords, nextChord } = context;
     const tonicPc = parseNoteName(tonic);
-    const useFlats = prefersFlats(tonic);
+    const useFlats = prefersFlatsForKey(tonic, mode);
     const suggestions: SubstitutionSuggestion[] = [];
 
     for (const rule of SUBSTITUTION_RULES) {

@@ -7,7 +7,9 @@ import {
     getAllTags,
     findMatchingProgressions,
     CHORD_PROGRESSIONS,
+    romanToChord,
 } from "../src/progressions";
+import { buildDiatonicChords } from "../src/index";
 
 describe("chord progressions", () => {
     it("dataset has expected number of progressions", () => {
@@ -88,6 +90,27 @@ describe("chord progressions", () => {
             expect(transposed.chords[2]).toBe("E");
             expect(transposed.chords[3]).toBe("Am");
         });
+
+        it("uses flat spellings in G aeolian diatonic sevenths", () => {
+            const chords = buildDiatonicChords("G", "aeolian", true).map(c => c.symbol);
+            expect(chords).toContain("Bbmaj7");
+            expect(chords).toContain("Ebmaj7");
+            expect(chords).not.toContain("A#maj7");
+            expect(chords).not.toContain("D#maj7");
+        });
+
+        it("maps IIImaj7 in G aeolian to Bbmaj7", () => {
+            expect(romanToChord("IIImaj7", "G", "aeolian")).toBe("Bbmaj7");
+        });
+
+        it.each([
+            { roman: "bII", tonic: "G", mode: "aeolian" as const, expected: "Ab" },
+            { roman: "V7/V", tonic: "C", mode: "ionian" as const, expected: "D7" },
+            { roman: "iiø7", tonic: "A", mode: "aeolian" as const, expected: "Bm7b5" },
+            { roman: "i6", tonic: "A", mode: "aeolian" as const, expected: "Am6" },
+        ])("maps $roman in $tonic $mode to $expected", ({ roman, tonic, mode, expected }) => {
+            expect(romanToChord(roman, tonic, mode)).toBe(expected);
+        });
     });
 
     describe("suggestNextChords", () => {
@@ -100,6 +123,14 @@ describe("chord progressions", () => {
             expect(romanSuggestions).toContain("V");
         });
 
+        it("keeps common major-function options after I", () => {
+            const suggestions = suggestNextChords(["I"], "C", "ionian");
+            const topRomans = suggestions.slice(0, 12).map((s) => s.roman);
+            expect(topRomans).toContain("IV");
+            expect(topRomans).toContain("V");
+            expect(topRomans).toContain("vi");
+        });
+
         it("returns empty array for empty sequence", () => {
             const suggestions = suggestNextChords([], "C");
             expect(suggestions).toEqual([]);
@@ -110,6 +141,12 @@ describe("chord progressions", () => {
             const vSuggestion = suggestions.find((s) => s.roman === "V");
 
             expect(vSuggestion?.chord).toBe("D");
+        });
+
+        it("is deterministic for same input sequence", () => {
+            const first = suggestNextChords(["I", "V"], "C", "ionian", { useSpice: true });
+            const second = suggestNextChords(["I", "V"], "C", "ionian", { useSpice: true });
+            expect(second).toEqual(first);
         });
     });
 
@@ -204,4 +241,3 @@ describe("chord progressions", () => {
         });
     });
 });
-

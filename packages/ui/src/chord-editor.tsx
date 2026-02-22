@@ -2,11 +2,13 @@
 "use client";
 
 import { useState, useEffect, useMemo, useRef } from "react";
-import { getChordSuggestions, getChordDegree } from "@repo/theory";
+import { getChordDegree, getNextChordSuggestionsFromSequence } from "@repo/theory";
 import { Button } from "./button";
 import { Label } from "./label";
 import { Textarea } from "./textarea";
 import { cn } from "./utils";
+
+type SuggestionProfile = "triad" | "seventh" | "jazz";
 
 interface ChordEditorProps {
     initialChords: string;
@@ -22,9 +24,28 @@ export function ChordEditor({ initialChords, songKey, onSave, onCancel }: ChordE
 
     // Current chord for suggestions (the one under cursor or last typed)
     const [currentChordContext, setCurrentChordContext] = useState<string | null>(null);
+    const [selectedProfile, setSelectedProfile] = useState<SuggestionProfile | "auto">("auto");
 
     // Filter valid key for theory functions
     const validKey = songKey || "C Major"; // Default if missing
+
+    const sequence = useMemo(() => {
+        return chordText
+            .split(/\n/)
+            .flatMap((line) => line.split(/[\s|-]+/))
+            .map((token) => token.trim())
+            .filter(Boolean);
+    }, [chordText]);
+
+    const inferredProfile = useMemo<SuggestionProfile>(() => {
+        const firstChord = sequence[0]?.toLowerCase() ?? "";
+        if (firstChord.includes("7") || firstChord.includes("9") || firstChord.includes("11") || firstChord.includes("13")) {
+            return "seventh";
+        }
+        return "triad";
+    }, [sequence]);
+
+    const activeProfile: SuggestionProfile = selectedProfile === "auto" ? inferredProfile : selectedProfile;
 
     // --- Degree Calculation Logic ---
     useEffect(() => {
@@ -68,7 +89,7 @@ export function ChordEditor({ initialChords, songKey, onSave, onCancel }: ChordE
         // AND maybe context if we could parse the previous chord.
 
         // Let's identify the *previous* chord token before cursor
-        const tokens = textBefore.trim().split(/[\s|-|\|]+/);
+        const tokens = textBefore.trim().split(/[\s|-]+/);
         const lastToken = tokens[tokens.length - 1];
         if (lastToken) {
             setCurrentChordContext(lastToken);
@@ -78,13 +99,14 @@ export function ChordEditor({ initialChords, songKey, onSave, onCancel }: ChordE
     };
 
     const suggestions = useMemo(() => {
-        // If we have a context chord, we could ask for "what follows X".
-        // Current theory package `getChordSuggestions` implementation returns *diatonic chords for the key*.
-        // It ignores the input `currentChord` argument mostly (except for placeholder logic).
-        // So effectively it returns the "Key Palette".
-        // This is perfect for "Suggestions" button list.
-        return getChordSuggestions(currentChordContext || "C", validKey);
-    }, [validKey, currentChordContext]);
+        const suggestionInput = sequence.length > 0
+            ? sequence
+            : (currentChordContext ? [currentChordContext] : []);
+
+        return getNextChordSuggestionsFromSequence(suggestionInput, validKey, {
+            profile: activeProfile,
+        });
+    }, [validKey, currentChordContext, sequence, activeProfile]);
 
 
     const insertChord = (chord: string) => {
@@ -120,19 +142,42 @@ export function ChordEditor({ initialChords, songKey, onSave, onCancel }: ChordE
 
             {/* Suggestions Toolbar */}
             <div className="flex flex-col gap-2">
-                <span className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">
-                    Forslag ({validKey})
-                </span>
+                <div className="flex items-center justify-between gap-2">
+                    <span className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">
+                        Forslag ({validKey})
+                    </span>
+                    <select
+                        value={selectedProfile}
+                        onChange={(e) => setSelectedProfile(e.target.value as SuggestionProfile | "auto")}
+                        className="rounded-md border border-border bg-background px-2 py-1 text-xs text-foreground"
+                    >
+                        <option value="auto">Auto ({inferredProfile})</option>
+                        <option value="triad">Triad</option>
+                        <option value="seventh">Seventh</option>
+                        <option value="jazz">Jazz</option>
+                    </select>
+                </div>
                 <div className="flex flex-wrap gap-2">
-                    {suggestions.map((chord: string) => (
-                        <Button
-                            key={chord}
-                            onClick={() => insertChord(chord)}
-                            variant="secondary"
-                            size="sm"
-                        >
-                            {chord}
-                        </Button>
+                    {suggestions.map((suggestion) => (
+                        <div key={`${suggestion.roman}-${suggestion.chord}`} className="flex items-center gap-1">
+                            <Button
+                                onClick={() => insertChord(suggestion.chord)}
+                                variant="secondary"
+                                size="sm"
+                            >
+                                {suggestion.chord}
+                            </Button>
+                            {suggestion.variants?.[0] && (
+                                <button
+                                    type="button"
+                                    onClick={() => insertChord(suggestion.variants![0]!)}
+                                    className="rounded border border-border px-2 py-1 text-xs text-muted-foreground hover:bg-muted"
+                                    title="Variant"
+                                >
+                                    +{suggestion.variants[0]}
+                                </button>
+                            )}
+                        </div>
                     ))}
                 </div>
             </div>

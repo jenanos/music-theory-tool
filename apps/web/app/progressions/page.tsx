@@ -7,7 +7,7 @@ import {
     getAllTags,
     transposeProgression,
     suggestNextChords,
-    buildDiatonicChords,
+    getStartingChords,
     romanToChord,
     SCALES,
     TONIC_OPTIONS,
@@ -188,36 +188,7 @@ export default function ProgressionsPage() {
 
     const nextChordSuggestions = useMemo(() => {
         if (sequenceRomans.length === 0) {
-            // "Start med" - show suggestions using getStartingChords to get Weighting + Signatures
-            // We import suggestNextChords, but for start we should use getStartingChords?
-            // Actually getStartingChords is exported from theory.
-            // But we need to import it. It was NOT imported in original file.
-            // Let's rely on suggestNextChords handling empty sequence? 
-            // Original suggestNextChords returned [] for empty.
-            // My NEW suggestNextChords returns [] for empty.
-            // So we must use a strategy for start.
-            // The logic at 153 in original file was manual buildDiatonicChords.
-            // We should switch to getStartingChords logic if possible, OR just build diatonic.
-            // User requested: "Startpunkt... foreslå først tonika... + signatur-akkorder".
-            // Since I implemented `getStartingChords` in `progressions.ts` (and it handles signatures), I should use it.
-            // But I need to add it to imports first.
-            // For now, I will modify the manual fallback to add `isDiatonic: true`.
-
-            const diatonic = buildDiatonicChords(tonic, modeId, true);
-            // We need to prioritize Signatures here too if we do manual?
-            // Better to use getStartingChords if I can add the import.
-            // I will assume I can add the import in a separate call or just use manual for now.
-            // The file doesn't import getStartingChords.
-            // I'll stick to fixing the compilation error for now by adding props.
-
-            return diatonic.map(c => ({
-                roman: c.roman,
-                chord: c.symbol,
-                frequency: 1, // Fallback
-                fromProgressions: [],
-                isDiatonic: true,
-                secondaryLabel: undefined
-            } as NextChordSuggestion));
+            return getStartingChords(modeId, tonic, { useSpice });
         }
         return suggestNextChords(
             sequenceRomans,

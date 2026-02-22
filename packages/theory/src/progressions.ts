@@ -8,7 +8,7 @@
 import {
     getScale,
     noteName,
-    prefersFlats,
+    prefersFlatsForKey,
     type ModeId,
     MODAL_SIGNATURES,
     MODE_DIATONIC_7THS,
@@ -1295,7 +1295,7 @@ export function romanToChord(
     tonic: string,
     mode: ModeId
 ): string {
-    const useFlats = prefersFlats(tonic);
+    const useFlats = prefersFlatsForKey(tonic, mode);
 
     // Handle secondary dominants
     if (roman.includes("/")) {

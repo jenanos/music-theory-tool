@@ -8,8 +8,7 @@ export * from "./scales";
 import {
   noteName,
   parseNoteName,
-  prefersFlats,
-  parseKey
+  prefersFlatsForKey
 } from "./utils";
 import {
   DiatonicChord,
@@ -33,7 +32,8 @@ export {
 } from "./substitutions";
 export {
   getChordDegree,
-  getChordSuggestions
+  getChordSuggestions,
+  getNextChordSuggestionsFromSequence
 } from "./chords";
 
 // Re-export common constants for convenience
@@ -65,7 +65,7 @@ export function getScale(tonic: string, mode: ModeId) {
       throw new Error(`Ukjent modus: ${mode}`);
     }
     const tonicPc = parseNoteName(tonic);
-    const useFlats = prefersFlats(tonic);
+    const useFlats = prefersFlatsForKey(tonic, mode);
     const pcs = fallback.intervals.map((interval: number) => (tonicPc + interval) % 12);
     const noteNames = pcs.map((pc: number) => noteName(pc, useFlats));
     return {
@@ -79,7 +79,7 @@ export function getScale(tonic: string, mode: ModeId) {
   }
 
   const tonicPc = parseNoteName(tonic);
-  const useFlats = prefersFlats(tonic);
+  const useFlats = prefersFlatsForKey(tonic, mode);
   const pcs = scaleDef.intervals.map((interval: number) => (tonicPc + interval) % 12);
   const noteNames = pcs.map((pc: number) => noteName(pc, useFlats));
 

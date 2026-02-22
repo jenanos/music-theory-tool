@@ -80,7 +80,7 @@ export const GameController = () => {
     };
 
     return (
-        <div className="flex flex-col items-center w-full max-w-6xl mx-auto gap-4 md:gap-8 py-2 md:py-8 relative">
+        <div className="flex flex-col items-center w-full max-w-6xl mx-auto gap-2 md:gap-8 py-1 md:py-8 relative">
 
             {/* Mobile Settings Toggle Overlay */}
             {showSettings && (
@@ -124,7 +124,7 @@ export const GameController = () => {
                 </div>
 
                 {/* Game Status Board / Mobile Header */}
-                <div className="w-full md:flex-1 bg-neutral-900 rounded-xl border border-neutral-800 p-4 md:p-8 flex flex-row md:flex-col items-center justify-between md:justify-center text-center shadow-2xl min-h-[80px] md:min-h-[200px]">
+                <div className="w-full md:flex-1 bg-neutral-900 rounded-xl border border-neutral-800 py-2 px-3 md:p-8 flex flex-row md:flex-col items-center justify-between md:justify-center text-center shadow-2xl min-h-[60px] md:min-h-[200px]">
 
                     {/* Mobile Only: Settings Button */}
                     <button className="md:hidden p-2 bg-neutral-800 rounded-lg text-neutral-400" onClick={() => setShowSettings(true)}>
@@ -134,8 +134,8 @@ export const GameController = () => {
                     <div className="flex flex-col md:mb-2">
                         <div className="text-[10px] md:text-sm text-neutral-500 uppercase tracking-widest hidden md:block">Current Objective</div>
                         {currentQuestion ? (
-                            <div className="flex flex-row md:flex-col items-baseline md:items-center gap-2 md:gap-0">
-                                <div className="text-4xl md:text-6xl font-black text-white md:mb-2 tracking-tighter">
+                            <div className="flex flex-row md:flex-col items-baseline md:items-center gap-1.5 md:gap-0">
+                                <div className="text-3xl md:text-6xl font-black text-white md:mb-2 tracking-tighter">
                                     {currentQuestion.targetNote}
                                 </div>
                                 <div className="text-sm md:text-xl text-indigo-400 font-medium whitespace-nowrap">
@@ -157,9 +157,9 @@ export const GameController = () => {
                         )}
                     </div>
 
-                    <div className="flex md:mt-8 items-center gap-2 px-3 py-1 md:px-4 md:py-2 bg-neutral-800 rounded-full">
+                    <div className="flex md:mt-8 items-center gap-1.5 md:gap-2 px-2.5 py-1 md:px-4 md:py-2 bg-neutral-800 rounded-full">
                         <span className="w-2 h-2 rounded-full bg-green-500 animate-pulse" />
-                        <span className="font-mono font-bold text-neutral-300 text-sm md:text-base">Score: {score}</span>
+                        <span className="font-mono font-bold text-neutral-300 text-xs md:text-base">Score: {score}</span>
                     </div>
                 </div>
             </div>
@@ -171,10 +171,8 @@ export const GameController = () => {
                 highlightedPositions={feedback ? [feedback] : []}
             />
 
-            <p className="text-neutral-600 text-xs md:text-sm mt-0 md:mt-4 text-center">
-                {/* Mobile hint */}
-                <span className="md:hidden">Tap the correct fret.</span>
-                <span className="hidden md:inline">Click the correct fret to score points.</span>
+            <p className="hidden md:block text-neutral-600 text-sm mt-4 text-center">
+                Click the correct fret to score points.
             </p>
         </div>
     );

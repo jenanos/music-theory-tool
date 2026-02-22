@@ -22,7 +22,7 @@ export const Fretboard: React.FC<FretboardProps> = ({
 }) => {
     return (
         <div className={cn("relative w-full overflow-hidden select-none p-4 flex justify-center", className)}>
-            <div className="w-full max-w-[400px] h-[65svh] min-h-[400px] md:max-w-none md:min-h-0 md:h-[300px] md:w-[800px] flex md:flex-row flex-col bg-[#2a2a2a] rounded-lg shadow-2xl border-2 border-[#1a1a1a] relative">
+            <div className="w-full max-w-[400px] h-[75svh] min-h-[400px] md:max-w-none md:min-h-0 md:h-[300px] md:w-[800px] flex md:flex-row flex-col bg-[#2a2a2a] rounded-lg shadow-2xl border-2 border-[#1a1a1a] relative">
                 {/* Nut */}
                 <div className="
                     absolute z-20 bg-[#1a1a1a] border-neutral-600

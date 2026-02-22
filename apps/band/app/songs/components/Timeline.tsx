@@ -19,6 +19,7 @@ import {
 } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
 import { Section } from "../data";
+import { getSectionColorClass } from "../utils/sectionColor";
 
 interface TimelineItem {
     id: string; // Unique ID for dnd (e.g. "verse-0", "verse-1")
@@ -57,8 +58,7 @@ function SortableItem(props: {
             style={style}
             {...attributes}
             {...listeners}
-            className={`flex-shrink-0 cursor-grab rounded-md border border-border bg-card px-3 py-2 text-sm font-medium text-foreground shadow-sm hover:border-primary/50 active:cursor-grabbing ${isDragging ? "opacity-50 z-50 ring-2 ring-primary" : ""
-                }`}
+            className={`flex-shrink-0 cursor-grab rounded-md border border-border px-3 py-2 text-sm font-medium text-foreground shadow-sm hover:opacity-90 active:cursor-grabbing ${isDragging ? "opacity-50 z-50 ring-2 ring-primary" : ""} ${getSectionColorClass(props.label)}`}
         >
             {props.label}
         </div>

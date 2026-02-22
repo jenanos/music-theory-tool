@@ -65,11 +65,17 @@ export function SongView({ song, onChange }: SongViewProps) {
         const id = `section-${Date.now()}`;
         const newSection: Section = {
             id,
-            label: "Ny Seksjon",
+            label: "Vers", // Settes som default for å gi en nyttig start-state
             chordLines: [],
             degreeLines: [],
         };
-        onChange({ ...song, sections: [...song.sections, newSection] });
+        const newSections = [...song.sections, newSection];
+        // Ensure new sections go into arrangement automatically
+        const newItem = { id: generateId(), sectionId: id };
+        const newTimelineItems = [...timelineItems, newItem];
+
+        setTimelineItems(newTimelineItems);
+        onChange({ ...song, sections: newSections, arrangement: [...song.arrangement, id] });
     };
 
     const deleteSection = (id: string) => {

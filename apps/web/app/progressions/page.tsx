@@ -111,11 +111,11 @@ function SortableChordItem({
             style={style}
             {...attributes}
             {...listeners}
-        className="group flex cursor-grab flex-col items-center justify-center rounded-lg border border-primary/40 bg-primary/15 px-3 py-2 shadow-sm transition-all hover:bg-primary/25 active:cursor-grabbing"
-    >
-        <span className="text-lg font-bold text-primary">{chordSymbol}</span>
-        <span className="text-xs font-medium text-primary/70 group-hover:text-primary">{roman}</span>
-    </div>
+            className="group flex cursor-grab flex-col items-center justify-center rounded-lg border border-primary/40 bg-primary/15 px-3 py-2 shadow-sm transition-all hover:bg-primary/25 active:cursor-grabbing"
+        >
+            <span className="text-lg font-bold text-primary">{chordSymbol}</span>
+            <span className="text-xs font-medium text-primary/70 group-hover:text-primary">{roman}</span>
+        </div>
     );
 }
 
@@ -313,7 +313,7 @@ export default function ProgressionsPage() {
     };
 
     return (
-        <main className="flex h-screen flex-col bg-background text-foreground overflow-hidden">
+        <main className="flex h-full flex-col bg-background text-foreground overflow-hidden">
             {/* Header */}
             <header className="shrink-0 border-b border-border bg-card px-6 py-4 shadow-sm z-10">
                 <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
@@ -441,12 +441,12 @@ export default function ProgressionsPage() {
                                             )}
                                         </div>
                                         <span className={`shrink-0 text-[9px] font-medium px-1.5 py-0.5 rounded ${prog.data.weight >= 9
-                                                ? "bg-primary/20 text-primary"
-                                                : prog.data.weight >= 7
-                                                    ? "bg-accent/20 text-accent-foreground"
-                                                    : prog.data.weight >= 5
-                                                        ? "bg-muted text-muted-foreground"
-                                                        : "bg-secondary text-secondary-foreground"
+                                            ? "bg-primary/20 text-primary"
+                                            : prog.data.weight >= 7
+                                                ? "bg-accent/20 text-accent-foreground"
+                                                : prog.data.weight >= 5
+                                                    ? "bg-muted text-muted-foreground"
+                                                    : "bg-secondary text-secondary-foreground"
                                             }`}>
                                             {prog.data.weight >= 9
                                                 ? "Klassiker"

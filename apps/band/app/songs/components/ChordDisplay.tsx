@@ -28,7 +28,7 @@ export function ChordDisplay({ chordLine, degreeLine, className, onClick, onChor
         return (
             <div
                 onClick={onClick}
-                className={`min-h-[80px] w-full rounded-md border-2 border-dashed border-border bg-muted p-4 text-center text-sm text-muted-foreground hover:border-primary/50 hover:bg-muted/80 ${className}`}
+                className={`min-h-[80px] w-full rounded-md border-2 border-dashed border-border bg-muted p-4 text-center text-sm text-muted-foreground hover:border-primary/60 hover:bg-muted/80 ${className}`}
             >
                 Klikk for å legge til akkorder...
             </div>
@@ -38,7 +38,7 @@ export function ChordDisplay({ chordLine, degreeLine, className, onClick, onChor
     return (
         <div
             onClick={onClick}
-            className={`flex flex-col gap-2 rounded-md bg-muted p-3 min-h-[60px] cursor-pointer hover:bg-muted/80 ring-1 ring-border ${className}`}
+            className={`flex flex-col gap-2 rounded-md bg-muted p-3 min-h-[60px] cursor-pointer hover:bg-muted/80 ring-1 ring-border/60 ${className}`}
         >
             {rows.map((row, rowIndex) => (
                 <div key={rowIndex} className="flex flex-wrap items-center gap-2 min-h-[56px]">
@@ -52,7 +52,7 @@ export function ChordDisplay({ chordLine, degreeLine, className, onClick, onChor
                                         onChordClick(chord, rowIndex, chordIndex, row.degrees[chordIndex]);
                                     }
                                 }}
-                                className={`flex flex-col gap-1 items-center justify-center p-2 rounded-lg bg-card shadow-sm ring-1 ring-border transition-transform hover:-translate-y-0.5 hover:shadow-md ${onChordClick ? 'cursor-pointer hover:ring-primary/50' : ''}`}
+                                className={`flex flex-col gap-1 items-center justify-center p-2 rounded-lg bg-card shadow-sm ring-1 ring-border/60 transition-transform hover:-translate-y-0.5 hover:shadow-md ${onChordClick ? 'cursor-pointer hover:ring-primary/60' : ''}`}
                             >
                                 <span className="font-bold text-foreground">
                                     {chord}

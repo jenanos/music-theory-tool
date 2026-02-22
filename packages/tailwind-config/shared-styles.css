@@ -4,48 +4,53 @@
 /* Dark mode variant for Tailwind v4 */
 @custom-variant dark (&:is(.dark *));
 
-/* Light Mode - Clean & Bright ☀️ */
-:root {
+/* Cyanotype / Ice Theme (Global) ☀️❄️ */
+:root,
+.dark {
   /* Core Colors */
-  --background: oklch(0.98 0.005 255);
-  --foreground: oklch(0.15 0.02 255);
+  --background: transparent;
+  --foreground: #f0f9fa;
 
   /* Card / Elevated surfaces */
-  --card: oklch(1.00 0 0);
-  --card-foreground: oklch(0.15 0.02 255);
+  --card: rgba(255, 255, 255, 0.08);
+  --card-foreground: #f0f9fa;
 
   /* Popover */
-  --popover: oklch(1.00 0 0);
-  --popover-foreground: oklch(0.15 0.02 255);
+  --popover: rgba(3, 43, 48, 0.4);
+  --popover-foreground: #f0f9fa;
 
-  /* Primary - Electric Blue */
-  --primary: oklch(0.55 0.20 255);
-  --primary-foreground: oklch(0.98 0.005 255);
+  /* Primary - Deep Cyan */
+  --primary: #158391;
+  --primary-foreground: #f0f9fa;
 
-  /* Secondary - Slate */
-  --secondary: oklch(0.93 0.01 255);
-  --secondary-foreground: oklch(0.25 0.02 255);
+  /* Secondary */
+  --secondary: rgba(3, 43, 48, 0.4);
+  --secondary-foreground: #f0f9fa;
 
-  /* Muted - Light Gray */
-  --muted: oklch(0.95 0.005 255);
-  --muted-foreground: oklch(0.45 0.02 255);
+  /* Muted */
+  --muted: rgba(255, 255, 255, 0.02);
+  --muted-foreground: #A1DCE3;
 
-  /* Accent - Aurora Teal */
-  --accent: oklch(0.92 0.04 175);
-  --accent-foreground: oklch(0.20 0.04 175);
+  /* Accent - Ice Blue/Cyan */
+  --accent: #A1DCE3;
+  --accent-bright: #B2EBF2;
+  --accent-foreground: #011315;
 
-  /* Destructive - Ember */
-  --destructive: oklch(0.56 0.21 28);
-  --destructive-foreground: oklch(0.98 0.005 255);
+  /* Sidebar */
+  --sidebar-bg: rgba(2, 20, 23, 0.85);
+
+  /* Destructive */
+  --destructive: #8A2C2C;
+  --destructive-foreground: #f0f9fa;
 
   /* Borders and inputs */
-  --border: oklch(0.87 0.01 255);
-  --input: oklch(0.87 0.01 255);
-  --ring: oklch(0.55 0.20 255);
+  --border: rgba(255, 255, 255, 0.2);
+  --input: rgba(255, 255, 255, 0.2);
+  --ring: #A1DCE3;
 
   /* Chart colors */
-  --chart-1: oklch(0.55 0.20 255);
-  --chart-2: oklch(0.50 0.15 175);
+  --chart-1: #158391;
+  --chart-2: #A1DCE3;
   --chart-3: oklch(0.55 0.18 110);
   --chart-4: oklch(0.50 0.18 310);
   --chart-5: oklch(0.50 0.20 30);
@@ -54,60 +59,14 @@
   --radius: 0.625rem;
 
   /* Sidebar */
-  --sidebar: oklch(0.96 0.005 255);
-  --sidebar-foreground: oklch(0.15 0.02 255);
-  --sidebar-primary: oklch(0.55 0.20 255);
-  --sidebar-primary-foreground: oklch(0.98 0.005 255);
-  --sidebar-accent: oklch(0.92 0.04 175);
-  --sidebar-accent-foreground: oklch(0.20 0.04 175);
-  --sidebar-border: oklch(0.87 0.01 255);
-  --sidebar-ring: oklch(0.55 0.20 255);
-}
-
-/* Dark Mode - Midnight Prism */
-.dark {
-  --background: oklch(0.16 0.02 255);
-  --foreground: oklch(0.92 0.01 255);
-
-  --card: oklch(0.20 0.03 255);
-  --card-foreground: oklch(0.92 0.01 255);
-
-  --popover: oklch(0.20 0.03 255);
-  --popover-foreground: oklch(0.92 0.01 255);
-
-  --primary: oklch(0.72 0.17 255);
-  --primary-foreground: oklch(0.13 0.02 255);
-
-  --secondary: oklch(0.40 0.03 255);
-  --secondary-foreground: oklch(0.98 0.01 255);
-
-  --muted: oklch(0.24 0.02 255);
-  --muted-foreground: oklch(0.80 0.03 255);
-
-  --accent: oklch(0.60 0.14 175);
-  --accent-foreground: oklch(0.12 0.02 255);
-
-  --destructive: oklch(0.56 0.21 28);
-  --destructive-foreground: oklch(0.96 0.01 255);
-
-  --border: oklch(0.32 0.03 255);
-  --input: oklch(0.32 0.03 255);
-  --ring: oklch(0.72 0.17 255);
-
-  --chart-1: oklch(0.72 0.17 255);
-  --chart-2: oklch(0.64 0.15 175);
-  --chart-3: oklch(0.72 0.18 110);
-  --chart-4: oklch(0.66 0.18 310);
-  --chart-5: oklch(0.66 0.20 30);
-
-  --sidebar: oklch(0.18 0.02 255);
-  --sidebar-foreground: oklch(0.92 0.01 255);
-  --sidebar-primary: oklch(0.72 0.17 255);
-  --sidebar-primary-foreground: oklch(0.13 0.02 255);
-  --sidebar-accent: oklch(0.60 0.14 175);
-  --sidebar-accent-foreground: oklch(0.12 0.02 255);
-  --sidebar-border: oklch(0.30 0.03 255);
-  --sidebar-ring: oklch(0.72 0.17 255);
+  --sidebar: #032B30;
+  --sidebar-foreground: #F0F9FA;
+  --sidebar-primary: #158391;
+  --sidebar-primary-foreground: #F0F9FA;
+  --sidebar-accent: #A1DCE3;
+  --sidebar-accent-foreground: #032B30;
+  --sidebar-border: rgba(161, 220, 227, 0.2);
+  --sidebar-ring: #A1DCE3;
 }
 
 /* Register theme colors with Tailwind v4 */
@@ -189,12 +148,17 @@
 
 /* Base layer styles */
 @layer base {
+  html {
+    /* Scale up the entire application visually */
+    font-size: 110%;
+  }
+
   * {
-    @apply border-border outline-ring/50;
+    @apply border-[var(--border)] outline-ring/50;
   }
 
   body {
-    @apply bg-background text-foreground;
+    @apply bg-transparent text-foreground;
   }
 
   /* Keep pointer cursor for buttons */

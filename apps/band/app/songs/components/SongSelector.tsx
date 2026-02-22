@@ -26,7 +26,7 @@ export function SongSelector({ songs, onSelectSong, selectedSongId, onAddSong }:
                     {onAddSong && (
                         <button
                             onClick={onAddSong}
-                            className="p-1 text-muted-foreground hover:text-primary hover:bg-primary/10 rounded transition-colors"
+                            className="p-1 text-muted-foreground hover:text-primary hover:bg-primary/20 rounded transition-colors"
                             title="Ny låt"
                         >
                             <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
@@ -38,7 +38,7 @@ export function SongSelector({ songs, onSelectSong, selectedSongId, onAddSong }:
                 <input
                     type="text"
                     placeholder="Søk..."
-                    className="w-full rounded-md border border-border bg-card px-3 py-2 text-sm text-foreground focus:border-primary focus:outline-none"
+                    className="w-full rounded-md border border-border bg-background px-3 py-2 text-sm text-foreground placeholder:text-muted-foreground focus:border-primary focus:outline-none"
                     value={search}
                     onChange={(e) => setSearch(e.target.value)}
                 />
@@ -48,14 +48,14 @@ export function SongSelector({ songs, onSelectSong, selectedSongId, onAddSong }:
                     <button
                         key={song.id}
                         onClick={() => onSelectSong(song.id)}
-                        className={`w-full px-4 py-3 text-left text-sm transition-colors hover:bg-card ${selectedSongId === song.id
-                            ? "bg-primary/15 text-primary font-medium border-r-2 border-primary"
+                        className={`w-full px-4 py-3 text-left text-sm transition-colors hover:bg-muted/80 ${selectedSongId === song.id
+                            ? "bg-primary/20 text-primary font-medium border-r-2 border-primary"
                             : "text-muted-foreground"
                             }`}
                     >
                         <div className="truncate">{song.title}</div>
                         {song.artist && (
-                            <div className="truncate text-xs text-muted-foreground/70">{song.artist}</div>
+                            <div className="truncate text-xs text-muted-foreground">{song.artist}</div>
                         )}
                     </button>
                 ))}

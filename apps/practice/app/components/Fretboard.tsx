@@ -22,7 +22,7 @@ export const Fretboard: React.FC<FretboardProps> = ({
 }) => {
     return (
         <div className={cn("relative w-full overflow-hidden select-none p-4 flex justify-center", className)}>
-            <div className="w-[300px] h-[550px] md:h-[300px] md:w-[800px] flex md:flex-row flex-col bg-[#2a2a2a] rounded-lg shadow-2xl border-2 border-[#1a1a1a] relative">
+            <div className="w-full max-w-[400px] h-[65svh] min-h-[400px] md:max-w-none md:min-h-0 md:h-[300px] md:w-[800px] flex md:flex-row flex-col bg-[#2a2a2a] rounded-lg shadow-2xl border-2 border-[#1a1a1a] relative">
                 {/* Nut */}
                 <div className="
                     absolute z-20 bg-[#1a1a1a] border-neutral-600
@@ -57,14 +57,14 @@ export const Fretboard: React.FC<FretboardProps> = ({
 
                 {/* Strings */}
                 <div className="absolute inset-0 pt-8 pl-0 md:pt-0 md:pl-8 flex justify-between pointer-events-none z-25
-                    flex-row px-6 md:flex-col md:py-4 md:px-0
+                    flex-row-reverse px-6 md:flex-col md:py-4 md:px-0
                 ">
                     {STRINGS.map((note, idx) => {
                         const stringNum = idx + 1; // 1-based, 1=High E
                         const isVisible = showStrings.includes(stringNum);
 
                         // Strings thickness variation
-                        const thickness = 1 + idx * 0.5;
+                        const thickness = [1, 1.5, 2.5, 3.5, 4.5, 6][idx] || 1;
 
                         return (
                             <div
@@ -93,7 +93,7 @@ export const Fretboard: React.FC<FretboardProps> = ({
 
                 {/* Clickable Area Overlay */}
                 <div className="absolute inset-0 pt-8 pl-0 md:pt-0 md:pl-8 flex justify-between z-30
-                    flex-row px-6 md:flex-col md:py-4 md:px-0
+                    flex-row-reverse px-6 md:flex-col md:py-4 md:px-0
                 ">
                     {STRINGS.map((_, sIdx) => {
                         const stringNum = sIdx + 1;

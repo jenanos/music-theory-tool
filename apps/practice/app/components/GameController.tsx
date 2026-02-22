@@ -173,7 +173,7 @@ export const GameController = () => {
 
             <p className="text-neutral-600 text-xs md:text-sm mt-0 md:mt-4 text-center">
                 {/* Mobile hint */}
-                <span className="md:hidden">Scroll if needed. Tap correct fret.</span>
+                <span className="md:hidden">Tap the correct fret.</span>
                 <span className="hidden md:inline">Click the correct fret to score points.</span>
             </p>
         </div>

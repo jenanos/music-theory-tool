@@ -36,7 +36,7 @@ export function SectionItem({ section, songKey, onUpdate, onDelete, onChordClick
                             ) : (
                                 <input
                                     type="text"
-                                    className="min-w-0 flex-1 rounded border-0 border-b border-transparent bg-transparent px-0 py-1 font-semibold text-foreground focus:border-primary focus:ring-0 group-hover:border-border"
+                                    className="min-w-0 flex-1 rounded border-0 border-b border-transparent bg-transparent px-0 py-1 font-semibold text-foreground focus:border-primary focus:ring-0 group-hover:border-border placeholder:text-muted-foreground"
                                     value={section.label}
                                     onChange={(e) => onUpdate(section.id, { label: e.target.value })}
                                     placeholder="Seksjonsnavn"

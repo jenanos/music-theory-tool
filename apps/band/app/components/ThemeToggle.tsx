@@ -25,9 +25,9 @@ export function ThemeToggle() {
     return (
         <button
             onClick={() => setTheme(isDark ? "light" : "dark")}
-            className="p-2 rounded-md text-muted-foreground hover:text-foreground hover:bg-muted transition-colors"
-            aria-label={isDark ? "Bytt til lyst tema" : "Bytt til mørkt tema"}
-            title={isDark ? "Bytt til lyst tema" : "Bytt til mørkt tema"}
+            className="p-2 rounded-md text-muted-foreground hover:text-foreground hover:bg-muted/50 transition-colors"
+            aria-label={isDark ? "Bytt til sollys-tema" : "Bytt til is-tema"}
+            title={isDark ? "Bytt til sollys-tema" : "Bytt til is-tema"}
         >
             {isDark ? (
                 /* Sun icon */

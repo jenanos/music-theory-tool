@@ -1,99 +1,174 @@
-
 import { describe, expect, test } from "vitest";
 import {
     buildDiatonicChords,
     suggestSubstitutions,
-    DiatonicChord,
-    ModeId
+    type DiatonicChord,
+    type ModeId,
 } from "../src";
 
-function getChord(chords: DiatonicChord[], degree: number) {
-    return chords.find(c => c.degree === degree)!;
+function getChord(chords: DiatonicChord[], degree: number): DiatonicChord {
+    const match = chords.find((chord) => chord.degree === degree);
+    if (!match) throw new Error(`Missing diatonic degree ${degree}`);
+    return match;
 }
 
-describe("Substitution Engine Rules", () => {
+function symbolsOfCategory(
+    suggestions: ReturnType<typeof suggestSubstitutions>,
+    category: "basic" | "spice" | "approach",
+): string[] {
+    return suggestions
+        .filter((suggestion) => suggestion.category === category)
+        .map((suggestion) => suggestion.substituteSymbol);
+}
 
-    describe("E Ionian (Major)", () => {
-        const tonic = "E";
-        const mode = "ionian";
+describe("substitution engine", () => {
+    test("is deterministic for identical input", () => {
+        const tonic = "C";
+        const mode: ModeId = "ionian";
         const chords = buildDiatonicChords(tonic, mode, true);
 
-        // 1. Emaj7 (I) -> G#m7 (iii), C#m7 (vi)
-        test("I (Emaj7) substitutions", () => {
-            const chord = getChord(chords, 1); // Emaj7
-            const suggestions = suggestSubstitutions({
-                tonic, mode, chord, allChords: chords
-            });
+        const context = {
+            tonic,
+            mode,
+            chord: getChord(chords, 1),
+            allChords: chords,
+            sourceSymbol: "C",
+            includeSpice: true,
+            preserveBass: true,
+        } as const;
 
-            expect(suggestions.some(s => s.substituteSymbol === "G#m7")).toBe(true);
-            expect(suggestions.some(s => s.substituteSymbol === "C#m7")).toBe(true);
+        const first = suggestSubstitutions(context);
+        const second = suggestSubstitutions(context);
 
-            // Log for manual verification
-            console.log("Emaj7 Subs:", suggestions.map(s => `${s.substituteSymbol} (${s.category})`));
-        });
-
-        // 2. B7 (V) -> D#m7b5 (viiø), F7 (tritone), D7 (backdoor)
-        test("V (B7) substitutions", () => {
-            const chord = getChord(chords, 5); // B7
-            const suggestions = suggestSubstitutions({
-                tonic, mode, chord, allChords: chords
-            });
-
-            const symbols = suggestions.map(s => s.substituteSymbol);
-            expect(symbols).toContain("D#m7b5"); // Diatonic dominant function
-            expect(symbols).toContain("F7");      // Tritone sub
-            expect(symbols).toContain("D7");      // Backdoor (bVII7)
-
-            console.log("B7 Subs:", suggestions.map(s => `${s.substituteSymbol} (${s.category})`));
-        });
-
-        // 3. Amaj7 (IV) -> Am7 (borrowed iv)
-        test("IV (Amaj7) substitutions", () => {
-            const chord = getChord(chords, 4); // Amaj7
-            const suggestions = suggestSubstitutions({
-                tonic, mode, chord, allChords: chords
-            });
-
-            expect(suggestions.some(s => s.substituteSymbol === "Am7")).toBe(true);
-            console.log("Amaj7 Subs:", suggestions.map(s => `${s.substituteSymbol} (${s.category})`));
-        });
+        expect(second).toEqual(first);
     });
 
-    describe("A Aeolian (Minor)", () => {
-        const tonic = "A";
-        const mode = "aeolian";
+    test("C major tonic gets useful basic + spice substitutions", () => {
+        const tonic = "C";
+        const mode: ModeId = "ionian";
         const chords = buildDiatonicChords(tonic, mode, true);
 
-        // 4. Em7 (v) -> E7 (V7 from harmonic minor)
-        test("v (Em7) substitutions", () => {
-            const chord = getChord(chords, 5); // Em7
-            const suggestions = suggestSubstitutions({
-                tonic, mode, chord, allChords: chords
-            });
-
-            expect(suggestions.some(s => s.substituteSymbol === "E7")).toBe(true);
-            console.log("Em7 Subs:", suggestions.map(s => `${s.substituteSymbol} (${s.category})`));
+        const suggestions = suggestSubstitutions({
+            tonic,
+            mode,
+            chord: getChord(chords, 1),
+            allChords: chords,
+            sourceSymbol: "C",
+            includeSpice: true,
         });
 
-        // Additional checks from user requirements
-        // "Dim approach chord: °7 som leder inn i målakkord"
-        // Let's emulate a i -> iv progression. Current is i (Am7). Next is iv (Dm7).
-        // Suggest vii°/iv? (C#dim7 -> Dm)
-        test("Dim approach to next chord (Am7 -> Dm7)", () => {
-            const chord = getChord(chords, 1); // Am7
-            const nextChord = getChord(chords, 4); // Dm7
+        const basic = symbolsOfCategory(suggestions, "basic");
+        const spice = symbolsOfCategory(suggestions, "spice");
 
-            const suggestions = suggestSubstitutions({
-                tonic, mode, chord, allChords: chords, nextChord
-            });
+        expect(basic.some((symbol) => symbol.startsWith("Am"))).toBe(true);
+        expect(basic.some((symbol) => symbol.startsWith("Em"))).toBe(true);
+        expect(basic.some((symbol) => ["Cmaj7", "C6", "C/E"].includes(symbol))).toBe(true);
 
-            // Target Dm7 (D). C#dim7 is approach.
-            // C# dim7 = C# E G Bb.
-            const hasDimApproach = suggestions.some(s => s.substituteSymbol.includes("C#dim7"));
-            expect(hasDimApproach).toBe(true);
-
-            console.log("Am7 -> Dm7 Subs:", suggestions.map(s => `${s.substituteSymbol} (${s.category})`));
-        });
+        expect(spice.some((symbol) => ["Fm", "Fm7", "Bb", "Ab"].includes(symbol))).toBe(true);
     });
 
+    test("dominant substitutions include Bdim and Db7 in C major", () => {
+        const tonic = "C";
+        const mode: ModeId = "ionian";
+        const chords = buildDiatonicChords(tonic, mode, true);
+
+        const suggestions = suggestSubstitutions({
+            tonic,
+            mode,
+            chord: getChord(chords, 5),
+            allChords: chords,
+            sourceSymbol: "G7",
+            includeSpice: true,
+        });
+
+        const symbols = suggestions.map((suggestion) => suggestion.substituteSymbol);
+        expect(symbols).toContain("Bdim");
+        expect(symbols).toContain("Db7");
+    });
+
+    test("approach suggestions include V/vi before Am in C major", () => {
+        const tonic = "C";
+        const mode: ModeId = "ionian";
+        const chords = buildDiatonicChords(tonic, mode, true);
+
+        const suggestions = suggestSubstitutions({
+            tonic,
+            mode,
+            chord: getChord(chords, 1),
+            allChords: chords,
+            nextChord: getChord(chords, 6),
+            sourceSymbol: "C",
+            includeApproach: true,
+        });
+
+        const approachE7 = suggestions.find(
+            (suggestion) => suggestion.category === "approach" && suggestion.substituteSymbol === "E7",
+        );
+
+        expect(approachE7).toBeDefined();
+        expect(approachE7?.requiresContext).toBe(true);
+    });
+
+    test("targeting tonic allows backdoor bVII7 as approach", () => {
+        const tonic = "C";
+        const mode: ModeId = "ionian";
+        const chords = buildDiatonicChords(tonic, mode, true);
+
+        const suggestions = suggestSubstitutions({
+            tonic,
+            mode,
+            chord: getChord(chords, 2),
+            allChords: chords,
+            nextChord: getChord(chords, 1),
+            sourceSymbol: "Dm7",
+            includeApproach: true,
+        });
+
+        expect(
+            suggestions.some(
+                (suggestion) => suggestion.category === "approach" && suggestion.substituteSymbol === "Bb7",
+            ),
+        ).toBe(true);
+    });
+
+    test("preserveBass prioritizes inversion-friendly substitutions", () => {
+        const tonic = "C";
+        const mode: ModeId = "ionian";
+        const chords = buildDiatonicChords(tonic, mode, true);
+
+        const suggestions = suggestSubstitutions({
+            tonic,
+            mode,
+            chord: getChord(chords, 5),
+            allChords: chords,
+            sourceSymbol: "G/B",
+            preserveBass: true,
+            includeSpice: true,
+        });
+
+        const symbols = suggestions.map((suggestion) => suggestion.substituteSymbol);
+        expect(symbols).toContain("Em7/B");
+        expect(symbols).toContain("G7/B");
+    });
+
+    test("G minor suggestions respect flat enharmonics", () => {
+        const tonic = "G";
+        const mode: ModeId = "aeolian";
+        const chords = buildDiatonicChords(tonic, mode, true);
+
+        const suggestions = suggestSubstitutions({
+            tonic,
+            mode,
+            chord: getChord(chords, 1),
+            allChords: chords,
+            sourceSymbol: "Gm",
+            includeSpice: true,
+        });
+
+        const hasSharpEnharmonics = suggestions.some(
+            (suggestion) => suggestion.substituteSymbol.startsWith("A#") || suggestion.substituteSymbol.startsWith("D#"),
+        );
+
+        expect(hasSharpEnharmonics).toBe(false);
+    });
 });

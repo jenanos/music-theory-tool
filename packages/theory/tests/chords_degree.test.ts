@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { getChordDegree, getNextChordSuggestionsFromSequence } from "../src/chords";
+import { analyzeSlashChord, getChordDegree, getNextChordSuggestionsFromSequence } from "../src/chords";
 
 describe("chromatic chord degree analysis", () => {
     it.each([
@@ -11,13 +11,21 @@ describe("chromatic chord degree analysis", () => {
         { chord: "A#maj7", key: "Gm", expected: "#IImaj7" },
         { chord: "F#m7b5", key: "Em", expected: "iiø7" },
         { chord: "F#dim7", key: "Em", expected: "ii°7" },
-        { chord: "Ab/C", key: "Gm", expected: "bII" },
+        { chord: "Ab/C", key: "Gm", expected: "bII6" },
+        { chord: "G/B", key: "C", expected: "V6" },
+        { chord: "G7/B", key: "C", expected: "V65" },
+        { chord: "C/D", key: "C", expected: "I" },
     ])("analyzes $chord in $key as $expected", ({ chord, key, expected }) => {
         expect(getChordDegree(chord, key)).toBe(expected);
     });
 
     it("returns null when root parsing fails", () => {
         expect(getChordDegree("H7", "C")).toBeNull();
+    });
+
+    it("classifies C/D as non-chord-bass slash chord", () => {
+        const slash = analyzeSlashChord("C/D");
+        expect(slash.type).toBe("non_chord_bass");
     });
 });
 

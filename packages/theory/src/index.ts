@@ -32,6 +32,7 @@ export {
 } from "./substitutions";
 export {
   getChordDegree,
+  analyzeSlashChord,
   getChordSuggestions,
   getNextChordSuggestionsFromSequence
 } from "./chords";

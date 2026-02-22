@@ -6,6 +6,7 @@ import {
     type NextChordSuggestion,
 } from "./progressions";
 import { parseKey, parseNoteName } from "./utils";
+import type { SlashChordAnalysis } from "./types";
 
 const LETTERS = ["C", "D", "E", "F", "G", "A", "B"] as const;
 const ROMANS = ["I", "II", "III", "IV", "V", "VI", "VII"] as const;
@@ -36,9 +37,7 @@ function parseChordRoot(chordSymbol: string): { root: string; letter: string; ro
     }
 }
 
-function detectChordQuality(chordSymbol: string): "major" | "minor" | "diminished" | "half-diminished" {
-    const cleaned = chordSymbol.trim().split("/")[0] ?? chordSymbol;
-    const body = cleaned.replace(/^([A-Ga-g][b#]?)/, "");
+function detectChordQualityFromBody(body: string): "major" | "minor" | "diminished" | "half-diminished" {
     const lower = body.toLowerCase();
 
     if (lower.includes("m7b5") || lower.includes("ø")) {
@@ -47,9 +46,6 @@ function detectChordQuality(chordSymbol: string): "major" | "minor" | "diminishe
     if (lower.includes("dim") || lower.includes("°")) {
         return "diminished";
     }
-    if (lower.includes("maj")) {
-        return "major";
-    }
     if (lower.startsWith("m") && !lower.startsWith("maj")) {
         return "minor";
     }
@@ -57,13 +53,151 @@ function detectChordQuality(chordSymbol: string): "major" | "minor" | "diminishe
     return "major";
 }
 
+function detectChordQuality(chordSymbol: string): "major" | "minor" | "diminished" | "half-diminished" {
+    const cleaned = chordSymbol.trim().split("/")[0] ?? chordSymbol;
+    const body = cleaned.replace(/^([A-Ga-g][b#]?)/, "");
+    return detectChordQualityFromBody(body);
+}
+
 function detectExtension(chordSymbol: string): "maj7" | "7" | "none" {
     const cleaned = chordSymbol.trim().split("/")[0] ?? chordSymbol;
     const body = cleaned.replace(/^([A-Ga-g][b#]?)/, "");
     const lower = body.toLowerCase();
     if (lower.includes("maj7")) return "maj7";
-    if (lower.includes("7") || lower.includes("9") || lower.includes("11") || lower.includes("13")) return "7";
+    if (
+        lower.includes("°7")
+        || lower.includes("m7")
+        || lower.includes("7")
+        || lower.includes("9")
+        || lower.includes("11")
+        || lower.includes("13")
+    ) {
+        return "7";
+    }
     return "none";
+}
+
+function detectChordTones(chordSymbol: string): { tones: number[]; isSeventhChord: boolean } | null {
+    const cleaned = chordSymbol.trim().split("/")[0] ?? chordSymbol;
+    const rootInfo = parseChordRoot(cleaned);
+    if (!rootInfo) return null;
+
+    const body = cleaned.replace(/^([A-Ga-g][b#]?)/, "");
+    const lower = body.toLowerCase();
+    const quality = detectChordQualityFromBody(body);
+
+    let intervals = [0, 4, 7];
+    let isSeventhChord = false;
+
+    if (quality === "half-diminished") {
+        intervals = [0, 3, 6, 10];
+        isSeventhChord = true;
+    } else if (quality === "diminished") {
+        if (lower.includes("dim7") || lower.includes("°7")) {
+            intervals = [0, 3, 6, 9];
+            isSeventhChord = true;
+        } else {
+            intervals = [0, 3, 6];
+        }
+    } else if (quality === "minor") {
+        intervals = [0, 3, 7];
+        if (detectExtension(cleaned) !== "none") {
+            intervals = [0, 3, 7, 10];
+            isSeventhChord = true;
+        }
+    } else {
+        if (lower.includes("maj7")) {
+            intervals = [0, 4, 7, 11];
+            isSeventhChord = true;
+        } else if (detectExtension(cleaned) === "7") {
+            intervals = [0, 4, 7, 10];
+            isSeventhChord = true;
+        }
+    }
+
+    return {
+        tones: intervals.map((interval) => (rootInfo.rootPc + interval) % 12),
+        isSeventhChord,
+    };
+}
+
+function getInversionFigure(index: number, isSeventhChord: boolean): string {
+    if (isSeventhChord) {
+        const sevenths = ["7", "65", "43", "42"] as const;
+        return sevenths[index] ?? "";
+    }
+
+    const triads = ["", "6", "64"] as const;
+    return triads[index] ?? "";
+}
+
+export function analyzeSlashChord(chordSymbol: string): SlashChordAnalysis {
+    const trimmed = chordSymbol.trim();
+    const slashIndex = trimmed.indexOf("/");
+    const upperStructure = slashIndex >= 0 ? trimmed.slice(0, slashIndex).trim() : trimmed;
+    const bassPart = slashIndex >= 0 ? trimmed.slice(slashIndex + 1).trim() : undefined;
+
+    const toneInfo = detectChordTones(upperStructure);
+    const rootInfo = parseChordRoot(upperStructure);
+    if (!toneInfo || !rootInfo) {
+        return {
+            type: "none",
+            chordSymbol: trimmed,
+            upperStructure,
+            bassSymbol: bassPart,
+            chordTones: [],
+            isSeventhChord: false,
+        };
+    }
+
+    if (!bassPart) {
+        return {
+            type: "none",
+            chordSymbol: trimmed,
+            upperStructure,
+            rootPc: rootInfo.rootPc,
+            chordTones: toneInfo.tones,
+            isSeventhChord: toneInfo.isSeventhChord,
+        };
+    }
+
+    const bassInfo = parseChordRoot(bassPart);
+    if (!bassInfo) {
+        return {
+            type: "none",
+            chordSymbol: trimmed,
+            upperStructure,
+            rootPc: rootInfo.rootPc,
+            chordTones: toneInfo.tones,
+            isSeventhChord: toneInfo.isSeventhChord,
+        };
+    }
+
+    const inversionIndex = toneInfo.tones.findIndex((tone) => tone === bassInfo.rootPc);
+    if (inversionIndex >= 0 && inversionIndex <= (toneInfo.isSeventhChord ? 3 : 2)) {
+        return {
+            type: "inversion",
+            chordSymbol: trimmed,
+            upperStructure,
+            bassSymbol: bassInfo.root,
+            rootPc: rootInfo.rootPc,
+            bassPc: bassInfo.rootPc,
+            chordTones: toneInfo.tones,
+            inversionIndex: inversionIndex as 0 | 1 | 2 | 3,
+            isSeventhChord: toneInfo.isSeventhChord,
+        };
+    }
+
+    return {
+        type: "non_chord_bass",
+        chordSymbol: trimmed,
+        upperStructure,
+        bassSymbol: bassInfo.root,
+        rootPc: rootInfo.rootPc,
+        bassPc: bassInfo.rootPc,
+        chordTones: toneInfo.tones,
+        isSeventhChord: toneInfo.isSeventhChord,
+    };
 }
 
 function accidentalFromPcDifference(diff: number): string | null {
@@ -137,8 +271,8 @@ export function getChordDegree(chordSymbol: string, key: string): string | null 
     if (!parsedKey) return null;
 
     const { tonic, mode } = parsedKey;
-    const slashRoot = chordSymbol.split("/")[0]?.trim() ?? chordSymbol;
-    const rootInfo = parseChordRoot(slashRoot);
+    const slashAnalysis = analyzeSlashChord(chordSymbol);
+    const rootInfo = parseChordRoot(slashAnalysis.upperStructure);
     if (!rootInfo) return null;
 
     const tonicLetter = tonic[0]?.toUpperCase();
@@ -157,12 +291,27 @@ export function getChordDegree(chordSymbol: string, key: string): string | null 
     const accidental = accidentalFromPcDifference(rootInfo.rootPc - degreePc);
     if (accidental === null) return null;
 
-    const quality = detectChordQuality(chordSymbol);
-    const extension = detectExtension(chordSymbol);
+    const quality = detectChordQuality(slashAnalysis.upperStructure);
+    const extension = detectExtension(slashAnalysis.upperStructure);
 
     let romanBase = ROMANS[degreeIndex]!;
     if (quality === "minor" || quality === "diminished" || quality === "half-diminished") {
         romanBase = romanBase.toLowerCase() as (typeof ROMANS)[number];
+    }
+
+    const qualityMark = quality === "diminished"
+        ? "°"
+        : quality === "half-diminished"
+            ? "ø"
+            : "";
+
+    if (slashAnalysis.type === "inversion" && slashAnalysis.inversionIndex !== undefined) {
+        const inversionFigure = getInversionFigure(
+            slashAnalysis.inversionIndex,
+            slashAnalysis.isSeventhChord
+        );
+
+        return `${accidental}${romanBase}${qualityMark}${inversionFigure}`;
     }
 
     let suffix = "";

@@ -8,18 +8,16 @@ type SubstitutionPanelProps = {
 };
 
 const CATEGORIES = {
-    basic: "Grunnleggende",
-    functional: "Funksjonell",
-    jazz: "Jazz",
-    modal_interchange: "Lånte akkorder",
-    chromatic: "Kromatisk",
+    basic: "Basic",
+    spice: "Spice",
+    approach: "Approach",
 } as const;
 
 type CategoryKey = keyof typeof CATEGORIES;
 
 export function SubstitutionPanel({ substitutions, onSelect }: SubstitutionPanelProps) {
     const [filters, setFilters] = useState<CategoryKey[]>([
-        "basic", "functional", "jazz", "modal_interchange", "chromatic"
+        "basic", "spice", "approach"
     ]);
 
     const toggleFilter = (key: CategoryKey) => {
@@ -78,9 +76,19 @@ export function SubstitutionPanel({ substitutions, onSelect }: SubstitutionPanel
                                         <span className="font-bold text-lg text-primary">
                                             {item.substituteSymbol}
                                         </span>
+                                        {item.roman && (
+                                            <span className="text-xs font-mono text-muted-foreground">
+                                                {item.roman}
+                                            </span>
+                                        )}
                                         <span className="text-xs px-2 py-0.5 rounded-full bg-muted text-muted-foreground capitalize">
                                             {CATEGORIES[item.category] || item.category}
                                         </span>
+                                        {item.requiresContext && (
+                                            <span className="text-[10px] px-2 py-0.5 rounded-full border border-border text-muted-foreground">
+                                                Context
+                                            </span>
+                                        )}
                                     </div>
                                     {item.score > 3 && (
                                         <span className="text-[9px] font-medium px-1.5 py-0.5 rounded bg-emerald-100 dark:bg-emerald-900/30 text-emerald-700 dark:text-emerald-400">Anbefalt</span>
@@ -89,6 +97,11 @@ export function SubstitutionPanel({ substitutions, onSelect }: SubstitutionPanel
 
                                 <div className="flex flex-col gap-1 text-muted-foreground mt-2">
                                     <p>{item.reason}</p>
+                                    {item.tags.length > 0 && (
+                                        <p className="text-xs">
+                                            {item.tags.join(" · ")}
+                                        </p>
+                                    )}
                                 </div>
                             </div>
 

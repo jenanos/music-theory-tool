@@ -1,84 +1,294 @@
+import { FUNCTION_GROUPS } from "./data";
+import { DiatonicChord, ModeId, SubstitutionSuggestion } from "./types";
+import { noteName, parseNoteName, prefersFlatsForKey } from "./utils";
 
-import {
-    SUBSTITUTION_RULES,
-    SCORING_WEIGHTS,
-    CHORD_QUALITIES,
-    FUNCTION_GROUPS,
-    MODES,
-    type SubstitutionRule
-} from "./data";
-import { DiatonicChord, SubstitutionSuggestion, ModeId } from "./types";
-import { parseNoteName, noteName, prefersFlatsForKey } from "./utils";
+type SubstitutionCategory = SubstitutionSuggestion["category"];
 
-// Helper to determine chord intervals from quality string
-function getQualityIntervals(quality: string): number[] {
-    // Check exact match
-    if (quality in CHORD_QUALITIES) return [...CHORD_QUALITIES[quality as keyof typeof CHORD_QUALITIES]];
+type SlashInfo = {
+    type: "none" | "inversion" | "non_chord_bass";
+    upperStructure: string;
+    bassSymbol?: string;
+    bassPc?: number;
+};
 
-    // Fallbacks
-    if (quality === "maj" || quality === "") return [0, 4, 7];
-    if (quality === "m") return [0, 3, 7];
-    if (quality === "dim") return [0, 3, 6];
-    if (quality === "aug") return [0, 4, 8];
+type ParsedChord = {
+    symbol: string;
+    root: string;
+    rootPc: number;
+    body: string;
+    tones: number[];
+    isSeventhChord: boolean;
+};
 
-    // Default to major triad
-    return [0, 4, 7];
+type SuggestionDraft = {
+    symbol: string;
+    roman?: string;
+    category: SubstitutionCategory;
+    tags: Set<string>;
+    score: number;
+    sharedTones: number;
+    requiresContext: boolean;
+};
+
+const CATEGORY_BASE_SCORE: Record<SubstitutionCategory, number> = {
+    basic: 100,
+    spice: 60,
+    approach: 40,
+};
+
+const CATEGORY_ORDER: Record<SubstitutionCategory, number> = {
+    basic: 0,
+    spice: 1,
+    approach: 2,
+};
+
+function normalizeSymbol(symbol: string): string {
+    return symbol.trim().replace(/\s+/g, "");
 }
 
-function getChordTones(rootPc: number, quality: string): number[] {
-    const intervals = getQualityIntervals(quality);
-    return intervals.map((i: number) => (rootPc + i) % 12);
+function parseRoot(symbol: string): { root: string; rootPc: number } | null {
+    const match = symbol.trim().match(/^([A-Ga-g])([b#]?)/);
+    if (!match) return null;
+
+    const root = `${match[1]!.toUpperCase()}${match[2] ?? ""}`;
+    try {
+        return { root, rootPc: parseNoteName(root) };
+    } catch {
+        return null;
+    }
 }
 
-function countSharedTones(tones1: number[], tones2: number[]): number {
-    const set2 = new Set(tones2.map(t => t % 12));
-    return tones1.filter(t => set2.has(t % 12)).length;
-}
+function parseChord(symbol: string): ParsedChord | null {
+    const normalized = normalizeSymbol(symbol);
+    const upper = normalized.split("/")[0] ?? normalized;
+    const rootInfo = parseRoot(upper);
+    if (!rootInfo) return null;
 
-// Global helper to create candidate
-function createCandidate(
-    rootPc: number,
-    quality: string,
-    useFlats: boolean,
-    rule: SubstitutionRule,
-    originalChordTones: number[],
-    baseScore: number,
-    details: { targetChord?: string }
-): SubstitutionSuggestion {
-    const rootNote = noteName(rootPc, useFlats);
-    let symbol = rootNote;
+    const body = upper.replace(/^([A-Ga-g][b#]?)/, "");
+    const lower = body.toLowerCase();
 
-    // Formatting logic
-    if (quality === "maj7") symbol += "maj7";
-    else if (quality === "m7") symbol += "m7";
-    else if (quality === "7") symbol += "7";
-    else if (quality === "m7b5") symbol += "m7b5";
-    else if (quality === "dim7") symbol += "dim7";
-    else if (quality === "m" || quality === "minor") symbol += "m";
-    else if (quality === "dim") symbol += "dim";
-    else if (quality === "aug") symbol += "aug";
-    else if (quality !== "maj" && quality !== "") symbol += quality;
+    let intervals = [0, 4, 7];
+    let isSeventhChord = false;
 
-    const candidateTones = getChordTones(rootPc, quality);
-    const shared = countSharedTones(originalChordTones, candidateTones);
-
-    let score = baseScore;
-    score += shared * SCORING_WEIGHTS.shared_tones;
-
-    const explanation = rule.explain_template
-        .replace("{shared}", shared.toString())
-        .replace("{targetRoman}", details.targetChord || "target")
-        .replace("{targetChord}", details.targetChord || "");
+    if (lower.includes("m7b5") || lower.includes("ø")) {
+        intervals = [0, 3, 6, 10];
+        isSeventhChord = true;
+    } else if (lower.includes("dim7") || lower.includes("°7")) {
+        intervals = [0, 3, 6, 9];
+        isSeventhChord = true;
+    } else if (lower.includes("dim") || lower.includes("°")) {
+        intervals = [0, 3, 6];
+    } else if (lower.startsWith("m") && !lower.startsWith("maj")) {
+        intervals = [0, 3, 7];
+        if (lower.includes("7") || lower.includes("9") || lower.includes("11") || lower.includes("13")) {
+            intervals = [0, 3, 7, 10];
+            isSeventhChord = true;
+        }
+    } else if (lower.includes("maj7")) {
+        intervals = [0, 4, 7, 11];
+        isSeventhChord = true;
+    } else if (lower.includes("7") || lower.includes("9") || lower.includes("11") || lower.includes("13")) {
+        intervals = [0, 4, 7, 10];
+        isSeventhChord = true;
+    }
 
     return {
-        targetSymbol: "",
-        substituteSymbol: symbol,
-        category: rule.category,
-        reason: explanation,
-        score,
-        sharedTones: shared,
-        requirements: []
+        symbol: normalized,
+        root: rootInfo.root,
+        rootPc: rootInfo.rootPc,
+        body,
+        tones: intervals.map((i) => (rootInfo.rootPc + i) % 12),
+        isSeventhChord,
     };
+}
+
+function countSharedTones(a: number[], b: number[]): number {
+    const setB = new Set(b.map((t) => ((t % 12) + 12) % 12));
+    return a.filter((t) => setB.has(((t % 12) + 12) % 12)).length;
+}
+
+function splitSlash(symbol: string): { upperStructure: string; bass?: string } {
+    const normalized = normalizeSymbol(symbol);
+    const slashIndex = normalized.indexOf("/");
+    if (slashIndex < 0) return { upperStructure: normalized };
+
+    const upperStructure = normalized.slice(0, slashIndex).trim();
+    const bass = normalized.slice(slashIndex + 1).trim();
+    return { upperStructure, bass: bass || undefined };
+}
+
+function analyzeSlash(symbol: string): SlashInfo {
+    const { upperStructure, bass } = splitSlash(symbol);
+    if (!bass) {
+        return { type: "none", upperStructure };
+    }
+
+    const upper = parseChord(upperStructure);
+    const bassInfo = parseRoot(bass);
+
+    if (!upper || !bassInfo) {
+        return { type: "none", upperStructure };
+    }
+
+    if (upper.tones.includes(bassInfo.rootPc)) {
+        return {
+            type: "inversion",
+            upperStructure,
+            bassSymbol: bassInfo.root,
+            bassPc: bassInfo.rootPc,
+        };
+    }
+
+    return {
+        type: "non_chord_bass",
+        upperStructure,
+        bassSymbol: bassInfo.root,
+        bassPc: bassInfo.rootPc,
+    };
+}
+
+function makeSymbol(rootPc: number, quality: string, useFlats: boolean, forceFlats = false): string {
+    const root = noteName(rootPc, forceFlats ? true : useFlats);
+    return `${root}${quality}`;
+}
+
+function isMajorContext(mode: ModeId): boolean {
+    return mode === "ionian" || mode === "lydian" || mode === "mixolydian";
+}
+
+function getFunctionGroup(
+    mode: ModeId,
+    degree: number,
+): "tonic" | "predominant" | "dominant" | undefined {
+    const groups = FUNCTION_GROUPS[mode] ?? FUNCTION_GROUPS.ionian ?? { tonic: [], predominant: [], dominant: [] };
+
+    if (groups.tonic.includes(degree)) return "tonic";
+    if (groups.predominant.includes(degree)) return "predominant";
+    if (groups.dominant.includes(degree)) return "dominant";
+
+    return undefined;
+}
+
+function buildReason(tags: string[]): string {
+    if (tags.length === 0) return "Foreslått substitusjon.";
+    if (tags.length === 1) return tags[0]!;
+    if (tags.length === 2) return `${tags[0]}, ${tags[1]}.`;
+    return `${tags[0]}, ${tags[1]}, ${tags[2]}.`;
+}
+
+function inferSharedTones(symbol: string, sourceTones: number[]): number {
+    const parsed = parseChord(symbol);
+    if (!parsed) return 0;
+    return countSharedTones(sourceTones, parsed.tones);
+}
+
+function withPreservedBass(
+    symbol: string,
+    slash: SlashInfo,
+    preserveBass: boolean,
+): { symbol: string; boost: number; extraTags: string[] } {
+    if (!preserveBass || slash.type !== "inversion" || slash.bassPc === undefined || !slash.bassSymbol) {
+        return { symbol, boost: 0, extraTags: [] };
+    }
+
+    const parsed = parseChord(symbol);
+    if (!parsed) {
+        return { symbol, boost: 0, extraTags: [] };
+    }
+
+    if (parsed.tones.includes(slash.bassPc)) {
+        if (parsed.rootPc === slash.bassPc || symbol.includes("/")) {
+            return {
+                symbol,
+                boost: 9,
+                extraTags: ["inversion preserved"],
+            };
+        }
+
+        return {
+            symbol: `${symbol}/${slash.bassSymbol}`,
+            boost: 11,
+            extraTags: ["inversion preserved"],
+        };
+    }
+
+    const clockwise = (parsed.rootPc - slash.bassPc + 12) % 12;
+    const counter = (slash.bassPc - parsed.rootPc + 12) % 12;
+    const distance = Math.min(clockwise, counter);
+
+    if (distance <= 2) {
+        return {
+            symbol,
+            boost: 4,
+            extraTags: ["stepwise bass"],
+        };
+    }
+
+    return { symbol, boost: 0, extraTags: [] };
+}
+
+function addSuggestion(
+    map: Map<string, SuggestionDraft>,
+    params: {
+        symbol: string;
+        roman?: string;
+        category: SubstitutionCategory;
+        tags: string[];
+        sourceTones: number[];
+        scoreOffset?: number;
+        requiresContext?: boolean;
+        sameFunction?: boolean;
+        crossFunction?: boolean;
+        resolvesToTarget?: boolean;
+        slash: SlashInfo;
+        preserveBass: boolean;
+    },
+): void {
+    const normalizedSymbol = normalizeSymbol(params.symbol);
+    if (!normalizedSymbol) return;
+
+    const bassAdjusted = withPreservedBass(normalizedSymbol, params.slash, params.preserveBass);
+    const finalSymbol = bassAdjusted.symbol;
+    const sharedTones = inferSharedTones(finalSymbol, params.sourceTones);
+
+    let score = CATEGORY_BASE_SCORE[params.category];
+    score += params.scoreOffset ?? 0;
+    score += sharedTones * 6;
+    score += bassAdjusted.boost;
+
+    if (params.sameFunction) score += 14;
+    if (params.crossFunction) score -= 8;
+    if (params.resolvesToTarget) score += 16;
+
+    const tags = [...params.tags, ...bassAdjusted.extraTags];
+
+    const key = `${params.category}:${finalSymbol}`;
+    const existing = map.get(key);
+
+    if (!existing) {
+        map.set(key, {
+            symbol: finalSymbol,
+            roman: params.roman,
+            category: params.category,
+            tags: new Set(tags),
+            score,
+            sharedTones,
+            requiresContext: params.requiresContext ?? false,
+        });
+        return;
+    }
+
+    for (const tag of tags) {
+        existing.tags.add(tag);
+    }
+
+    if (params.roman && !existing.roman) {
+        existing.roman = params.roman;
+    }
+
+    existing.score = Math.max(existing.score, score);
+    existing.sharedTones = Math.max(existing.sharedTones, sharedTones);
+    existing.requiresContext = existing.requiresContext || Boolean(params.requiresContext);
 }
 
 export function suggestSubstitutions(
@@ -88,198 +298,351 @@ export function suggestSubstitutions(
         chord: DiatonicChord;
         allChords: DiatonicChord[];
         nextChord?: DiatonicChord;
-    }
+        sourceSymbol?: string;
+        preserveBass?: boolean;
+        includeSpice?: boolean;
+        includeApproach?: boolean;
+    },
 ): SubstitutionSuggestion[] {
-    const { tonic, mode, chord, allChords, nextChord } = context;
-    const tonicPc = parseNoteName(tonic);
+    const {
+        tonic,
+        mode,
+        chord,
+        allChords,
+        nextChord,
+        sourceSymbol,
+        preserveBass = false,
+        includeSpice = true,
+    } = context;
+
+    const includeApproach = context.includeApproach ?? Boolean(nextChord);
     const useFlats = prefersFlatsForKey(tonic, mode);
-    const suggestions: SubstitutionSuggestion[] = [];
+    const tonicPc = parseNoteName(tonic);
+    const rootPc = chord.tones[0] ?? tonicPc;
 
-    for (const rule of SUBSTITUTION_RULES) {
-        const when = rule.when;
+    const sourceParsed = parseChord(sourceSymbol ?? chord.symbol);
+    const sourceTones = sourceParsed?.tones ?? chord.tones;
+    const sourceDisplaySymbol = normalizeSymbol(sourceSymbol ?? chord.symbol);
+    const slash = analyzeSlash(sourceDisplaySymbol);
 
-        // if (when.scope === "diatonic") { }
+    const functionGroup = getFunctionGroup(mode, chord.degree);
+    const groups = FUNCTION_GROUPS[mode] ?? FUNCTION_GROUPS.ionian ?? { tonic: [], predominant: [], dominant: [] };
 
-        if (when.mode_is && when.mode_is !== mode) continue;
-        if (when.degree_is && when.degree_is !== chord.degree) continue;
-        if (when.function_is && when.function_is !== chord.function) continue;
+    const drafts = new Map<string, SuggestionDraft>();
 
-        if (when.quality_in) {
-            let matchesQuality = false;
-            for (const q of when.quality_in) {
-                if (chord.symbol.endsWith(q) || chord.quality === q) matchesQuality = true;
-                if (q === "7" && (chord.symbol.includes("maj7") || chord.symbol.includes("m7"))) matchesQuality = false;
-                if (q === "7" && chord.quality === "dominant") matchesQuality = true;
-            }
-            if (!matchesQuality) continue;
-        }
+    // === BASIC: Functional families ===
+    if (functionGroup) {
+        const family = groups[functionGroup] ?? [];
+        for (const degree of family) {
+            if (degree === chord.degree) continue;
+            const candidate = allChords.find((entry) => entry.degree === degree);
+            if (!candidate) continue;
 
-        if (when.target_degree_not_in) {
-            if (when.target_degree_not_in.includes(chord.degree)) continue;
-        }
-
-        if (when.has_next_chord && !nextChord) continue;
-
-        if (when.resolves_to_degree && nextChord) {
-            if (nextChord.degree !== when.resolves_to_degree) continue;
-        } else if (when.resolves_to_degree) {
-            // Requirement but no next chord known -> assume we can't apply
-            continue;
-        }
-
-        // === Generate Suggestions (OP) ===
-        const op = rule.generate.op;
-
-        if (op === "swap_degree_within_same_function_group") {
-            // Find chords in same function group
-            const groupMap = FUNCTION_GROUPS[mode] || FUNCTION_GROUPS.ionian;
-            if (!groupMap) continue;
-
-            let functionType: "tonic" | "predominant" | "dominant" | undefined;
-
-            if (groupMap.tonic.includes(chord.degree)) functionType = "tonic";
-            else if (groupMap.predominant.includes(chord.degree)) functionType = "predominant";
-            else if (groupMap.dominant.includes(chord.degree)) functionType = "dominant";
-
-            if (functionType) {
-                const candidates = groupMap[functionType];
-                for (const deg of candidates) {
-                    if (deg === chord.degree) continue;
-
-                    const candidateChord = allChords.find(c => c.degree === deg);
-                    if (!candidateChord) continue;
-
-                    // Use the candidate chord's known symbol/tones
-                    const shared = countSharedTones(chord.tones, candidateChord.tones);
-                    if (when.min_shared_tones && shared < when.min_shared_tones) continue;
-
-                    // Calculate score
-                    let score = SCORING_WEIGHTS.diatonic_bonus;
-                    score += shared * SCORING_WEIGHTS.shared_tones;
-
-                    suggestions.push({
-                        targetSymbol: chord.symbol,
-                        substituteSymbol: candidateChord.symbol,
-                        category: rule.category,
-                        reason: rule.explain_template.replace("{shared}", shared.toString()),
-                        score,
-                        sharedTones: shared,
-                        requirements: []
-                    });
-                }
-            }
-        }
-
-        else if (op === "make_V7_of_target_degree") {
-            if (nextChord) {
-                const nextRoot = nextChord.tones[0];
-                if (nextRoot !== undefined && chord.tones[0] !== undefined) {
-                    // Calc V7 of Next
-                    // const domRoot = (nextRoot + 7) % 12;
-
-                    // Check if current chord root is same as dom root? 
-                    if ((chord.tones[0] - nextRoot + 12) % 12 === 7) {
-                        // Current is V of next.
-                        const sub = createCandidate(chord.tones[0], "7", useFlats, rule, chord.tones, 2.0, {
-                            targetChord: nextChord.symbol
-                        });
-                        suggestions.push(sub);
-                    }
-                }
-            }
-        }
-
-        else if (op === "make_vii_dim7_of_target_degree") {
-            if (nextChord) {
-                const nextRoot = nextChord.tones[0];
-                if (nextRoot !== undefined) {
-                    const dimRoot = (nextRoot - 1 + 12) % 12;
-                    const sub = createCandidate(dimRoot, "dim7", useFlats, rule, chord.tones, 1.0, {
-                        targetChord: nextChord.symbol
-                    });
-                    suggestions.push(sub);
-                }
-            }
-        }
-
-        else if (op === "tritone_substitute_dominant7") {
-            const root = chord.tones[0];
-            if (root !== undefined) {
-                const subRoot = (root + 6) % 12;
-                const sub = createCandidate(subRoot, "7", useFlats, rule, chord.tones, 2.0, {});
-                suggestions.push(sub);
-            }
-        }
-
-        else if (op === "make_bVII7_to_I") {
-            if (nextChord && nextChord.degree === 1) {
-                const nextRoot = nextChord.tones[0];
-                if (nextRoot !== undefined) {
-                    const subRoot = (nextRoot + 10) % 12;
-                    const sub = createCandidate(subRoot, "7", useFlats, rule, chord.tones, 2.0, {
-                        targetChord: nextChord.symbol
-                    });
-                    suggestions.push(sub);
-                }
-            } else if (chord.function === "dominant") {
-                const tonicRoot = parseNoteName(tonic);
-                const subRoot = (tonicRoot + 10) % 12;
-                const sub = createCandidate(subRoot, "7", useFlats, rule, chord.tones, 1.5, {
-                    targetChord: "I"
-                });
-                suggestions.push(sub);
-            }
-        }
-
-        else if (op === "borrow_from_parallel_aeolian") {
-            if (rule.generate.borrow_degree) {
-                const aeolianMode = MODES["aeolian"];
-                if (aeolianMode) {
-                    const aeolianIntervals = aeolianMode.intervals;
-                    const degIndex = rule.generate.borrow_degree - 1;
-                    const interval = aeolianIntervals[degIndex];
-                    if (interval !== undefined) {
-                        const subRoot = (tonicPc + interval) % 12;
-                        const quality = rule.generate.borrow_quality || "m7";
-
-                        const sub = createCandidate(subRoot, quality, useFlats, rule, chord.tones, SCORING_WEIGHTS.borrowed_penalty, {});
-                        suggestions.push(sub);
-                    }
-                }
-            }
-        }
-
-        else if (op === "replace_with_V7_harmonic_minor") {
-            const root = chord.tones[0];
-            if (root !== undefined) {
-                const sub = createCandidate(root, "7", useFlats, rule, chord.tones, 1.0, {});
-                suggestions.push(sub);
-            }
-        }
-
-        else if (op === "dim7_approach_to_next_root" || op === "diminished_approach_up_semitone") {
-            if (nextChord) {
-                const nextRoot = nextChord.tones[0];
-                if (nextRoot !== undefined) {
-                    const subRoot = (nextRoot - 1 + 12) % 12;
-                    const sub = createCandidate(subRoot, "dim7", useFlats, rule, chord.tones, 0, { targetChord: nextChord.symbol });
-                    suggestions.push(sub);
-                }
-            }
+            addSuggestion(drafts, {
+                symbol: candidate.symbol,
+                roman: candidate.roman,
+                category: "basic",
+                tags: ["common tones", `${functionGroup} family`],
+                sourceTones,
+                scoreOffset: 8,
+                sameFunction: true,
+                slash,
+                preserveBass,
+            });
         }
     }
 
-    // Deduplicate
-    const unique = new Map<string, SubstitutionSuggestion>();
-    for (const s of suggestions) {
-        if (!unique.has(s.substituteSymbol)) {
-            unique.set(s.substituteSymbol, s);
+    // === BASIC: common-tone within diatonic set ===
+    for (const candidate of allChords) {
+        if (candidate.degree === chord.degree) continue;
+
+        const shared = countSharedTones(sourceTones, candidate.tones);
+        if (shared < 2) continue;
+
+        const candidateGroup = getFunctionGroup(mode, candidate.degree);
+        const sameFunction = candidateGroup !== undefined && candidateGroup === functionGroup;
+
+        addSuggestion(drafts, {
+            symbol: candidate.symbol,
+            roman: candidate.roman,
+            category: "basic",
+            tags: sameFunction
+                ? ["common tones", `${candidateGroup} family`]
+                : ["common tones", "cross-function voice-leading"],
+            sourceTones,
+            scoreOffset: sameFunction ? 10 : 1,
+            sameFunction,
+            crossFunction: !sameFunction,
+            slash,
+            preserveBass,
+        });
+    }
+
+    // === BASIC: richer versions of same harmony ===
+    const rootName = noteName(rootPc, useFlats);
+    const sourceLower = (sourceSymbol ?? chord.symbol).toLowerCase();
+    const sameChordVariants = new Set<string>();
+
+    if (sourceLower.includes("m") && !sourceLower.includes("maj")) {
+        sameChordVariants.add(`${rootName}m7`);
+        sameChordVariants.add(`${rootName}m9`);
+    } else if (sourceLower.includes("7") || functionGroup === "dominant") {
+        sameChordVariants.add(`${rootName}7`);
+        sameChordVariants.add(`${rootName}9`);
+        sameChordVariants.add(`${rootName}13`);
+    } else {
+        sameChordVariants.add(`${rootName}maj7`);
+        sameChordVariants.add(`${rootName}6`);
+        sameChordVariants.add(`${rootName}add9`);
+    }
+
+    const thirdPc = chord.tones[1];
+    if (thirdPc !== undefined) {
+        sameChordVariants.add(`${rootName}/${noteName(thirdPc, useFlats)}`);
+    }
+
+    for (const variant of sameChordVariants) {
+        if (normalizeSymbol(variant) === sourceDisplaySymbol) continue;
+
+        addSuggestion(drafts, {
+            symbol: variant,
+            roman: chord.roman,
+            category: "basic",
+            tags: ["same harmony richer voicing"],
+            sourceTones,
+            scoreOffset: 7,
+            sameFunction: true,
+            slash,
+            preserveBass,
+        });
+    }
+
+    // === SPICE: modal interchange / color ===
+    if (includeSpice) {
+        if (isMajorContext(mode)) {
+            addSuggestion(drafts, {
+                symbol: makeSymbol((tonicPc + 5) % 12, "m7", useFlats),
+                roman: "iv7",
+                category: "spice",
+                tags: ["modal borrow", "predominant color"],
+                sourceTones,
+                scoreOffset: 2,
+                slash,
+                preserveBass,
+            });
+
+            addSuggestion(drafts, {
+                symbol: makeSymbol((tonicPc + 10) % 12, "", useFlats, true),
+                roman: "bVII",
+                category: "spice",
+                tags: ["modal borrow", "backdoor color"],
+                sourceTones,
+                scoreOffset: 1,
+                slash,
+                preserveBass,
+            });
+
+            addSuggestion(drafts, {
+                symbol: makeSymbol((tonicPc + 8) % 12, "", useFlats, true),
+                roman: "bVI",
+                category: "spice",
+                tags: ["modal borrow"],
+                sourceTones,
+                scoreOffset: 0,
+                slash,
+                preserveBass,
+            });
+
+            addSuggestion(drafts, {
+                symbol: makeSymbol((tonicPc + 3) % 12, "", useFlats, true),
+                roman: "bIII",
+                category: "spice",
+                tags: ["modal borrow"],
+                sourceTones,
+                scoreOffset: -1,
+                slash,
+                preserveBass,
+            });
+
+            addSuggestion(drafts, {
+                symbol: makeSymbol((tonicPc + 1) % 12, "", useFlats, true),
+                roman: "bII",
+                category: "spice",
+                tags: ["neapolitan color"],
+                sourceTones,
+                scoreOffset: -2,
+                slash,
+                preserveBass,
+            });
         } else {
-            if (s.score > unique.get(s.substituteSymbol)!.score) {
-                unique.set(s.substituteSymbol, s);
+            addSuggestion(drafts, {
+                symbol: makeSymbol((tonicPc + 5) % 12, "", useFlats),
+                roman: "IV",
+                category: "spice",
+                tags: ["borrowed from parallel major"],
+                sourceTones,
+                scoreOffset: 1,
+                slash,
+                preserveBass,
+            });
+
+            addSuggestion(drafts, {
+                symbol: makeSymbol((tonicPc + 1) % 12, "", useFlats, true),
+                roman: "bII",
+                category: "spice",
+                tags: ["neapolitan color"],
+                sourceTones,
+                scoreOffset: -1,
+                slash,
+                preserveBass,
+            });
+
+            if (mode === "aeolian" && chord.degree === 5) {
+                addSuggestion(drafts, {
+                    symbol: makeSymbol(rootPc, "7", useFlats),
+                    roman: "V7",
+                    category: "spice",
+                    tags: ["harmonic minor dominant"],
+                    sourceTones,
+                    scoreOffset: 4,
+                    slash,
+                    preserveBass,
+                });
+            }
+        }
+
+        if (functionGroup === "dominant") {
+            addSuggestion(drafts, {
+                symbol: makeSymbol((rootPc + 4) % 12, "dim", useFlats),
+                roman: undefined,
+                category: "spice",
+                tags: ["leading-tone diminished", "dominant substitute"],
+                sourceTones,
+                scoreOffset: 8,
+                slash,
+                preserveBass,
+            });
+
+            addSuggestion(drafts, {
+                symbol: makeSymbol((rootPc + 6) % 12, "7", useFlats, true),
+                roman: "bII7",
+                category: "spice",
+                tags: ["tritone sub"],
+                sourceTones,
+                scoreOffset: 7,
+                slash,
+                preserveBass,
+            });
+        }
+    }
+
+    // Non-chord slash bass interpretation
+    if (slash.type === "non_chord_bass" && slash.bassPc !== undefined && slash.bassSymbol) {
+        addSuggestion(drafts, {
+            symbol: `${slash.bassSymbol}9sus`,
+            roman: undefined,
+            category: "spice",
+            tags: ["non-chord bass", "upper structure", "sus dominant interpretation"],
+            sourceTones,
+            scoreOffset: 6,
+            slash,
+            preserveBass,
+        });
+    }
+
+    // === APPROACH: target-aware substitutions ===
+    if (includeApproach && nextChord) {
+        const targetRoot = nextChord.tones[0];
+        const targetRoman = nextChord.roman;
+
+        if (targetRoot !== undefined) {
+            const dominantRoot = (targetRoot + 7) % 12;
+            const leadingToneRoot = (targetRoot + 11) % 12;
+            const tritoneRoot = (dominantRoot + 6) % 12;
+
+            addSuggestion(drafts, {
+                symbol: makeSymbol(dominantRoot, "7", useFlats),
+                roman: `V/${targetRoman}`,
+                category: "approach",
+                tags: ["secondary dominant", "resolves to target"],
+                sourceTones,
+                scoreOffset: 12,
+                requiresContext: true,
+                resolvesToTarget: true,
+                slash,
+                preserveBass,
+            });
+
+            addSuggestion(drafts, {
+                symbol: makeSymbol(leadingToneRoot, "dim7", useFlats),
+                roman: `vii°7/${targetRoman}`,
+                category: "approach",
+                tags: ["diminished approach", "resolves to target"],
+                sourceTones,
+                scoreOffset: 8,
+                requiresContext: true,
+                resolvesToTarget: true,
+                slash,
+                preserveBass,
+            });
+
+            addSuggestion(drafts, {
+                symbol: makeSymbol(tritoneRoot, "7", useFlats, true),
+                roman: `bII7/${targetRoman}`,
+                category: "approach",
+                tags: ["tritone sub", "resolves to target"],
+                sourceTones,
+                scoreOffset: 7,
+                requiresContext: true,
+                resolvesToTarget: true,
+                slash,
+                preserveBass,
+            });
+
+            if (nextChord.degree === 1) {
+                addSuggestion(drafts, {
+                    symbol: makeSymbol((targetRoot + 10) % 12, "7", useFlats, true),
+                    roman: "bVII7",
+                    category: "approach",
+                    tags: ["backdoor dominant", "resolves to target"],
+                    sourceTones,
+                    scoreOffset: 10,
+                    requiresContext: true,
+                    resolvesToTarget: true,
+                    slash,
+                    preserveBass,
+                });
             }
         }
     }
 
-    return Array.from(unique.values()).sort((a, b) => b.score - a.score);
+    const suggestions: SubstitutionSuggestion[] = Array.from(drafts.values())
+        .map((draft) => {
+            const tags = Array.from(draft.tags);
+            tags.sort((a, b) => a.localeCompare(b));
+
+            const requiresContext = draft.category === "approach" || draft.requiresContext;
+
+            return {
+                targetSymbol: sourceDisplaySymbol,
+                substituteSymbol: draft.symbol,
+                symbol: draft.symbol,
+                roman: draft.roman,
+                category: draft.category,
+                tags,
+                requiresContext,
+                reason: buildReason(tags),
+                score: draft.score,
+                sharedTones: draft.sharedTones,
+                requirements: requiresContext ? ["next chord context"] : [],
+            };
+        })
+        .sort((a, b) => {
+            const categoryDiff = CATEGORY_ORDER[a.category] - CATEGORY_ORDER[b.category];
+            if (categoryDiff !== 0) return categoryDiff;
+            if (b.score !== a.score) return b.score - a.score;
+            return a.substituteSymbol.localeCompare(b.substituteSymbol);
+        });
+
+    return suggestions;
 }

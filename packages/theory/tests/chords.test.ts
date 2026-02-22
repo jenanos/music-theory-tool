@@ -27,8 +27,8 @@ describe("getChordDegree", () => {
         expect(getChordDegree("Cmaj7", "C Major")).toBe("Imaj7");
     });
 
-    it("should handle slash chords (C/E -> I)", () => {
-        expect(getChordDegree("C/E", "C Major")).toBe("I");
+    it("should show inversion figures for slash chords (C/E -> I6)", () => {
+        expect(getChordDegree("C/E", "C Major")).toBe("I6");
     });
 
     it("should return null for unknown key", () => {

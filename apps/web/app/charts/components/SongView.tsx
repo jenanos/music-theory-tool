@@ -8,9 +8,8 @@ import { SectionList } from "./SectionList";
 import {
     suggestSubstitutions,
     buildDiatonicChords,
-    getScale,
+    getChordDegree,
     parseKey,
-    type ModeId,
     type SubstitutionSuggestion,
     type DiatonicChord
 } from "@repo/theory";
@@ -151,34 +150,78 @@ export function SongView({ song, onChange }: SongViewProps) {
     const [selectedChord, setSelectedChord] = useState<SelectedChordState | null>(null);
 
     const handleChordClick = useCallback((chordSymbol: string, sectionId: string, lineIndex: number, chordIndex: number, degree?: string) => {
-        if (!song.key) return;
+        const songKey = song.key;
+        if (!songKey) return;
 
-        const keyInfo = parseKey(song.key);
+        const keyInfo = parseKey(songKey);
         if (!keyInfo) return;
 
         const { tonic, mode } = keyInfo;
         const diatonicChords = buildDiatonicChords(tonic, mode, true);
 
-        let targetChord: DiatonicChord | undefined;
+        const normalizeRomanBase = (roman: string) =>
+            roman
+                .replace(/(maj7|M7|°7|ø7|65|64|43|42|7|6)$/i, "")
+                .replace(/[+°ø]/g, "");
 
-        if (degree) {
-            const degreeBase = degree.replace(/[^IViv0-9]/g, '');
-            targetChord = diatonicChords.find(c => c.roman === degree);
-            if (!targetChord) {
-                targetChord = diatonicChords.find(c => c.roman.startsWith(degree));
+        const resolveDiatonicChord = (symbol: string, romanHint?: string): DiatonicChord | undefined => {
+            if (romanHint) {
+                const direct = diatonicChords.find((candidate) => candidate.roman === romanHint);
+                if (direct) return direct;
+
+                const base = normalizeRomanBase(romanHint);
+                const byBase = diatonicChords.find((candidate) =>
+                    normalizeRomanBase(candidate.roman) === base
+                );
+                if (byBase) return byBase;
             }
-        }
 
-        if (!targetChord) {
-            targetChord = diatonicChords.find(c => c.symbol === chordSymbol);
-        }
+            const inferredRoman = getChordDegree(symbol, songKey);
+            if (inferredRoman) {
+                const inferredDirect = diatonicChords.find((candidate) => candidate.roman === inferredRoman);
+                if (inferredDirect) return inferredDirect;
+
+                const inferredBase = normalizeRomanBase(inferredRoman);
+                const inferredByBase = diatonicChords.find((candidate) =>
+                    normalizeRomanBase(candidate.roman) === inferredBase
+                );
+                if (inferredByBase) return inferredByBase;
+            }
+
+            const upperStructure = symbol.split("/")[0] ?? symbol;
+            return diatonicChords.find((candidate) =>
+                candidate.symbol === symbol
+                || candidate.symbol === upperStructure
+                || candidate.symbol.startsWith(upperStructure)
+            );
+        };
+
+        const targetChord = resolveDiatonicChord(chordSymbol, degree);
+
+        const section = song.sections.find((s) => s.id === sectionId);
+        const chordLine = section?.chordLines[lineIndex] ?? "";
+        const degreeLine = section?.degreeLines?.[lineIndex] ?? "";
+
+        const lineChords = chordLine.split(/[\s|-]+/).filter(Boolean);
+        const lineDegrees = degreeLine.split(/[\s|-]+/).filter(Boolean);
+
+        const nextChordSymbol = lineChords[chordIndex + 1];
+        const nextChordDegree = lineDegrees[chordIndex + 1];
+        const nextChord = nextChordSymbol
+            ? resolveDiatonicChord(nextChordSymbol, nextChordDegree)
+            : undefined;
 
         if (targetChord) {
             const suggestions = suggestSubstitutions({
                 tonic,
                 mode,
                 chord: targetChord,
-                allChords: diatonicChords
+                allChords: diatonicChords,
+                nextChord,
+                sourceSymbol: chordSymbol,
+                preserveBass: true,
+                includeApproach: Boolean(nextChord),
+                includeSpice: true,
             });
             setSelectedChord({
                 symbol: chordSymbol,
@@ -197,7 +240,7 @@ export function SongView({ song, onChange }: SongViewProps) {
                 suggestions: []
             });
         }
-    }, [song.key]);
+    }, [song.key, song.sections]);
 
     const handleApplySubstitution = useCallback((substitution: SubstitutionSuggestion) => {
         if (!selectedChord) return;

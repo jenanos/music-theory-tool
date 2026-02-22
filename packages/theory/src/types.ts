@@ -27,11 +27,32 @@ export interface DiatonicChord {
 export interface SubstitutionSuggestion {
     targetSymbol: string;
     substituteSymbol: string;
-    category: "basic" | "functional" | "jazz" | "modal_interchange" | "chromatic";
+    /**
+     * Alias for substituteSymbol to support clearer UI/data usage.
+     */
+    symbol: string;
+    roman?: string;
+    category: "basic" | "spice" | "approach";
+    tags: string[];
+    requiresContext: boolean;
     reason: string;
     score: number;
     sharedTones: number;
     requirements?: string[];
+}
+
+export type SlashChordType = "none" | "inversion" | "non_chord_bass";
+
+export interface SlashChordAnalysis {
+    type: SlashChordType;
+    chordSymbol: string;
+    upperStructure: string;
+    bassSymbol?: string;
+    rootPc?: number;
+    bassPc?: number;
+    chordTones: number[];
+    inversionIndex?: 0 | 1 | 2 | 3;
+    isSeventhChord: boolean;
 }
 
 export type ScaleFamily = "diatonic" | "pentatonic" | "symmetric" | "minor" | "melodic_minor_mode" | "blues" | "dim";

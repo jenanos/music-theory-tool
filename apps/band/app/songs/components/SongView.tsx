@@ -401,7 +401,7 @@ export function SongView({ song, onChange }: SongViewProps) {
             <div className="flex flex-1 overflow-hidden">
                 {/* Main Content: Sections */}
                 <div className="flex-1 overflow-y-auto p-6 bg-background">
-                    <div className="max-w-3xl mx-auto space-y-6">
+                    <div className="mx-auto w-full max-w-7xl space-y-6">
                         <div className="flex items-center justify-end">
                             <label className="flex items-center gap-2 text-sm text-muted-foreground cursor-pointer select-none">
                                 <input

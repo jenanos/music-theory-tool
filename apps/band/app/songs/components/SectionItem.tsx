@@ -33,7 +33,7 @@ export function SectionItem({ section, songKey, onUpdate, onDelete, onChordClick
         >
             <div className="flex flex-col gap-4 md:flex-row md:items-start md:gap-6">
                 {/* Left side: Label and controls */}
-                <div className="flex w-full shrink-0 flex-col gap-2 md:w-48">
+                <div className="flex w-full shrink-0 flex-col gap-2 md:w-40">
                     <div className="flex items-start justify-between gap-2">
                         <div className="flex flex-col w-full">
                             {isReadonly ? (
@@ -102,56 +102,13 @@ export function SectionItem({ section, songKey, onUpdate, onDelete, onChordClick
                             )}
                         </div>
 
-                        {!isReadonly && (
-                            <div className="absolute top-3 right-3 flex items-center gap-1 shrink-0 z-10 bg-inherit rounded-md pl-1">
-                                <button
-                                    onClick={() => setIsEditing(!isEditing)}
-                                    className={`p-1 text-muted-foreground hover:text-primary ${isEditing ? 'text-primary' : 'opacity-0 group-hover:opacity-100'}`}
-                                    title={isEditing ? "Ferdig" : "Rediger"}
-                                >
-                                    {isEditing ? (
-                                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" className="h-5 w-5">
-                                            <path fillRule="evenodd" d="M16.704 4.153a.75.75 0 01.143 1.052l-8 10.5a.75.75 0 01-1.127.075l-4.5-4.5a.75.75 0 011.06-1.06l3.894 3.893 7.48-9.817a.75.75 0 011.05-.143z" clipRule="evenodd" />
-                                        </svg>
-                                    ) : (
-                                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" className="h-5 w-5">
-                                            <path d="M5.433 13.917l1.262-3.155A4 4 0 017.58 9.42l6.92-6.918a2.121 2.121 0 013 3l-6.92 6.918c-.383.326-.795.594-1.225.794l-3.155 1.262c-.49.196-1.002-.122-1.05-.626-.013-.122.016-.251.085-.36z" />
-                                        </svg>
-                                    )}
-                                </button>
-                                {onDelete && (
-                                    <button
-                                        onClick={() => {
-                                            if (confirm("Er du sikker på at du vil slette denne seksjonen?")) {
-                                                onDelete(section.id);
-                                            }
-                                        }}
-                                        className="p-1 text-muted-foreground opacity-0 hover:text-destructive group-hover:opacity-100"
-                                        title="Slett seksjon"
-                                    >
-                                        <svg
-                                            xmlns="http://www.w3.org/2000/svg"
-                                            viewBox="0 0 20 20"
-                                            fill="currentColor"
-                                            className="h-5 w-5"
-                                        >
-                                            <path
-                                                fillRule="evenodd"
-                                                d="M8.75 1A2.75 2.75 0 006 3.75v.443c-.795.077-1.584.176-2.365.298a.75.75 0 10.23 1.482l.149-.022.841 10.518A2.75 2.75 0 007.596 19h4.807a2.75 2.75 0 002.742-2.53l.841-10.52.149.023a.75.75 0 00.23-1.482A41.03 41.03 0 0014 4.193V3.75A2.75 2.75 0 0011.25 1h-2.5zM10 4c.84 0 1.673.025 2.5.075V3.75c0-.69-.56-1.25-1.25-1.25h-2.5c-.69 0-1.25.56-1.25 1.25v.325C8.327 4.025 9.16 4 10 4zM8.58 7.72a.75.75 0 00-1.5.06l.3 7.5a.75.75 0 101.5-.06l-.3-7.5zm4.34.06a.75.75 0 10-1.5-.06l-.3 7.5a.75.75 0 001.5.06l.3-7.5z"
-                                                clipRule="evenodd"
-                                            />
-                                        </svg>
-                                    </button>
-                                )}
-                            </div>
-                        )}
                     </div>
 
                     {!isReadonly && (
-                        <div className="flex items-center gap-2 mt-2">
+                        <div className="mt-2 flex flex-col items-stretch gap-2">
                             <button
                                 onClick={() => setIsEditing(!isEditing)}
-                                className={`flex items-center gap-1.5 px-2 py-1.5 rounded-md transition-colors ${isEditing ? 'bg-primary/10 text-primary ring-1 ring-primary/30' : 'bg-muted text-muted-foreground hover:bg-muted/80 hover:text-foreground'}`}
+                                className={`flex w-full items-center justify-center gap-1.5 rounded-md px-2 py-1.5 transition-colors ${isEditing ? 'bg-primary/10 text-primary ring-1 ring-primary/30' : 'bg-muted text-muted-foreground hover:bg-muted/80 hover:text-foreground'}`}
                                 title={isEditing ? "Ferdig" : "Rediger"}
                             >
                                 {isEditing ? (
@@ -172,7 +129,7 @@ export function SectionItem({ section, songKey, onUpdate, onDelete, onChordClick
                                             onDelete(section.id);
                                         }
                                     }}
-                                    className="px-2 py-1.5 flex items-center gap-1.5 rounded-md bg-muted text-muted-foreground hover:bg-destructive/10 hover:text-destructive transition-colors"
+                                    className="flex w-full items-center justify-center gap-1.5 rounded-md bg-muted px-2 py-1.5 text-muted-foreground transition-colors hover:bg-destructive/10 hover:text-destructive"
                                     title="Slett seksjon"
                                 >
                                     <svg

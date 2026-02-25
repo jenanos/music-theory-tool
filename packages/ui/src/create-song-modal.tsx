@@ -2,10 +2,13 @@
 "use client";
 
 import React, { useState } from "react";
+import { TONIC_OPTIONS, SCALES, type ModeId } from "@repo/theory";
 import { Button } from "./button";
 import { Input } from "./input";
 import { Label } from "./label";
 import { cn } from "./utils";
+
+const HARMONY_SCALES = SCALES.filter(s => s.isHarmony);
 
 interface CreateSongData {
     title: string;
@@ -22,7 +25,8 @@ interface CreateSongModalProps {
 export function CreateSongModal({ isOpen, onClose, onSave }: CreateSongModalProps) {
     const [title, setTitle] = useState("");
     const [artist, setArtist] = useState("");
-    const [key, setKey] = useState("");
+    const [tonic, setTonic] = useState("C");
+    const [modeId, setModeId] = useState<ModeId>("ionian");
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [error, setError] = useState("");
 
@@ -39,12 +43,13 @@ export function CreateSongModal({ isOpen, onClose, onSave }: CreateSongModalProp
         setError("");
 
         try {
-            await onSave({ title, artist, key });
+            await onSave({ title, artist, key: `${tonic} ${modeId}` });
             onClose();
             // Reset form
             setTitle("");
             setArtist("");
-            setKey("");
+            setTonic("C");
+            setModeId("ionian");
         } catch (err) {
             setError("Kunne ikke lagre låt. Prøv igjen.");
             console.error(err);
@@ -117,14 +122,35 @@ export function CreateSongModal({ isOpen, onClose, onSave }: CreateSongModalProp
                         </div>
 
                         <div className="space-y-2">
-                            <Label htmlFor="song-key">Toneart (Key)</Label>
-                            <Input
-                                id="song-key"
-                                type="text"
-                                value={key}
-                                onChange={(e) => setKey(e.target.value)}
-                                placeholder="f.eks. Fm"
-                            />
+                            <Label>Toneart (Key)</Label>
+                            <div className="flex gap-2">
+                                <div className="flex flex-col flex-1">
+                                    <label className="text-[10px] uppercase font-bold text-muted-foreground mb-0.5">Grunntone</label>
+                                    <select
+                                        id="song-key-tonic"
+                                        className="rounded-md border border-border bg-muted px-3 py-2 text-sm font-medium focus:ring-2 focus:ring-primary"
+                                        value={tonic}
+                                        onChange={(e) => setTonic(e.target.value)}
+                                    >
+                                        {TONIC_OPTIONS.map((opt) => (
+                                            <option key={opt} value={opt}>{opt}</option>
+                                        ))}
+                                    </select>
+                                </div>
+                                <div className="flex flex-col flex-1">
+                                    <label className="text-[10px] uppercase font-bold text-muted-foreground mb-0.5">Modalitet</label>
+                                    <select
+                                        id="song-key-mode"
+                                        className="rounded-md border border-border bg-muted px-3 py-2 text-sm font-medium focus:ring-2 focus:ring-primary"
+                                        value={modeId}
+                                        onChange={(e) => setModeId(e.target.value as ModeId)}
+                                    >
+                                        {HARMONY_SCALES.map((scale) => (
+                                            <option key={scale.id} value={scale.id}>{scale.name}</option>
+                                        ))}
+                                    </select>
+                                </div>
+                            </div>
                         </div>
                     </div>
 

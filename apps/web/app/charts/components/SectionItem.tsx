@@ -30,7 +30,7 @@ export function SectionItem({ section, songKey, onUpdate, onDelete, onChordClick
     return (
         <>
             <div
-                className={`group relative min-w-[18rem] max-w-full flex-1 rounded-lg border border-border shadow-sm transition-shadow hover:shadow-md ${getSectionColorClass(section.label)} p-3`}
+                className={`group relative min-w-[18rem] w-fit rounded-lg border border-border shadow-sm transition-shadow hover:shadow-md ${getSectionColorClass(section.label)} p-3`}
             >
                 <div className="flex flex-col gap-3 md:flex-row md:items-start md:gap-4">
                     {/* Left side: Label and controls */}

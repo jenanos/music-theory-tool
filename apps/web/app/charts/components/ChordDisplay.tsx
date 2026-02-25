@@ -38,7 +38,7 @@ export function ChordDisplay({ chordLine, degreeLine, className, onClick, onChor
     return (
         <div
             onClick={onClick}
-            className={`flex flex-col gap-2 rounded-md bg-muted p-3 min-h-[60px] cursor-pointer hover:bg-muted/80 ring-1 ring-border/60 overflow-x-auto ${className}`}
+            className={`flex flex-col gap-2 rounded-md bg-muted p-3 min-h-[60px] cursor-pointer hover:bg-muted/80 ring-1 ring-border/60 w-max min-w-full ${className}`}
         >
             {rows.map((row, rowIndex) => (
                 <div key={rowIndex} className="flex min-w-max flex-nowrap items-center gap-2 min-h-[56px]">

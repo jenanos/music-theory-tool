@@ -125,7 +125,9 @@ export function parseKey(keyString: string): { tonic: string; mode: ModeId } | n
         mode = "ionian";
     } else {
         // Search for keywords
-        if (restLower.includes("min") || restLower.includes("moll") || restLower.includes("aeol")) {
+        if (restLower.includes("harmonic") || restLower.includes("harmonisk")) {
+            mode = "harmonic_minor";
+        } else if (restLower.includes("min") || restLower.includes("moll") || restLower.includes("aeol")) {
             mode = "aeolian";
         } else if (restLower.includes("maj") || restLower.includes("dur") || restLower.includes("ion")) {
             mode = "ionian";
@@ -133,10 +135,10 @@ export function parseKey(keyString: string): { tonic: string; mode: ModeId } | n
             mode = "dorian";
         } else if (restLower.includes("phryg") || restLower.includes("fryg")) {
             mode = "phrygian";
-        } else if (restLower.includes("lyd")) {
-            mode = "lydian";
         } else if (restLower.includes("mix") || restLower.includes("mik")) {
             mode = "mixolydian";
+        } else if (restLower.includes("lyd")) {
+            mode = "lydian";
         } else if (restLower.includes("locr") || restLower.includes("lokr")) {
             mode = "locrian";
         } else {

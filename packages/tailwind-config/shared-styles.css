@@ -161,6 +161,20 @@
     @apply bg-transparent text-foreground;
   }
 
+  /* Improve native select menu contrast across platforms */
+  select {
+    color: var(--foreground);
+  }
+
+  select option {
+    background-color: #f0f9fa;
+    color: #032b30;
+  }
+
+  select option:disabled {
+    color: #4f7175;
+  }
+
   /* Keep pointer cursor for buttons */
   button:not(:disabled),
   [role="button"]:not(:disabled) {

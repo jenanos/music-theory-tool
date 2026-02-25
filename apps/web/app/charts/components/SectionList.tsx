@@ -29,7 +29,7 @@ export function SectionList({ sections, songKey, onUpdate, onAdd, onDelete, onCh
                 )}
             </div>
 
-            <div className="grid grid-cols-1 gap-4 xl:grid-cols-2 2xl:grid-cols-3">
+            <div className="flex flex-wrap items-start gap-4">
                 {sections.map((section) => (
                     <SectionItem
                         key={section.id}

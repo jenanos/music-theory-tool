@@ -92,43 +92,47 @@ export default function Page() {
 
         <div className="flex flex-col gap-3 sm:flex-row sm:items-stretch">
           {/* Harmony Controls */}
-          <div className="flex items-center gap-3 rounded-lg border border-border bg-muted px-3 py-2 text-xs">
-            <span className="font-semibold uppercase tracking-wide text-muted-foreground">Toneart</span>
-            <select
-              className="rounded border border-border bg-background px-2 py-1 focus:border-primary focus:outline-none"
-              onChange={(event) => setTonic(event.target.value)}
-              value={tonic}
-            >
-              {TONIC_OPTIONS.map((option) => (
-                <option key={option} value={option}>
-                  {option}
-                </option>
-              ))}
-            </select>
-            <select
-              className="rounded border border-border bg-background px-2 py-1 focus:border-primary focus:outline-none"
-              onChange={(event) => {
-                const newMode = event.target.value as ModeId;
-                setMode(newMode);
-                setOverlayMode(newMode);
-              }}
-              value={mode}
-            >
-              {SCALES.filter(s => s.isHarmony).map((scale) => (
-                <option key={scale.id} value={scale.id}>
-                  {scale.name}
-                </option>
-              ))}
-            </select>
-            <label className="flex cursor-pointer items-center gap-1.5 text-muted-foreground hover:text-foreground">
-              <input
-                checked={includeSevenths}
-                className="accent-primary"
-                onChange={(event) => setIncludeSevenths(event.target.checked)}
-                type="checkbox"
-              />
-              <span>7-ere</span>
-            </label>
+          <div className="flex flex-col gap-2 rounded-lg border border-border bg-muted px-3 py-2 text-xs">
+            <div className="flex items-center gap-3">
+              <span className="font-semibold uppercase tracking-wide text-muted-foreground">Toneart</span>
+              <label className="flex cursor-pointer items-center gap-1.5 text-muted-foreground hover:text-foreground">
+                <input
+                  checked={includeSevenths}
+                  className="accent-primary"
+                  onChange={(event) => setIncludeSevenths(event.target.checked)}
+                  type="checkbox"
+                />
+                <span>7-ere</span>
+              </label>
+            </div>
+            <div className="flex items-center gap-2">
+              <select
+                className="rounded border border-border bg-background px-2 py-1 focus:border-primary focus:outline-none"
+                onChange={(event) => setTonic(event.target.value)}
+                value={tonic}
+              >
+                {TONIC_OPTIONS.map((option) => (
+                  <option key={option} value={option}>
+                    {option}
+                  </option>
+                ))}
+              </select>
+              <select
+                className="rounded border border-border bg-background px-2 py-1 focus:border-primary focus:outline-none"
+                onChange={(event) => {
+                  const newMode = event.target.value as ModeId;
+                  setMode(newMode);
+                  setOverlayMode(newMode);
+                }}
+                value={mode}
+              >
+                {SCALES.filter(s => s.isHarmony).map((scale) => (
+                  <option key={scale.id} value={scale.id}>
+                    {scale.name}
+                  </option>
+                ))}
+              </select>
+            </div>
           </div>
 
           {/* Overlay Controls */}

@@ -90,7 +90,7 @@ export default function Page() {
           </p>
         </div>
 
-        <div className="flex flex-col gap-3 sm:flex-row sm:items-start">
+        <div className="flex flex-col gap-3 sm:flex-row sm:items-stretch">
           {/* Harmony Controls */}
           <div className="flex items-center gap-3 rounded-lg border border-border bg-muted px-3 py-2 text-xs">
             <span className="font-semibold uppercase tracking-wide text-muted-foreground">Toneart</span>

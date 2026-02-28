@@ -6,7 +6,7 @@ RETRY_INTERVAL=${DB_WAIT_INTERVAL:-2}
 
 wait_for_db() {
   count=0
-  until pnpm --filter @repo/db run db:migrate:deploy 2>&1; do
+  until pnpm --filter @repo/db run db:migrate:deploy; do
     count=$((count + 1))
     if [ "$count" -ge "$MAX_RETRIES" ]; then
       echo "ERROR: Failed to run migrations after $MAX_RETRIES attempts"

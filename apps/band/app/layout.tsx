@@ -4,8 +4,6 @@ import type { Metadata } from "next";
 import { Outfit } from "next/font/google";
 import Link from "next/link";
 import Image from "next/image";
-import { ThemeProvider } from "./components/ThemeProvider";
-import { ThemeToggle } from "./components/ThemeToggle";
 
 const outfit = Outfit({ subsets: ["latin"] });
 
@@ -20,7 +18,7 @@ export default function RootLayout({
     children: React.ReactNode;
 }) {
     return (
-        <html lang="no" suppressHydrationWarning>
+        <html lang="no" className="dark">
             <body className={`${outfit.className} bg-transparent text-foreground antialiased min-h-screen relative`} style={{ backgroundColor: '#011315' }}>
                 {/* Background Image Layer */}
                 <div className="fixed inset-0 -z-50 overflow-hidden">
@@ -43,21 +41,12 @@ export default function RootLayout({
                             <Link href="/" className="font-serif italic font-bold text-xl tracking-wider text-foreground">
                                 gete
                             </Link>
-                            <div className="flex items-center gap-4 text-sm">
-                                <Link
-                                    href="/songs"
-                                    className="text-muted-foreground hover:text-primary hover:underline"
-                                >
-                                    Sanger
-                                </Link>
-                                <ThemeToggle />
-                            </div>
                         </div>
-                    </nav>
-                    <div className="flex-1 overflow-hidden">
-                        {children}
                     </div>
-                </ThemeProvider>
+                </nav>
+                <div className="flex-1 overflow-hidden">
+                    {children}
+                </div>
             </body>
         </html>
     );

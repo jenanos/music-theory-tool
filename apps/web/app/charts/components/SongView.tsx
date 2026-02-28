@@ -132,12 +132,12 @@ export function SongView({ song, onChange }: SongViewProps) {
     const displaySong = showOriginal && originalSong ? originalSong : song;
     const isReadonly = showOriginal;
 
-    // Filter unique sections based on chord lines content
+    // Filter unique sections based on label and chord lines content
     const visibleSections = showUniqueSections
         ? displaySong.sections.filter((section, index, self) =>
-            // Keep the first section that has this specific chord content
+            // Keep the first section that has this specific label + chord content combination
             index === self.findIndex((s) =>
-                s.chordLines.join('\n') === section.chordLines.join('\n')
+                s.label === section.label && s.chordLines.join('\n') === section.chordLines.join('\n')
             )
         )
         : displaySong.sections;

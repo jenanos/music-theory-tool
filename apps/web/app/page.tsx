@@ -90,39 +90,37 @@ export default function Page() {
           </p>
         </div>
 
-        <div className="flex flex-col gap-4 sm:flex-row sm:items-center">
+        <div className="flex flex-col gap-3 sm:flex-row sm:items-start">
           {/* Harmony Controls */}
-          <div className="flex flex-col gap-2 rounded-lg border border-border bg-muted p-2 text-xs">
+          <div className="flex items-center gap-3 rounded-lg border border-border bg-muted px-3 py-2 text-xs">
             <span className="font-semibold uppercase tracking-wide text-muted-foreground">Toneart</span>
-            <div className="flex items-center gap-2">
-              <select
-                className="rounded border border-border bg-background px-2 py-1 focus:border-primary focus:outline-none"
-                onChange={(event) => setTonic(event.target.value)}
-                value={tonic}
-              >
-                {TONIC_OPTIONS.map((option) => (
-                  <option key={option} value={option}>
-                    {option}
-                  </option>
-                ))}
-              </select>
-              <select
-                className="rounded border border-border bg-background px-2 py-1 focus:border-primary focus:outline-none"
-                onChange={(event) => {
-                  const newMode = event.target.value as ModeId;
-                  setMode(newMode);
-                  setOverlayMode(newMode);
-                }}
-                value={mode}
-              >
-                {SCALES.filter(s => s.isHarmony).map((scale) => (
-                  <option key={scale.id} value={scale.id}>
-                    {scale.name}
-                  </option>
-                ))}
-              </select>
-            </div>
-            <label className="flex cursor-pointer items-center gap-2 text-sm text-muted-foreground hover:text-foreground mt-1">
+            <select
+              className="rounded border border-border bg-background px-2 py-1 focus:border-primary focus:outline-none"
+              onChange={(event) => setTonic(event.target.value)}
+              value={tonic}
+            >
+              {TONIC_OPTIONS.map((option) => (
+                <option key={option} value={option}>
+                  {option}
+                </option>
+              ))}
+            </select>
+            <select
+              className="rounded border border-border bg-background px-2 py-1 focus:border-primary focus:outline-none"
+              onChange={(event) => {
+                const newMode = event.target.value as ModeId;
+                setMode(newMode);
+                setOverlayMode(newMode);
+              }}
+              value={mode}
+            >
+              {SCALES.filter(s => s.isHarmony).map((scale) => (
+                <option key={scale.id} value={scale.id}>
+                  {scale.name}
+                </option>
+              ))}
+            </select>
+            <label className="flex cursor-pointer items-center gap-1.5 text-muted-foreground hover:text-foreground">
               <input
                 checked={includeSevenths}
                 className="accent-primary"
@@ -134,59 +132,56 @@ export default function Page() {
           </div>
 
           {/* Overlay Controls */}
-          <div className="flex flex-col gap-2 rounded-lg border border-border bg-muted p-2 text-xs">
-            <div className="flex items-center justify-between gap-4">
-              <span className="font-semibold uppercase tracking-wide text-muted-foreground">Skalaer</span>
-              <div className="flex items-center gap-3">
-                <label className="flex items-center gap-1 cursor-pointer" title="Vis skala på gripebrett">
-                  <input
-                    type="checkbox"
-                    checked={showOverlayScale}
-                    onChange={(e) => setShowOverlayScale(e.target.checked)}
-                    className="rounded border-border text-primary focus:ring-primary"
-                  />
-                  <span className="text-[10px] text-muted-foreground">Vis</span>
-                </label>
-                <label className="flex items-center gap-1 cursor-pointer" title="Bruk samme tonika som harmoni">
-                  <input
-                    type="checkbox"
-                    checked={syncOverlayTonic}
-                    onChange={(e) => setSyncOverlayTonic(e.target.checked)}
-                    className="rounded border-border text-primary focus:ring-primary"
-                  />
-                  <span className="text-[10px] text-muted-foreground">Sync Tonika</span>
-                </label>
-              </div>
-              <div className="flex items-center gap-2">
-                <select
-                  className="rounded border border-border bg-background px-2 py-1 focus:border-primary focus:outline-none disabled:opacity-50"
-                  onChange={(event) => {
-                    setOverlayTonic(event.target.value);
-                    setSyncOverlayTonic(false);
-                  }}
-                  value={syncOverlayTonic ? tonic : overlayTonic}
-                  disabled={syncOverlayTonic}
-                >
-                  {TONIC_OPTIONS.map((option) => (
-                    <option key={option} value={option}>
-                      {option}
-                    </option>
-                  ))}
-                </select>
-                <select
-                  className="rounded border border-border bg-background px-2 py-1 focus:border-primary focus:outline-none"
-                  onChange={(event) => setOverlayMode(event.target.value as ModeId)}
-                  value={overlayMode}
-                >
-                  {SCALES.map((scale) => (
-                    <option key={scale.id} value={scale.id}>
-                      {scale.name}
-                    </option>
-                  ))}
-                </select>
-              </div>
+          <div className="flex flex-col gap-2 rounded-lg border border-border bg-muted px-3 py-2 text-xs">
+            <div className="flex items-center gap-3">
+              <span className="font-semibold uppercase tracking-wide text-muted-foreground">Skala-overlay</span>
+              <label className="flex cursor-pointer items-center gap-1" title="Vis skala på gripebrett">
+                <input
+                  type="checkbox"
+                  checked={showOverlayScale}
+                  onChange={(e) => setShowOverlayScale(e.target.checked)}
+                  className="accent-primary"
+                />
+                <span className="text-muted-foreground">Vis</span>
+              </label>
+              <label className="flex cursor-pointer items-center gap-1" title="Bruk samme tonika som harmoni">
+                <input
+                  type="checkbox"
+                  checked={syncOverlayTonic}
+                  onChange={(e) => setSyncOverlayTonic(e.target.checked)}
+                  className="accent-primary"
+                />
+                <span className="text-muted-foreground">Sync tonika</span>
+              </label>
             </div>
-
+            <div className="flex items-center gap-2">
+              <select
+                className="rounded border border-border bg-background px-2 py-1 focus:border-primary focus:outline-none disabled:opacity-50"
+                onChange={(event) => {
+                  setOverlayTonic(event.target.value);
+                  setSyncOverlayTonic(false);
+                }}
+                value={syncOverlayTonic ? tonic : overlayTonic}
+                disabled={syncOverlayTonic}
+              >
+                {TONIC_OPTIONS.map((option) => (
+                  <option key={option} value={option}>
+                    {option}
+                  </option>
+                ))}
+              </select>
+              <select
+                className="rounded border border-border bg-background px-2 py-1 focus:border-primary focus:outline-none"
+                onChange={(event) => setOverlayMode(event.target.value as ModeId)}
+                value={overlayMode}
+              >
+                {SCALES.map((scale) => (
+                  <option key={scale.id} value={scale.id}>
+                    {scale.name}
+                  </option>
+                ))}
+              </select>
+            </div>
           </div>
         </div>
       </header>

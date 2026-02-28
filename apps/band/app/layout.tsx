@@ -8,7 +8,7 @@ import Image from "next/image";
 const outfit = Outfit({ subsets: ["latin"] });
 
 export const metadata: Metadata = {
-    title: "Band App | Akkorder og setlister",
+    title: "Gete | Akkorder og setlister",
     description: "Enkel visning av akkorder for bandmedlemmer.",
 };
 
@@ -37,8 +37,8 @@ export default function RootLayout({
 
                 <nav className="border-b border-white/5 dark:border-white/10 bg-card/60 backdrop-blur-xl shrink-0">
                     <div className="mx-auto flex w-full max-w-[1920px] items-center justify-between px-6 py-3">
-                        <Link href="/" className="font-semibold text-foreground">
-                            🎸 Band App
+                        <Link href="/" className="font-serif italic font-bold text-xl tracking-wider text-foreground">
+                            gete
                         </Link>
                         <div className="flex items-center gap-4 text-sm">
                             <Link

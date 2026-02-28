@@ -10,10 +10,14 @@ import {
     buildDiatonicChords,
     getChordDegree,
     parseKey,
+    TONIC_OPTIONS,
+    SCALES,
+    transposeSongSections,
     DEFAULT_CHORD_RICHNESS_PROFILE,
     type SubstitutionSuggestion,
     type DiatonicChord,
     type ChordRichnessProfile,
+    type ModeId,
 } from "@repo/theory";
 import { SubstitutionPanel } from "../../components/SubstitutionPanel";
 
@@ -31,6 +35,8 @@ interface TimelineItem {
 function generateId() {
     return Math.random().toString(36).substring(2, 9);
 }
+
+const HARMONY_SCALES = SCALES.filter(s => s.isHarmony);
 
 export function SongView({ song, onChange }: SongViewProps) {
     // Initialize timeline items directly from song.arrangement.
@@ -103,6 +109,16 @@ export function SongView({ song, onChange }: SongViewProps) {
     const updateArtist = (newArtist: string) => {
         onChange({ ...song, artist: newArtist });
     };
+
+    const handleKeyChange = useCallback((newTonic: string, newMode: ModeId) => {
+        const newKey = `${newTonic} ${newMode}`;
+        if (!song.key) {
+            onChange({ ...song, key: newKey });
+            return;
+        }
+        const transposed = transposeSongSections(song.sections, song.key, newTonic, newMode);
+        onChange({ ...song, key: newKey, sections: transposed });
+    }, [song, onChange]);
 
     const [showUniqueSections, setShowUniqueSections] = useState(true);
     const [showNotes, setShowNotes] = useState(false);
@@ -374,9 +390,38 @@ export function SongView({ song, onChange }: SongViewProps) {
                             </button>
                         </div>
 
-                        <span className="text-xs text-muted-foreground/60">
-                            {displaySong.key ? `Key: ${displaySong.key}` : "No key"}
-                        </span>
+                        {isReadonly ? (
+                            <span className="text-xs text-muted-foreground/60">
+                                {displaySong.key ? `Key: ${displaySong.key}` : "No key"}
+                            </span>
+                        ) : (() => {
+                            const parsed = song.key ? parseKey(song.key) : null;
+                            const currentTonic = parsed?.tonic ?? "C";
+                            const currentMode = parsed?.mode ?? "ionian";
+                            return (
+                                <div className="flex items-center gap-1">
+                                    <span className="text-xs text-muted-foreground/60">Key:</span>
+                                    <select
+                                        value={currentTonic}
+                                        onChange={(e) => handleKeyChange(e.target.value, currentMode)}
+                                        className="rounded border border-border bg-background px-1.5 py-0.5 text-xs text-foreground focus:border-primary focus:outline-none"
+                                    >
+                                        {TONIC_OPTIONS.map((t) => (
+                                            <option key={t} value={t}>{t}</option>
+                                        ))}
+                                    </select>
+                                    <select
+                                        value={currentMode}
+                                        onChange={(e) => handleKeyChange(currentTonic, e.target.value as ModeId)}
+                                        className="rounded border border-border bg-background px-1.5 py-0.5 text-xs text-foreground focus:border-primary focus:outline-none"
+                                    >
+                                        {HARMONY_SCALES.map((s) => (
+                                            <option key={s.id} value={s.id}>{s.name}</option>
+                                        ))}
+                                    </select>
+                                </div>
+                            );
+                        })()}
 
                         <div className="flex items-center gap-2">
                             <span className="text-xs text-muted-foreground/70">Profil</span>

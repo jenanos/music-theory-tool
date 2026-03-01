@@ -59,7 +59,21 @@ export default function ChartsPage() {
         }
     };
 
-    const handleCreateSong = async (data: { title: string; artist: string; key: string }) => {
+    const handleCreateSong = async (data: {
+        id?: string;
+        title: string;
+        artist?: string;
+        key?: string;
+        notes?: string;
+        arrangement?: string[];
+        sections?: {
+            id: string;
+            label: string;
+            chordLines: string[];
+            degreeLines: string[];
+            notes?: string;
+        }[];
+    }) => {
         const response = await fetch("/api/songs", {
             method: "POST",
             headers: { "Content-Type": "application/json" },
@@ -78,8 +92,9 @@ export default function ChartsPage() {
                 title: data.title,
                 artist: data.artist,
                 key: data.key,
-                sections: [],
-                arrangement: [],
+                notes: data.notes,
+                sections: data.sections ?? [],
+                arrangement: data.arrangement ?? [],
             };
 
             setSongs((prev) => [...prev, newSong]);

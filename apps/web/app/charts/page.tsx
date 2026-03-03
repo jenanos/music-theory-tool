@@ -102,6 +102,30 @@ export default function ChartsPage() {
         }
     };
 
+    const handleDeleteSong = async (songId: string) => {
+        const response = await fetch(`/api/songs/${songId}`, {
+            method: "DELETE",
+        });
+
+        if (!response.ok) {
+            throw new Error("Failed to delete song");
+        }
+
+        setSongs((prevSongs) => {
+            const updatedSongs = prevSongs.filter((song) => song.id !== songId);
+
+            setSelectedSongId((currentSelectedSongId) => {
+                if (currentSelectedSongId !== songId) {
+                    return currentSelectedSongId;
+                }
+
+                return updatedSongs[0]?.id;
+            });
+
+            return updatedSongs;
+        });
+    };
+
     if (isLoading) {
         return (
             <div className="flex h-full w-full items-center justify-center bg-background">
@@ -142,6 +166,7 @@ export default function ChartsPage() {
                 onSelectSong={setSelectedSongId}
                 selectedSongId={selectedSongId}
                 onAddSong={() => setIsCreateModalOpen(true)}
+                onDeleteSong={handleDeleteSong}
             />
             <div className="flex-1 overflow-hidden">
                 {selectedSong ? (

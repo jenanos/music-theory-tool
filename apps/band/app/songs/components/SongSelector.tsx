@@ -9,9 +9,10 @@ interface SongSelectorProps {
     onSelectSong: (songId: string) => void;
     selectedSongId?: string;
     onAddSong?: () => void;
+    onDeleteSong?: (songId: string) => Promise<void>;
 }
 
-export function SongSelector({ songs, onSelectSong, selectedSongId, onAddSong }: SongSelectorProps) {
+export function SongSelector({ songs, onSelectSong, selectedSongId, onAddSong, onDeleteSong }: SongSelectorProps) {
     const [search, setSearch] = useState("");
 
     const filteredSongs = songs.filter((song) =>
@@ -45,19 +46,52 @@ export function SongSelector({ songs, onSelectSong, selectedSongId, onAddSong }:
             </div>
             <div className="flex-1 overflow-y-auto">
                 {filteredSongs.map((song) => (
-                    <button
+                    <div
                         key={song.id}
-                        onClick={() => onSelectSong(song.id)}
-                        className={`w-full px-4 py-3 text-left text-sm transition-colors hover:bg-muted/80 ${selectedSongId === song.id
+                        className={`group flex items-center ${selectedSongId === song.id
                             ? "bg-primary/20 text-primary font-medium border-r-2 border-primary"
-                            : "text-muted-foreground"
+                            : "text-muted-foreground hover:bg-muted/80"
                             }`}
                     >
-                        <div className="truncate">{song.title}</div>
-                        {song.artist && (
-                            <div className="truncate text-xs text-muted-foreground">{song.artist}</div>
+                        <button
+                            onClick={() => onSelectSong(song.id)}
+                            className="flex-1 px-4 py-3 text-left text-sm"
+                        >
+                            <div className="truncate">{song.title}</div>
+                            {song.artist && (
+                                <div className="truncate text-xs text-muted-foreground">{song.artist}</div>
+                            )}
+                        </button>
+                        {onDeleteSong && (
+                            <button
+                                onClick={async (e) => {
+                                    e.stopPropagation();
+
+                                    const shouldDeleteSong = window.confirm(
+                                        `Slett "${song.title}"? Dette kan ikke angres.`
+                                    );
+
+                                    if (!shouldDeleteSong) {
+                                        return;
+                                    }
+
+                                    try {
+                                        await onDeleteSong(song.id);
+                                    } catch (error) {
+                                        console.error("Error deleting song:", error);
+                                        window.alert("Kunne ikke slette låten. Prøv igjen.");
+                                    }
+                                }}
+                                className="mr-3 rounded p-1 text-muted-foreground/70 transition-colors hover:bg-destructive/15 hover:text-destructive"
+                                title={`Slett ${song.title}`}
+                                aria-label={`Slett ${song.title}`}
+                            >
+                                <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" viewBox="0 0 20 20" fill="currentColor">
+                                    <path fillRule="evenodd" d="M6 4a2 2 0 012-2h4a2 2 0 012 2h3a1 1 0 110 2h-1v9a2 2 0 01-2 2H6a2 2 0 01-2-2V6H3a1 1 0 110-2h3zm2-1a1 1 0 00-1 1h6a1 1 0 00-1-1H8zm-2 3v9h8V6H6z" clipRule="evenodd" />
+                                </svg>
+                            </button>
                         )}
-                    </button>
+                    </div>
                 ))}
                 {filteredSongs.length === 0 && (
                     <div className="p-4 text-center text-sm text-muted-foreground">

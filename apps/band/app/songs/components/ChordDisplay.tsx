@@ -16,6 +16,8 @@ export function ChordDisplay({ chordLine, degreeLine, className, onClick, onChor
         const cLines = chordLine.split('\n');
         const dLines = degreeLine ? degreeLine.split('\n') : [];
 
+        let lastChord: string | undefined;
+
         return cLines.map((line, lineIndex) => {
             const chords = line.split(/[\s|-]+/).filter(Boolean);
             const degrees = dLines[lineIndex]
@@ -26,10 +28,11 @@ export function ChordDisplay({ chordLine, degreeLine, className, onClick, onChor
             const resolvedChords: string[] = [];
             const isRepeated: boolean[] = [];
             chords.forEach((chord, i) => {
+                const prev = i > 0 ? resolvedChords[i - 1] : lastChord;
                 if (chord === "%") {
-                    resolvedChords.push(i > 0 ? resolvedChords[i - 1]! : chord);
+                    resolvedChords.push(prev ?? chord);
                     isRepeated.push(true);
-                } else if (i > 0 && chord === resolvedChords[i - 1]) {
+                } else if (prev !== undefined && chord === prev) {
                     resolvedChords.push(chord);
                     isRepeated.push(true);
                 } else {
@@ -37,6 +40,10 @@ export function ChordDisplay({ chordLine, degreeLine, className, onClick, onChor
                     isRepeated.push(false);
                 }
             });
+
+            if (resolvedChords.length > 0) {
+                lastChord = resolvedChords[resolvedChords.length - 1];
+            }
 
             return { chords: resolvedChords, degrees, isRepeated };
         });

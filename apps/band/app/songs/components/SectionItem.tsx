@@ -19,6 +19,8 @@ const PRESET_SECTIONS = ["Intro", "Vers", "Pre-chorus", "Refreng", "Bridge", "Me
 export function SectionItem({ section, songKey, onUpdate, onDelete, onChordClick }: SectionItemProps) {
     const [isEditing, setIsEditing] = useState(false);
     const [showNotes, setShowNotes] = useState(false);
+    const [hideRepeats, setHideRepeats] = useState(false);
+    const [showAsPercent, setShowAsPercent] = useState(false);
     const [isCustomLabel, setIsCustomLabel] = useState(() => {
         return !PRESET_SECTIONS.includes(section.label) && section.label !== "Ny Seksjon";
     });
@@ -100,6 +102,34 @@ export function SectionItem({ section, songKey, onUpdate, onDelete, onChordClick
                                         {showNotes ? "Skjul notat" : "Vis notat"}
                                     </button>
                                 )}
+                                {!isEditing && (
+                                    <div className="mt-1 flex flex-col gap-1">
+                                        <button
+                                            onClick={() => setHideRepeats(!hideRepeats)}
+                                            className="flex self-start items-center gap-1 text-xs font-medium text-muted-foreground transition-colors hover:text-primary"
+                                            title={hideRepeats ? "Vis repeterende akkorder" : "Skjul repeterende akkorder"}
+                                        >
+                                            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16" fill="currentColor" className="h-3.5 w-3.5">
+                                                {hideRepeats ? (
+                                                    <path d="M8 9.5a1.5 1.5 0 1 0 0-3 1.5 1.5 0 0 0 0 3Z" />
+                                                ) : (
+                                                    <path fillRule="evenodd" d="M3.28 2.22a.75.75 0 0 0-1.06 1.06l10.5 10.5a.75.75 0 1 0 1.06-1.06l-10.5-10.5Z" clipRule="evenodd" />
+                                                )}
+                                                <path d="M1.5 8c0-.7.27-1.37.58-1.9a9.17 9.17 0 0 1 1.64-2.07A8.26 8.26 0 0 1 8 2c1.66 0 3.12.56 4.28 2.03.5.64.96 1.3 1.31 1.87.3.53.41.93.41 1.1 0 .7-.27 1.37-.58 1.9a9.17 9.17 0 0 1-1.64 2.07A8.26 8.26 0 0 1 8 14c-1.66 0-3.12-.56-4.28-2.03a11.5 11.5 0 0 1-1.31-1.87A3.67 3.67 0 0 1 1.5 8Z" />
+                                            </svg>
+                                            {hideRepeats ? "Vis repeterende" : "Skjul repeterende"}
+                                        </button>
+                                        <label className="flex self-start items-center gap-1 text-xs font-medium text-muted-foreground transition-colors hover:text-primary cursor-pointer">
+                                            <input
+                                                type="checkbox"
+                                                checked={showAsPercent}
+                                                onChange={() => setShowAsPercent(!showAsPercent)}
+                                                className="h-3 w-3 rounded border-border text-primary focus:ring-primary"
+                                            />
+                                            Vis som %
+                                        </label>
+                                    </div>
+                                )}
                             </div>
                         </div>
 
@@ -141,6 +171,8 @@ export function SectionItem({ section, songKey, onUpdate, onDelete, onChordClick
                                 chordLine={chordText}
                                 degreeLine={section.degreeLines ? section.degreeLines.join("\n") : ""}
                                 className="w-full"
+                                hideRepeats={hideRepeats}
+                                showAsPercent={showAsPercent}
                                 onClick={() => {
                                     if (!isReadonly) {
                                         setIsEditing(true);

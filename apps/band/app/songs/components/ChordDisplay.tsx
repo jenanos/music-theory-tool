@@ -6,13 +6,17 @@ interface ChordDisplayProps {
     className?: string;
     onClick?: () => void;
     onChordClick?: (chord: string, lineIndex: number, chordIndex: number, degree?: string) => void;
+    hideRepeats?: boolean;
+    showAsPercent?: boolean;
 }
 
-export function ChordDisplay({ chordLine, degreeLine, className, onClick, onChordClick }: ChordDisplayProps) {
+export function ChordDisplay({ chordLine, degreeLine, className, onClick, onChordClick, hideRepeats, showAsPercent }: ChordDisplayProps) {
     const rows = useMemo(() => {
         if (!chordLine) return [];
         const cLines = chordLine.split('\n');
         const dLines = degreeLine ? degreeLine.split('\n') : [];
+
+        let lastChord: string | undefined;
 
         return cLines.map((line, lineIndex) => {
             const chords = line.split(/[\s|-]+/).filter(Boolean);
@@ -20,7 +24,28 @@ export function ChordDisplay({ chordLine, degreeLine, className, onClick, onChor
                 ? dLines[lineIndex].split(/[\s|-]+/).filter(Boolean)
                 : [];
 
-            return { chords, degrees };
+            // Resolve "%" to the previous chord and mark repeated chords
+            const resolvedChords: string[] = [];
+            const isRepeated: boolean[] = [];
+            chords.forEach((chord, i) => {
+                const prev = i > 0 ? resolvedChords[i - 1] : lastChord;
+                if (chord === "%") {
+                    resolvedChords.push(prev ?? chord);
+                    isRepeated.push(true);
+                } else if (prev !== undefined && chord === prev) {
+                    resolvedChords.push(chord);
+                    isRepeated.push(true);
+                } else {
+                    resolvedChords.push(chord);
+                    isRepeated.push(false);
+                }
+            });
+
+            if (resolvedChords.length > 0) {
+                lastChord = resolvedChords[resolvedChords.length - 1];
+            }
+
+            return { chords: resolvedChords, degrees, isRepeated };
         });
     }, [chordLine, degreeLine]);
 
@@ -43,27 +68,35 @@ export function ChordDisplay({ chordLine, degreeLine, className, onClick, onChor
             {rows.map((row, rowIndex) => (
                 <div key={rowIndex} className="flex min-w-max flex-nowrap items-center gap-2 min-h-[56px]">
                     {row.chords.length > 0 ? (
-                        row.chords.map((chord, chordIndex) => (
-                            <div
-                                key={`${chord}-${rowIndex}-${chordIndex}`}
-                                onClick={(e) => {
-                                    if (onChordClick) {
-                                        e.stopPropagation();
-                                        onChordClick(chord, rowIndex, chordIndex, row.degrees[chordIndex]);
-                                    }
-                                }}
-                                className={`flex flex-col gap-1 items-center justify-center p-2 rounded-lg bg-card shadow-sm ring-1 ring-border/60 transition-transform hover:-translate-y-0.5 hover:shadow-md ${onChordClick ? 'cursor-pointer hover:ring-primary/60' : ''}`}
-                            >
-                                <span className="font-bold text-foreground">
-                                    {chord}
-                                </span>
-                                {row.degrees[chordIndex] && (
-                                    <span className="text-xs font-medium text-primary">
-                                        {row.degrees[chordIndex]}
+                        row.chords.map((chord, chordIndex) => {
+                            const repeated = row.isRepeated[chordIndex];
+
+                            if (repeated && hideRepeats) return null;
+
+                            const displayChord = repeated && showAsPercent ? "%" : chord;
+
+                            return (
+                                <div
+                                    key={`${chord}-${rowIndex}-${chordIndex}`}
+                                    onClick={(e) => {
+                                        if (onChordClick) {
+                                            e.stopPropagation();
+                                            onChordClick(chord, rowIndex, chordIndex, row.degrees[chordIndex]);
+                                        }
+                                    }}
+                                    className={`flex flex-col gap-1 items-center justify-center p-2 rounded-lg bg-card shadow-sm ring-1 ring-border/60 transition-transform hover:-translate-y-0.5 hover:shadow-md ${onChordClick ? 'cursor-pointer hover:ring-primary/60' : ''} ${repeated ? 'opacity-40' : ''}`}
+                                >
+                                    <span className="font-bold text-foreground">
+                                        {displayChord}
                                     </span>
-                                )}
-                            </div>
-                        ))
+                                    {row.degrees[chordIndex] && !repeated && (
+                                        <span className="text-xs font-medium text-primary">
+                                            {row.degrees[chordIndex]}
+                                        </span>
+                                    )}
+                                </div>
+                            );
+                        })
                     ) : (
                         <div className="h-14 border border-transparent" />
                     )}

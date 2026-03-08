@@ -37,11 +37,11 @@ export default function RootLayout({
         </div>
 
         <nav className="border-b border-white/10 bg-card/60 backdrop-blur-xl shrink-0">
-          <div className="mx-auto flex w-full max-w-[1920px] items-center justify-between px-6 py-3">
-            <Link href="/" className="font-semibold text-foreground">
+          <div className="mx-auto flex w-full max-w-[1920px] items-center justify-between px-4 py-2 md:px-6 md:py-3">
+            <Link href="/" className="font-semibold text-foreground text-sm md:text-base">
               🎸 Gitarist-støtteapp
             </Link>
-            <div className="flex gap-4 text-sm">
+            <div className="flex gap-2 md:gap-4 text-xs md:text-sm">
               <Link
                 href="/"
                 className="text-muted-foreground hover:text-primary hover:underline"

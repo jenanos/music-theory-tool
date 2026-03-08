@@ -23,6 +23,7 @@ import { SubstitutionPanel } from "../../components/SubstitutionPanel";
 interface SongViewProps {
   song: Song;
   onChange: (updatedSong: Song) => void;
+  onBackToList?: () => void;
 }
 
 interface TimelineItem {
@@ -37,7 +38,7 @@ function generateId() {
 
 const HARMONY_SCALES = SCALES.filter((s) => s.isHarmony);
 
-export function SongView({ song, onChange }: SongViewProps) {
+export function SongView({ song, onChange, onBackToList }: SongViewProps) {
   // Initialize timeline items directly from song.arrangement.
   // Because "key={song.id}" is used in the parent, this component is
   // freshly mounted for each song, guaranteeing correct initialization.
@@ -144,6 +145,8 @@ export function SongView({ song, onChange }: SongViewProps) {
   const [richnessProfile, setRichnessProfile] = useState<ChordRichnessProfile>(
     DEFAULT_CHORD_RICHNESS_PROFILE,
   );
+  const [showMobileTimeline, setShowMobileTimeline] = useState(false);
+  const [showMobileSettings, setShowMobileSettings] = useState(false);
 
   // Version history state
   const [showOriginal, setShowOriginal] = useState(false);
@@ -407,11 +410,24 @@ export function SongView({ song, onChange }: SongViewProps) {
       )}
 
       {/* Header */}
-      <div className="border-b border-border bg-card px-6 py-4 flex-none relative z-10">
-        <div className="flex items-center gap-4">
+      <div className="border-b border-border bg-card px-4 py-3 md:px-6 md:py-4 flex-none relative z-10">
+        <div className="flex flex-wrap items-center gap-2 md:gap-4">
+          {/* Back button on mobile */}
+          {onBackToList && (
+            <button
+              onClick={onBackToList}
+              className="p-1.5 -ml-1 rounded-md text-muted-foreground hover:text-foreground hover:bg-muted transition-colors md:hidden"
+              title="Tilbake til låtlisten"
+            >
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" className="w-5 h-5">
+                <path fillRule="evenodd" d="M17 10a.75.75 0 0 1-.75.75H5.612l4.158 3.96a.75.75 0 1 1-1.04 1.08l-5.5-5.25a.75.75 0 0 1 0-1.08l5.5-5.25a.75.75 0 1 1 1.04 1.08L5.612 9.25H16.25A.75.75 0 0 1 17 10Z" clipRule="evenodd" />
+              </svg>
+            </button>
+          )}
+
           {isReadonly ? (
-            <>
-              <span className="text-2xl font-bold text-foreground">
+            <div className="flex flex-wrap items-center gap-2 min-w-0 flex-1">
+              <span className="text-lg md:text-2xl font-bold text-foreground truncate">
                 {displaySong.title}
               </span>
               <span className="text-sm font-medium text-muted-foreground">
@@ -420,25 +436,59 @@ export function SongView({ song, onChange }: SongViewProps) {
               <span className="text-xs text-accent-foreground bg-accent/20 px-2 py-1 rounded-full border border-accent/40">
                 Originalversjon (skrivebeskyttet)
               </span>
-            </>
+            </div>
           ) : (
-            <>
+            <div className="flex flex-wrap items-center gap-2 min-w-0 flex-1">
               <input
-                className="text-2xl font-bold text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary rounded px-1 bg-transparent"
+                className="text-lg md:text-2xl font-bold text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary rounded px-1 bg-transparent min-w-0 w-full md:w-auto"
                 value={song.title}
                 onChange={(e) => updateTitle(e.target.value)}
                 placeholder="Låttittel"
               />
               <input
-                className="text-sm font-medium text-muted-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary rounded px-1 bg-transparent"
+                className="text-sm font-medium text-muted-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary rounded px-1 bg-transparent min-w-0 w-full md:w-auto"
                 value={song.artist || ""}
                 onChange={(e) => updateArtist(e.target.value)}
                 placeholder="Artist"
               />
-            </>
+            </div>
           )}
 
-          <div className="ml-auto flex items-center gap-3">
+          {/* Mobile: compact icon buttons for settings/timeline toggles */}
+          <div className="flex items-center gap-1 md:hidden">
+            <button
+              onClick={() => setShowMobileTimeline(!showMobileTimeline)}
+              className={`p-1.5 rounded-md transition-colors ${showMobileTimeline ? "bg-primary/20 text-primary" : "text-muted-foreground hover:text-foreground hover:bg-muted"}`}
+              title="Vis arrangement"
+            >
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" className="w-5 h-5">
+                <path fillRule="evenodd" d="M2 3.75A.75.75 0 0 1 2.75 3h14.5a.75.75 0 0 1 0 1.5H2.75A.75.75 0 0 1 2 3.75Zm0 4.167a.75.75 0 0 1 .75-.75h14.5a.75.75 0 0 1 0 1.5H2.75a.75.75 0 0 1-.75-.75Zm0 4.166a.75.75 0 0 1 .75-.75h14.5a.75.75 0 0 1 0 1.5H2.75a.75.75 0 0 1-.75-.75Zm0 4.167a.75.75 0 0 1 .75-.75h14.5a.75.75 0 0 1 0 1.5H2.75a.75.75 0 0 1-.75-.75Z" clipRule="evenodd" />
+              </svg>
+            </button>
+            <button
+              onClick={() => setShowMobileSettings(!showMobileSettings)}
+              className={`p-1.5 rounded-md transition-colors ${showMobileSettings ? "bg-primary/20 text-primary" : "text-muted-foreground hover:text-foreground hover:bg-muted"}`}
+              title="Innstillinger"
+            >
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" className="w-5 h-5">
+                <path fillRule="evenodd" d="M8.34 1.804A1 1 0 0 1 9.32 1h1.36a1 1 0 0 1 .98.804l.295 1.473c.497.144.971.342 1.416.587l1.25-.834a1 1 0 0 1 1.262.125l.962.962a1 1 0 0 1 .125 1.262l-.834 1.25c.245.445.443.919.587 1.416l1.473.294a1 1 0 0 1 .804.98v1.361a1 1 0 0 1-.804.98l-1.473.295a6.95 6.95 0 0 1-.587 1.416l.834 1.25a1 1 0 0 1-.125 1.262l-.962.962a1 1 0 0 1-1.262.125l-1.25-.834a6.953 6.953 0 0 1-1.416.587l-.294 1.473a1 1 0 0 1-.98.804H9.32a1 1 0 0 1-.98-.804l-.295-1.473a6.957 6.957 0 0 1-1.416-.587l-1.25.834a1 1 0 0 1-1.262-.125l-.962-.962a1 1 0 0 1-.125-1.262l.834-1.25a6.957 6.957 0 0 1-.587-1.416l-1.473-.294A1 1 0 0 1 1 11.681V10.32a1 1 0 0 1 .804-.98l1.473-.295c.144-.497.342-.971.587-1.416l-.834-1.25a1 1 0 0 1 .125-1.262l.962-.962A1 1 0 0 1 5.38 3.22l1.25.834a6.957 6.957 0 0 1 1.416-.587l.294-1.473ZM13 10a3 3 0 1 1-6 0 3 3 0 0 1 6 0Z" clipRule="evenodd" />
+              </svg>
+            </button>
+            {displaySong.notes && (
+              <button
+                onClick={() => setShowNotes(!showNotes)}
+                className={`p-1.5 rounded-md transition-colors ${showNotes ? "bg-primary/20 text-primary" : "text-muted-foreground hover:text-foreground hover:bg-muted"}`}
+                title={showNotes ? "Skjul låtnotater" : "Vis låtnotater"}
+              >
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" className="w-5 h-5">
+                  <path fillRule="evenodd" d="M18 10a8 8 0 1 1-16 0 8 8 0 0 1 16 0ZM8.94 6.94a.75.75 0 1 1-1.061-1.061 3 3 0 1 1 2.871 5.026v.345a.75.75 0 0 1-1.5 0v-.5c0-.72.57-1.172 1.081-1.287A1.5 1.5 0 1 0 8.94 6.94ZM10 15a1 1 0 1 0 0-2 1 1 0 0 0 0 2Z" clipRule="evenodd" />
+                </svg>
+              </button>
+            )}
+          </div>
+
+          {/* Desktop: full controls row */}
+          <div className="hidden md:flex ml-auto items-center gap-3">
             {/* Version Toggle */}
             <div className="flex items-center gap-1 bg-muted rounded-lg p-0.5">
               <button
@@ -548,6 +598,84 @@ export function SongView({ song, onChange }: SongViewProps) {
           </div>
         </div>
 
+        {/* Mobile settings panel */}
+        {showMobileSettings && (
+          <div className="mt-3 flex flex-wrap items-center gap-3 border-t border-border pt-3 md:hidden animate-in fade-in slide-in-from-top-1 duration-200">
+            {/* Version Toggle */}
+            <div className="flex items-center gap-1 bg-muted rounded-lg p-0.5">
+              <button
+                onClick={() => setShowOriginal(false)}
+                className={`px-3 py-1.5 text-xs font-medium rounded-md transition-colors ${
+                  !showOriginal
+                    ? "bg-card text-foreground shadow-sm"
+                    : "text-muted-foreground hover:text-foreground"
+                }`}
+              >
+                Nåværende
+              </button>
+              <button
+                onClick={() => setShowOriginal(true)}
+                disabled={isLoadingOriginal}
+                className={`px-3 py-1.5 text-xs font-medium rounded-md transition-colors ${
+                  showOriginal
+                    ? "bg-card text-foreground shadow-sm"
+                    : "text-muted-foreground hover:text-foreground"
+                } disabled:opacity-50`}
+              >
+                {isLoadingOriginal ? "Laster..." : "Opprinnelig"}
+              </button>
+            </div>
+
+            {isReadonly ? (
+              <span className="text-xs text-muted-foreground/60">
+                {displaySong.key ? `Key: ${displaySong.key}` : "No key"}
+              </span>
+            ) : (
+              (() => {
+                const parsed = song.key ? parseKey(song.key) : null;
+                const currentTonic = parsed?.tonic ?? "C";
+                const currentMode = parsed?.mode ?? "ionian";
+                return (
+                  <div className="flex items-center gap-1">
+                    <span className="text-xs text-muted-foreground/60">Key:</span>
+                    <select
+                      value={currentTonic}
+                      onChange={(e) => handleKeyChange(e.target.value, currentMode)}
+                      className="rounded border border-border bg-background px-1.5 py-0.5 text-xs text-foreground focus:border-primary focus:outline-none"
+                    >
+                      {TONIC_OPTIONS.map((t) => (
+                        <option key={t} value={t}>{t}</option>
+                      ))}
+                    </select>
+                    <select
+                      value={currentMode}
+                      onChange={(e) => handleKeyChange(currentTonic, e.target.value as ModeId)}
+                      className="rounded border border-border bg-background px-1.5 py-0.5 text-xs text-foreground focus:border-primary focus:outline-none"
+                    >
+                      {HARMONY_SCALES.map((s) => (
+                        <option key={s.id} value={s.id}>{s.name}</option>
+                      ))}
+                    </select>
+                  </div>
+                );
+              })()
+            )}
+
+            <div className="flex items-center gap-2">
+              <span className="text-xs text-muted-foreground/70">Profil</span>
+              <select
+                value={richnessProfile}
+                onChange={(e) => setRichnessProfile(e.target.value as ChordRichnessProfile)}
+                className="rounded border border-border bg-background px-2 py-1 text-xs text-foreground focus:border-primary focus:outline-none"
+              >
+                <option value="triad">Triad</option>
+                <option value="seventh">Seventh</option>
+                <option value="jazz">Jazz</option>
+              </select>
+            </div>
+          </div>
+        )}
+
         {/* Expandable Notes Section */}
         {displaySong.notes && showNotes && (
           <div className="mt-4 text-sm text-muted-foreground bg-muted p-3 rounded-md border border-border animate-in fade-in slide-in-from-top-1 duration-200">
@@ -557,9 +685,38 @@ export function SongView({ song, onChange }: SongViewProps) {
         )}
       </div>
 
+      {/* Mobile Timeline Panel */}
+      {showMobileTimeline && (
+        <div className="border-b border-border bg-card p-4 flex-none md:hidden animate-in fade-in slide-in-from-top-1 duration-200 max-h-[40vh] overflow-y-auto">
+          <Timeline
+            items={timelineItems}
+            sections={song.sections}
+            onReorder={handleReorder}
+          />
+          {!isReadonly && (
+            <div className="mt-4 pt-4 border-t border-border">
+              <span className="text-xs font-medium text-muted-foreground block mb-2 uppercase tracking-wider">
+                Legg til i arrangement
+              </span>
+              <div className="flex flex-wrap gap-2">
+                {song.sections.map((s) => (
+                  <button
+                    key={s.id}
+                    onClick={() => addToArrangement(s.id)}
+                    className="text-xs px-2 py-1.5 rounded bg-muted hover:bg-muted/80 text-foreground transition border border-border"
+                  >
+                    + {s.label}
+                  </button>
+                ))}
+              </div>
+            </div>
+          )}
+        </div>
+      )}
+
       <div className="flex flex-1 overflow-hidden">
         {/* Main Content: Sections */}
-        <div className="flex-1 overflow-y-auto p-6 bg-background">
+        <div className="flex-1 overflow-y-auto p-3 md:p-6 bg-background">
           <div className="mx-auto w-full max-w-7xl space-y-6">
             <div className="flex flex-wrap items-center justify-end gap-3">
               <label className="flex items-center gap-2 text-sm text-muted-foreground cursor-pointer select-none">
@@ -600,8 +757,8 @@ export function SongView({ song, onChange }: SongViewProps) {
           </div>
         </div>
 
-        {/* Sidebar: Timeline */}
-        <div className="w-80 border-l border-border bg-card flex flex-col">
+        {/* Desktop Sidebar: Timeline */}
+        <div className="hidden md:flex w-80 border-l border-border bg-card flex-col">
           <div className="p-4 flex-1 overflow-hidden flex flex-col">
             <Timeline
               items={timelineItems}

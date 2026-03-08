@@ -10,6 +10,7 @@
   "exports": {
     "./styles.css": "./src/styles.css",
     "./utils": "./src/utils.ts",
+    "./use-mobile": "./src/use-mobile.ts",
     "./*": "./src/*.tsx"
   },
   "license": "MIT",

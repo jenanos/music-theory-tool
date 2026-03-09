@@ -10,9 +10,10 @@ interface SongSelectorProps {
     selectedSongId?: string;
     onAddSong?: () => void;
     onDeleteSong?: (songId: string) => Promise<void>;
+    isMobile?: boolean;
 }
 
-export function SongSelector({ songs, onSelectSong, selectedSongId, onAddSong, onDeleteSong }: SongSelectorProps) {
+export function SongSelector({ songs, onSelectSong, selectedSongId, onAddSong, onDeleteSong, isMobile }: SongSelectorProps) {
     const [search, setSearch] = useState("");
 
     const filteredSongs = songs.filter((song) =>
@@ -20,7 +21,7 @@ export function SongSelector({ songs, onSelectSong, selectedSongId, onAddSong, o
     );
 
     return (
-        <div className="flex w-64 flex-col border-r border-border bg-muted h-full">
+        <div className={`flex flex-col border-r border-border bg-muted h-full ${isMobile ? "w-full" : "w-64"}`}>
             <div className="p-4 border-b border-border">
                 <div className="flex items-center justify-between mb-2">
                     <h2 className="font-semibold text-foreground">Låter</h2>

@@ -6,6 +6,7 @@ import { Song } from "./data";
 import { SongSelector } from "./components/SongSelector";
 import { SongView } from "./components/SongView";
 import { CreateSongModal } from "@repo/ui/create-song-modal";
+import { useIsMobile } from "@repo/ui/use-mobile";
 
 export default function ChartsPage() {
     const [songs, setSongs] = useState<Song[]>([]);
@@ -13,6 +14,8 @@ export default function ChartsPage() {
     const [isLoading, setIsLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
     const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
+    const isMobile = useIsMobile();
+    const [showMobileList, setShowMobileList] = useState(true);
 
     // Fetch songs from API on mount
     useEffect(() => {
@@ -35,6 +38,13 @@ export default function ChartsPage() {
     }, []);
 
     const selectedSong = songs.find((s) => s.id === selectedSongId);
+
+    const handleSelectSong = (songId: string) => {
+        setSelectedSongId(songId);
+        if (isMobile) {
+            setShowMobileList(false);
+        }
+    };
 
     const handleUpdateSong = async (updatedSong: Song) => {
         // Optimistic update
@@ -161,26 +171,42 @@ export default function ChartsPage() {
                 onSave={handleCreateSong}
             />
 
-            <SongSelector
-                songs={songs}
-                onSelectSong={setSelectedSongId}
-                selectedSongId={selectedSongId}
-                onAddSong={() => setIsCreateModalOpen(true)}
-                onDeleteSong={handleDeleteSong}
-            />
-            <div className="flex-1 overflow-hidden">
-                {selectedSong ? (
-                    <SongView
-                        key={selectedSong.id}
-                        song={selectedSong}
-                        onChange={handleUpdateSong}
-                    />
-                ) : (
-                    <div className="flex h-full items-center justify-center text-muted-foreground">
-                        Velg en låt fra listen til venstre for å begynne.
-                    </div>
-                )}
-            </div>
+            {/* Mobile: show list OR view; Desktop: show both side-by-side */}
+            {(!isMobile || showMobileList) && (
+                <SongSelector
+                    songs={songs}
+                    onSelectSong={handleSelectSong}
+                    selectedSongId={selectedSongId}
+                    onAddSong={() => setIsCreateModalOpen(true)}
+                    onDeleteSong={handleDeleteSong}
+                    isMobile={isMobile}
+                />
+            )}
+            {(!isMobile || !showMobileList) && (
+                <div className="flex-1 overflow-hidden">
+                    {selectedSong ? (
+                        <SongView
+                            key={selectedSong.id}
+                            song={selectedSong}
+                            onChange={handleUpdateSong}
+                            onBackToList={isMobile ? () => setShowMobileList(true) : undefined}
+                        />
+                    ) : (
+                        <div className="flex h-full items-center justify-center text-muted-foreground px-4 text-center">
+                            {isMobile ? (
+                                <button
+                                    onClick={() => setShowMobileList(true)}
+                                    className="rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground"
+                                >
+                                    Velg en låt
+                                </button>
+                            ) : (
+                                "Velg en låt fra listen til venstre for å begynne."
+                            )}
+                        </div>
+                    )}
+                </div>
+            )}
         </div>
     );
 }

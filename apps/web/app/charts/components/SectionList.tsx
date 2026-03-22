@@ -7,6 +7,8 @@ interface SectionListProps {
   sections: Section[];
   songKey?: string;
   layoutMode?: "multi" | "single";
+  hideRepeats?: boolean;
+  showAsPercent?: boolean;
   onUpdate?: (id: string, updates: Partial<Section>) => void;
   onAdd?: () => void;
   onDelete?: (id: string) => void;
@@ -23,6 +25,8 @@ export function SectionList({
   sections,
   songKey,
   layoutMode = "multi",
+  hideRepeats,
+  showAsPercent,
   onUpdate,
   onAdd,
   onDelete,
@@ -49,8 +53,8 @@ export function SectionList({
       <div
         className={
           isSingleSectionPerRow
-            ? "mx-auto flex w-full max-w-3xl flex-col items-center gap-4 px-4"
-            : "flex flex-wrap items-start gap-4"
+            ? "mx-auto flex w-full max-w-3xl flex-col items-center gap-2 md:gap-4 px-0 md:px-4"
+            : "flex flex-wrap items-start gap-2 md:gap-4"
         }
       >
         {sections.map((section) => (
@@ -63,6 +67,8 @@ export function SectionList({
             <SectionItem
               section={section}
               songKey={songKey}
+              hideRepeats={hideRepeats}
+              showAsPercent={showAsPercent}
               onUpdate={onUpdate}
               onDelete={onDelete}
               onChordClick={onChordClick}

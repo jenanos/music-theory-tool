@@ -136,9 +136,12 @@ export function SongView({ song, onChange, onBackToList }: SongViewProps) {
   const [sectionLayoutMode, setSectionLayoutMode] = useState<
     "multi" | "single"
   >("multi");
+  const [hideRepeats, setHideRepeats] = useState(false);
+  const [showAsPercent, setShowAsPercent] = useState(false);
   const [showNotes, setShowNotes] = useState(false);
   const [showMobileTimeline, setShowMobileTimeline] = useState(false);
   const [showMobileSettings, setShowMobileSettings] = useState(false);
+  const [isSubMdViewport, setIsSubMdViewport] = useState(false);
 
   // Version history state
   const [showOriginal, setShowOriginal] = useState(false);
@@ -160,9 +163,22 @@ export function SongView({ song, onChange, onBackToList }: SongViewProps) {
     }
   }, [showOriginal, originalSong, song.id]);
 
+  useEffect(() => {
+    const mediaQuery = window.matchMedia("(max-width: 767px)");
+    const updateViewport = () => setIsSubMdViewport(mediaQuery.matches);
+
+    updateViewport();
+    mediaQuery.addEventListener("change", updateViewport);
+
+    return () => mediaQuery.removeEventListener("change", updateViewport);
+  }, []);
+
   // Use original or current song based on toggle
   const displaySong = showOriginal && originalSong ? originalSong : song;
   const isReadonly = showOriginal;
+  const effectiveSectionLayoutMode = isSubMdViewport
+    ? "single"
+    : sectionLayoutMode;
 
   // Filter unique sections based on label and chord lines content
   const visibleSections = showUniqueSections
@@ -691,7 +707,30 @@ export function SongView({ song, onChange, onBackToList }: SongViewProps) {
                 />
                 Vis unike seksjoner
               </label>
-              <label className="flex items-center gap-2 text-sm text-muted-foreground">
+              <button
+                onClick={() => setHideRepeats(!hideRepeats)}
+                className="flex items-center gap-1.5 text-sm text-muted-foreground cursor-pointer select-none hover:text-primary transition-colors"
+              >
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16" fill="currentColor" className="h-3.5 w-3.5">
+                  {hideRepeats ? (
+                    <path d="M8 9.5a1.5 1.5 0 1 0 0-3 1.5 1.5 0 0 0 0 3Z" />
+                  ) : (
+                    <path fillRule="evenodd" d="M3.28 2.22a.75.75 0 0 0-1.06 1.06l10.5 10.5a.75.75 0 1 0 1.06-1.06l-10.5-10.5Z" clipRule="evenodd" />
+                  )}
+                  <path d="M1.5 8c0-.7.27-1.37.58-1.9a9.17 9.17 0 0 1 1.64-2.07A8.26 8.26 0 0 1 8 2c1.66 0 3.12.56 4.28 2.03.5.64.96 1.3 1.31 1.87.3.53.41.93.41 1.1 0 .7-.27 1.37-.58 1.9a9.17 9.17 0 0 1-1.64 2.07A8.26 8.26 0 0 1 8 14c-1.66 0-3.12-.56-4.28-2.03a11.5 11.5 0 0 1-1.31-1.87A3.67 3.67 0 0 1 1.5 8Z" />
+                </svg>
+                {hideRepeats ? "Vis repeterende" : "Skjul repeterende"}
+              </button>
+              <label className="flex items-center gap-1.5 text-sm text-muted-foreground cursor-pointer select-none hover:text-primary transition-colors">
+                <input
+                  type="checkbox"
+                  checked={showAsPercent}
+                  onChange={() => setShowAsPercent(!showAsPercent)}
+                  className="h-3.5 w-3.5 rounded border-border text-primary focus:ring-primary"
+                />
+                Vis som %
+              </label>
+              <label className="hidden md:flex items-center gap-2 text-sm text-muted-foreground">
                 <span>Visning</span>
                 <select
                   value={sectionLayoutMode}
@@ -711,7 +750,9 @@ export function SongView({ song, onChange, onBackToList }: SongViewProps) {
             <SectionList
               sections={visibleSections}
               songKey={displaySong.key}
-              layoutMode={sectionLayoutMode}
+              layoutMode={effectiveSectionLayoutMode}
+              hideRepeats={hideRepeats}
+              showAsPercent={showAsPercent}
               onUpdate={isReadonly ? undefined : updateSection}
               onAdd={isReadonly ? undefined : addSection}
               onDelete={isReadonly ? undefined : deleteSection}

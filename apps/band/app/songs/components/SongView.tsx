@@ -141,6 +141,7 @@ export function SongView({ song, onChange, onBackToList }: SongViewProps) {
   const [showNotes, setShowNotes] = useState(false);
   const [showMobileTimeline, setShowMobileTimeline] = useState(false);
   const [showMobileSettings, setShowMobileSettings] = useState(false);
+  const [isSubMdViewport, setIsSubMdViewport] = useState(false);
 
   // Version history state
   const [showOriginal, setShowOriginal] = useState(false);
@@ -162,9 +163,22 @@ export function SongView({ song, onChange, onBackToList }: SongViewProps) {
     }
   }, [showOriginal, originalSong, song.id]);
 
+  useEffect(() => {
+    const mediaQuery = window.matchMedia("(max-width: 767px)");
+    const updateViewport = () => setIsSubMdViewport(mediaQuery.matches);
+
+    updateViewport();
+    mediaQuery.addEventListener("change", updateViewport);
+
+    return () => mediaQuery.removeEventListener("change", updateViewport);
+  }, []);
+
   // Use original or current song based on toggle
   const displaySong = showOriginal && originalSong ? originalSong : song;
   const isReadonly = showOriginal;
+  const effectiveSectionLayoutMode = isSubMdViewport
+    ? "single"
+    : sectionLayoutMode;
 
   // Filter unique sections based on label and chord lines content
   const visibleSections = showUniqueSections
@@ -736,7 +750,7 @@ export function SongView({ song, onChange, onBackToList }: SongViewProps) {
             <SectionList
               sections={visibleSections}
               songKey={displaySong.key}
-              layoutMode={sectionLayoutMode}
+              layoutMode={effectiveSectionLayoutMode}
               hideRepeats={hideRepeats}
               showAsPercent={showAsPercent}
               onUpdate={isReadonly ? undefined : updateSection}

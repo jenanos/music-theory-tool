@@ -2,6 +2,7 @@
 export interface Section {
     id: string;
     label: string;
+    description?: string; // Tilleggsbeskrivelse ved siden av label-dropdown
     chordLines: string[];
     degreeLines: string[];
     notes?: string; // NY: seksjonsnotater

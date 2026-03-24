@@ -5,6 +5,7 @@ const optionalNullableString = z.string().trim().optional().nullable();
 export const sectionInputSchema = z.object({
     id: z.string().trim().min(1, "Section id is required"),
     label: z.string().trim().min(1, "Section label is required"),
+    description: optionalNullableString,
     chordLines: z.array(z.string()).optional().default([]),
     degreeLines: z.array(z.string()).optional().default([]),
     notes: optionalNullableString,

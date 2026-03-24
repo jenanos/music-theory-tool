@@ -21,10 +21,56 @@ interface CreateSongData {
     sections?: {
         id: string;
         label: string;
+        description?: string;
         chordLines: string[];
         degreeLines: string[];
         notes?: string;
     }[];
+}
+
+const PRESET_LABELS = ["Intro", "Vers", "Pre-chorus", "Refreng", "Bridge", "Mellomspill", "Outro"];
+
+/** Try to split a label like "Vers del 1 (atmos)" into { label: "Vers", description: "del 1 (atmos)" } */
+function normalizeSectionLabel(rawLabel: string, rawDescription?: string): { label: string; description?: string } {
+    // If already a preset label, keep as-is
+    if (PRESET_LABELS.includes(rawLabel)) {
+        return { label: rawLabel, description: rawDescription || undefined };
+    }
+
+    // Try to find a preset that the label starts with (case-insensitive)
+    const lower = rawLabel.toLowerCase();
+    for (const preset of PRESET_LABELS) {
+        if (lower.startsWith(preset.toLowerCase())) {
+            const rest = rawLabel.slice(preset.length).trim();
+            const desc = [rest, rawDescription].filter(Boolean).join(" ").trim();
+            return { label: preset, description: desc || undefined };
+        }
+    }
+
+    // Also check common aliases
+    const aliases: Record<string, string> = {
+        "ref": "Refreng", "chorus": "Refreng",
+        "bro": "Bridge", "stikk": "Bridge",
+        "introriff": "Intro", "riff": "Mellomspill",
+        "solo": "Mellomspill", "instrumental": "Mellomspill",
+        "ending": "Outro", "outro": "Outro",
+    };
+
+    // Check if the first word is an alias
+    const firstWord = rawLabel.split(/\s+/)[0]?.toLowerCase() ?? "";
+    if (aliases[firstWord]) {
+        const rest = rawLabel.slice(firstWord.length).trim();
+        const desc = [rest, rawDescription].filter(Boolean).join(" ").trim();
+        return { label: aliases[firstWord], description: desc || undefined };
+    }
+
+    // Check whole label as alias
+    if (aliases[lower]) {
+        return { label: aliases[lower], description: rawDescription || undefined };
+    }
+
+    // Fallback: keep as-is (will show as custom)
+    return { label: rawLabel, description: rawDescription || undefined };
 }
 
 interface CreateSongModalProps {
@@ -58,12 +104,25 @@ Slik skal outputen se ut:
     {
       "id": "section-id",
       "label": "",
+      "description": "",
       "chordLines": [""],
       "degreeLines": [""],
       "notes": ""
     }
   ]
 }
+
+REGLER FOR SEKSJONER:
+- "label" MÅ være en av disse forhåndsdefinerte verdiene: "Intro", "Vers", "Pre-chorus", "Refreng", "Bridge", "Mellomspill", "Outro".
+- "description" er valgfritt og brukes for tilleggsinformasjon, f.eks. "del 1 (atmos)", "(groove)", "2" osv. Bruk dette istedenfor å lage egendefinerte labels.
+- Eksempel: istedenfor label="Vers del 1 (atmos)", bruk label="Vers" og description="del 1 (atmos)".
+
+REGLER FOR chordLines:
+- Akkorder separeres med " - " (mellomrom-bindestrek-mellomrom).
+- Hver linje i chordLines representerer én linje/rad med akkorder.
+- Taktskifter (f.eks. 5/4, 6/4, 3/4) skrives INLINE med akkordene, f.eks.: "5/4 Cmaj7 - G/B - 6/4 B/D# - Em"
+- IKKE inkluder repetisjoner som "x2", "x4" osv. som akkorder. Hvis en linje gjentas, skriv den ut eksplisitt som separate linjer, eller noter det i "notes"-feltet.
+- IKKE inkluder taktangivelser som "(4 takter)" eller lignende som akkorder.
 
 Viktig: Returner kun gyldig JSON. Ingen forklaringer, markdown eller ekstra tekst.`;
 
@@ -138,6 +197,7 @@ Viktig: Returner kun gyldig JSON. Ingen forklaringer, markdown eller ekstra teks
                         const candidate = (section ?? {}) as {
                             id?: string;
                             label?: string;
+                            description?: string;
                             chordLines?: unknown;
                             degreeLines?: unknown;
                             notes?: unknown;
@@ -147,9 +207,15 @@ Viktig: Returner kun gyldig JSON. Ingen forklaringer, markdown eller ekstra teks
                             throw new Error("Hver seksjon må ha feltene id og label.");
                         }
 
+                        const normalized = normalizeSectionLabel(
+                            candidate.label,
+                            typeof candidate.description === "string" ? candidate.description : undefined,
+                        );
+
                         return {
                             id: candidate.id,
-                            label: candidate.label,
+                            label: normalized.label,
+                            description: normalized.description,
                             chordLines: Array.isArray(candidate.chordLines)
                                 ? candidate.chordLines.filter((line): line is string => typeof line === "string")
                                 : [],

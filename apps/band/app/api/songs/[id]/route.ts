@@ -83,6 +83,7 @@ export async function PUT(request: Request, { params }: { params: Params }) {
                             id: `${id}-${section.id}`,
                             songId: id,
                             label: section.label,
+                            description: section.description ?? null,
                             chordLines: section.chordLines ?? [],
                             degreeLines: section.degreeLines ?? [],
                             notes: section.notes ?? null,

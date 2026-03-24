@@ -15,7 +15,7 @@ function isTimeSignature(token: string): boolean {
     return /^\d+\/\d+$/.test(token);
 }
 
-type Token = { type: "chord"; chord: string; degree?: string; isRepeated: boolean } | { type: "timesig"; value: string };
+type Token = { type: "chord"; chord: string; degree?: string; isRepeated: boolean; chordIndex: number } | { type: "timesig"; value: string };
 
 export function ChordDisplay({ chordLine, degreeLine, className, onClick, onChordClick, hideRepeats, showAsPercent }: ChordDisplayProps) {
     const rows = useMemo(() => {
@@ -32,15 +32,14 @@ export function ChordDisplay({ chordLine, degreeLine, className, onClick, onChor
                 : [];
 
             const tokens: Token[] = [];
-            let degreeOffset = 0;
+            let chordCount = 0;
 
-            rawTokens.forEach((token, i) => {
+            rawTokens.forEach((token) => {
                 if (isTimeSignature(token)) {
                     tokens.push({ type: "timesig", value: token });
-                    degreeOffset++;
                 } else {
-                    const chordIdx = i - degreeOffset;
-                    const prev = tokens.filter(t => t.type === "chord").length > 0
+                    const chordIdx = chordCount;
+                    const prev = chordCount > 0
                         ? (tokens.filter(t => t.type === "chord").pop() as Extract<Token, { type: "chord" }>).chord
                         : lastChord;
 
@@ -59,8 +58,10 @@ export function ChordDisplay({ chordLine, degreeLine, className, onClick, onChor
                         chord: resolvedChord,
                         degree: degrees[chordIdx],
                         isRepeated,
+                        chordIndex: chordIdx,
                     });
 
+                    chordCount++;
                     lastChord = resolvedChord;
                 }
             });
@@ -104,7 +105,7 @@ export function ChordDisplay({ chordLine, degreeLine, className, onClick, onChor
                                 );
                             }
 
-                            const { chord, degree, isRepeated } = token;
+                            const { chord, degree, isRepeated, chordIndex } = token;
 
                             if (isRepeated && hideRepeats) return null;
 
@@ -116,7 +117,7 @@ export function ChordDisplay({ chordLine, degreeLine, className, onClick, onChor
                                     onClick={(e) => {
                                         if (onChordClick) {
                                             e.stopPropagation();
-                                            onChordClick(chord, rowIndex, tokenIndex, degree);
+                                            onChordClick(chord, rowIndex, chordIndex, degree);
                                         }
                                     }}
                                     className={`flex flex-col gap-1 items-center justify-center p-2 rounded-lg bg-card shadow-sm ring-1 ring-border/60 transition-transform hover:-translate-y-0.5 hover:shadow-md ${onChordClick ? 'cursor-pointer hover:ring-primary/60' : ''} ${isRepeated ? 'opacity-40' : ''}`}

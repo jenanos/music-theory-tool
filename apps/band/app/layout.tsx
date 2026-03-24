@@ -1,11 +1,12 @@
 import "@repo/ui/styles.css";
 import "./globals.css";
 import type { Metadata } from "next";
-import { Outfit } from "next/font/google";
+import { Outfit, Josefin_Sans } from "next/font/google";
 import Link from "next/link";
 import Image from "next/image";
 
 const outfit = Outfit({ subsets: ["latin"] });
+const josefinSans = Josefin_Sans({ subsets: ["latin"], weight: ["100", "300"] });
 
 export const metadata: Metadata = {
     title: "Gete | Akkorder og setlister",
@@ -37,8 +38,17 @@ export default function RootLayout({
 
                 <nav className="border-b border-white/5 dark:border-white/10 bg-card/60 backdrop-blur-xl shrink-0">
                     <div className="mx-auto flex w-full max-w-[1920px] items-center justify-between px-4 py-2 md:px-6 md:py-3">
-                        <Link href="/" className="font-serif italic font-bold text-lg md:text-xl tracking-wider text-foreground">
-                            gete
+                        <Link
+                            href="/"
+                            className={`${josefinSans.className} text-2xl md:text-3xl tracking-[0.25em] font-light select-none`}
+                            style={{
+                                background: 'linear-gradient(135deg, #f0f9fa 0%, #A1DCE3 50%, #158391 100%)',
+                                WebkitBackgroundClip: 'text',
+                                WebkitTextFillColor: 'transparent',
+                                backgroundClip: 'text',
+                            }}
+                        >
+                            GETE
                         </Link>
                         <div className="flex items-center gap-2 md:gap-4 text-xs md:text-sm">
                             <Link

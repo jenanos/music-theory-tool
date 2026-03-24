@@ -10,6 +10,13 @@ interface ChordDisplayProps {
     showAsPercent?: boolean;
 }
 
+// Matches time signatures like 3/4, 4/4, 5/4, 6/4, 6/8, 7/8, 12/8 etc.
+function isTimeSignature(token: string): boolean {
+    return /^\d+\/\d+$/.test(token);
+}
+
+type Token = { type: "chord"; chord: string; degree?: string; isRepeated: boolean; chordIndex: number } | { type: "timesig"; value: string };
+
 export function ChordDisplay({ chordLine, degreeLine, className, onClick, onChordClick, hideRepeats, showAsPercent }: ChordDisplayProps) {
     const rows = useMemo(() => {
         if (!chordLine) return [];
@@ -19,33 +26,47 @@ export function ChordDisplay({ chordLine, degreeLine, className, onClick, onChor
         let lastChord: string | undefined;
 
         return cLines.map((line, lineIndex) => {
-            const chords = line.split(/[\s|-]+/).filter(Boolean);
+            const rawTokens = line.split(/[\s|-]+/).filter(Boolean);
             const degrees = dLines[lineIndex]
                 ? dLines[lineIndex].split(/[\s|-]+/).filter(Boolean)
                 : [];
 
-            // Resolve "%" to the previous chord and mark repeated chords
-            const resolvedChords: string[] = [];
-            const isRepeated: boolean[] = [];
-            chords.forEach((chord, i) => {
-                const prev = i > 0 ? resolvedChords[i - 1] : lastChord;
-                if (chord === "%") {
-                    resolvedChords.push(prev ?? chord);
-                    isRepeated.push(true);
-                } else if (prev !== undefined && chord === prev) {
-                    resolvedChords.push(chord);
-                    isRepeated.push(true);
+            const tokens: Token[] = [];
+            let chordCount = 0;
+
+            rawTokens.forEach((token) => {
+                if (isTimeSignature(token)) {
+                    tokens.push({ type: "timesig", value: token });
                 } else {
-                    resolvedChords.push(chord);
-                    isRepeated.push(false);
+                    const chordIdx = chordCount;
+                    const prev = chordCount > 0
+                        ? (tokens.filter(t => t.type === "chord").pop() as Extract<Token, { type: "chord" }>).chord
+                        : lastChord;
+
+                    let isRepeated = false;
+                    let resolvedChord = token;
+
+                    if (token === "%") {
+                        resolvedChord = prev ?? token;
+                        isRepeated = true;
+                    } else if (prev !== undefined && token === prev) {
+                        isRepeated = true;
+                    }
+
+                    tokens.push({
+                        type: "chord",
+                        chord: resolvedChord,
+                        degree: degrees[chordIdx],
+                        isRepeated,
+                        chordIndex: chordIdx,
+                    });
+
+                    chordCount++;
+                    lastChord = resolvedChord;
                 }
             });
 
-            if (resolvedChords.length > 0) {
-                lastChord = resolvedChords[resolvedChords.length - 1];
-            }
-
-            return { chords: resolvedChords, degrees, isRepeated };
+            return tokens;
         });
     }, [chordLine, degreeLine]);
 
@@ -67,31 +88,46 @@ export function ChordDisplay({ chordLine, degreeLine, className, onClick, onChor
         >
             {rows.map((row, rowIndex) => (
                 <div key={rowIndex} className="flex min-w-max flex-nowrap items-center gap-2 min-h-[56px]">
-                    {row.chords.length > 0 ? (
-                        row.chords.map((chord, chordIndex) => {
-                            const repeated = row.isRepeated[chordIndex];
+                    {row.length > 0 ? (
+                        row.map((token, tokenIndex) => {
+                            if (token.type === "timesig") {
+                                const [num, den] = token.value.split("/");
+                                return (
+                                    <div
+                                        key={`ts-${rowIndex}-${tokenIndex}`}
+                                        className="flex flex-col items-center justify-center px-1.5 py-1 rounded bg-muted-foreground/10 ring-1 ring-border/40 select-none"
+                                        title={`Taktart: ${token.value}`}
+                                    >
+                                        <span className="text-[10px] font-bold leading-tight text-muted-foreground">{num}</span>
+                                        <div className="w-3 border-t border-muted-foreground/50" />
+                                        <span className="text-[10px] font-bold leading-tight text-muted-foreground">{den}</span>
+                                    </div>
+                                );
+                            }
 
-                            if (repeated && hideRepeats) return null;
+                            const { chord, degree, isRepeated, chordIndex } = token;
 
-                            const displayChord = repeated && showAsPercent ? "%" : chord;
+                            if (isRepeated && hideRepeats) return null;
+
+                            const displayChord = isRepeated && showAsPercent ? "%" : chord;
 
                             return (
                                 <div
-                                    key={`${chord}-${rowIndex}-${chordIndex}`}
+                                    key={`${chord}-${rowIndex}-${tokenIndex}`}
                                     onClick={(e) => {
                                         if (onChordClick) {
                                             e.stopPropagation();
-                                            onChordClick(chord, rowIndex, chordIndex, row.degrees[chordIndex]);
+                                            onChordClick(chord, rowIndex, chordIndex, degree);
                                         }
                                     }}
-                                    className={`flex flex-col gap-1 items-center justify-center p-2 rounded-lg bg-card shadow-sm ring-1 ring-border/60 transition-transform hover:-translate-y-0.5 hover:shadow-md ${onChordClick ? 'cursor-pointer hover:ring-primary/60' : ''} ${repeated ? 'opacity-40' : ''}`}
+                                    className={`flex flex-col gap-1 items-center justify-center p-2 rounded-lg bg-card shadow-sm ring-1 ring-border/60 transition-transform hover:-translate-y-0.5 hover:shadow-md ${onChordClick ? 'cursor-pointer hover:ring-primary/60' : ''} ${isRepeated ? 'opacity-40' : ''}`}
                                 >
                                     <span className="font-bold text-foreground">
                                         {displayChord}
                                     </span>
-                                    {row.degrees[chordIndex] && !repeated && (
+                                    {degree && !isRepeated && (
                                         <span className="text-xs font-medium text-primary">
-                                            {row.degrees[chordIndex]}
+                                            {degree}
                                         </span>
                                     )}
                                 </div>

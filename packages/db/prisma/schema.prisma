@@ -22,14 +22,15 @@ model Song {
 }
 
 model Section {
-  id         String   @id
-  songId     String   @map("song_id")
-  label      String
-  chordLines String[] @default([]) @map("chord_lines")
+  id          String   @id
+  songId      String   @map("song_id")
+  label       String
+  description String?
+  chordLines  String[] @default([]) @map("chord_lines")
   degreeLines String[] @default([]) @map("degree_lines")
-  notes      String?
-  orderIndex Int      @map("order_index")
-  song       Song     @relation(fields: [songId], references: [id], onDelete: Cascade)
+  notes       String?
+  orderIndex  Int      @map("order_index")
+  song        Song     @relation(fields: [songId], references: [id], onDelete: Cascade)
 
   @@index([songId, orderIndex])
   @@map("sections")
@@ -49,14 +50,15 @@ model OriginalSong {
 }
 
 model OriginalSection {
-  id         String       @id
-  songId     String       @map("song_id")
-  label      String
-  chordLines String[]     @default([]) @map("chord_lines")
-  degreeLines String[]    @default([]) @map("degree_lines")
-  notes      String?
-  orderIndex Int          @map("order_index")
-  song       OriginalSong @relation(fields: [songId], references: [id], onDelete: Cascade)
+  id          String       @id
+  songId      String       @map("song_id")
+  label       String
+  description String?
+  chordLines  String[]     @default([]) @map("chord_lines")
+  degreeLines String[]     @default([]) @map("degree_lines")
+  notes       String?
+  orderIndex  Int          @map("order_index")
+  song        OriginalSong @relation(fields: [songId], references: [id], onDelete: Cascade)
 
   @@index([songId, orderIndex])
   @@map("original_sections")

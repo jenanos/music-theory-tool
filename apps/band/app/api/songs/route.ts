@@ -48,6 +48,7 @@ export async function POST(request: Request) {
                         id: `${songId}-${section.id}`,
                         songId,
                         label: section.label,
+                        description: section.description ?? null,
                         chordLines: section.chordLines ?? [],
                         degreeLines: section.degreeLines ?? [],
                         notes: section.notes ?? null,

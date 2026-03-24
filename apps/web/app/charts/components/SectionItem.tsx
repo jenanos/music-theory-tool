@@ -29,6 +29,11 @@ export function SectionItem({ section, songKey, hideRepeats, showAsPercent, onUp
 
     const isReadonly = !onUpdate;
 
+    // Display label: combine label + description
+    const displayLabel = section.description
+        ? `${section.label} ${section.description}`
+        : section.label;
+
     return (
         <>
             <div
@@ -36,34 +41,43 @@ export function SectionItem({ section, songKey, hideRepeats, showAsPercent, onUp
             >
                 <div className="flex flex-col gap-1.5 md:gap-3 md:flex-row md:items-start md:gap-4">
                     {/* Left side: Label and controls */}
-                    <div className="flex w-full shrink-0 flex-col gap-1 md:gap-2 md:w-32">
+                    <div className="flex w-full shrink-0 flex-col gap-1 md:gap-2 md:w-40">
                         <div className="flex items-center justify-between gap-1 md:items-start md:gap-2">
                             <div className="flex min-w-0 flex-1 flex-col">
                                 {isReadonly ? (
                                     <span className="min-w-0 flex-1 px-0 py-0.5 md:py-1 text-sm md:text-base font-semibold text-foreground">
-                                        {section.label}
+                                        {displayLabel}
                                     </span>
                                 ) : (
-                                    <div className="min-w-0 flex-1">
+                                    <div className="min-w-0 flex-1 flex flex-col gap-1">
                                         {!isCustomLabel ? (
-                                            <select
-                                                className="w-full rounded-md border border-input bg-card px-1.5 py-1 md:px-2 md:py-1.5 text-xs md:text-sm font-semibold text-foreground focus:border-primary focus:ring-1 focus:ring-primary"
-                                                value={PRESET_SECTIONS.includes(section.label) ? section.label : (section.label === "Ny Seksjon" ? "default" : "custom")}
-                                                onChange={(e) => {
-                                                    if (e.target.value === "custom") {
-                                                        setIsCustomLabel(true);
-                                                        onUpdate(section.id, { label: "" });
-                                                    } else {
-                                                        onUpdate(section.id, { label: e.target.value });
-                                                    }
-                                                }}
-                                            >
-                                                <option value="default" disabled hidden>Velg seksjon...</option>
-                                                {PRESET_SECTIONS.map((s) => (
-                                                    <option key={s} value={s}>{s}</option>
-                                                ))}
-                                                <option value="custom">Egendefinert...</option>
-                                            </select>
+                                            <div className="flex items-center gap-1">
+                                                <select
+                                                    className="flex-shrink-0 rounded-md border border-input bg-card px-1.5 py-1 md:px-2 md:py-1.5 text-xs md:text-sm font-semibold text-foreground focus:border-primary focus:ring-1 focus:ring-primary"
+                                                    value={PRESET_SECTIONS.includes(section.label) ? section.label : (section.label === "Ny Seksjon" ? "default" : "custom")}
+                                                    onChange={(e) => {
+                                                        if (e.target.value === "custom") {
+                                                            setIsCustomLabel(true);
+                                                            onUpdate(section.id, { label: "" });
+                                                        } else {
+                                                            onUpdate(section.id, { label: e.target.value });
+                                                        }
+                                                    }}
+                                                >
+                                                    <option value="default" disabled hidden>Velg seksjon...</option>
+                                                    {PRESET_SECTIONS.map((s) => (
+                                                        <option key={s} value={s}>{s}</option>
+                                                    ))}
+                                                    <option value="custom">Egendefinert...</option>
+                                                </select>
+                                                <input
+                                                    type="text"
+                                                    className="min-w-0 flex-1 rounded-md border border-input bg-card px-1.5 py-1 md:px-2 md:py-1.5 text-xs md:text-sm text-foreground focus:border-primary focus:ring-1 focus:ring-primary placeholder:text-muted-foreground/50 placeholder:font-normal"
+                                                    value={section.description || ""}
+                                                    onChange={(e) => onUpdate(section.id, { description: e.target.value || undefined })}
+                                                    placeholder="beskrivelse..."
+                                                />
+                                            </div>
                                         ) : (
                                             <div className="flex w-full items-center gap-1">
                                                 <input
@@ -213,7 +227,7 @@ export function SectionItem({ section, songKey, hideRepeats, showAsPercent, onUp
                 <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4 backdrop-blur-sm">
                     <div className="w-full max-w-4xl rounded-xl border border-border bg-card shadow-xl">
                         <div className="flex items-center justify-between border-b border-border px-4 py-3">
-                            <h3 className="text-base font-semibold text-foreground">Rediger seksjon: {section.label || "Uten navn"}</h3>
+                            <h3 className="text-base font-semibold text-foreground">Rediger seksjon: {displayLabel || "Uten navn"}</h3>
                             <button
                                 onClick={() => setIsEditing(false)}
                                 className="rounded-md p-1 text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"

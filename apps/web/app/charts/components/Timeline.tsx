@@ -84,9 +84,11 @@ export function Timeline({ items, sections, onReorder }: TimelineProps) {
         }
     }
 
-    // Helper to find label
+    // Helper to find label (with optional description)
     const getLabel = (sectionId: string) => {
-        return sections.find((s) => s.id === sectionId)?.label || sectionId;
+        const section = sections.find((s) => s.id === sectionId);
+        if (!section) return sectionId;
+        return section.description ? `${section.label} ${section.description}` : section.label;
     };
 
     return (

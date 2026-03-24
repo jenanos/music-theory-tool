@@ -8,6 +8,7 @@ import type {
 export type SongSectionResponse = {
     id: string;
     label: string;
+    description: string | null;
     chordLines: string[];
     degreeLines: string[];
     notes: string | null;
@@ -30,6 +31,7 @@ function toSectionResponse(songId: string, section: Section | OriginalSection): 
     return {
         id: section.id.replace(`${songId}-`, ""),
         label: section.label,
+        description: section.description ?? null,
         chordLines: section.chordLines ?? [],
         degreeLines: section.degreeLines ?? [],
         notes: section.notes,

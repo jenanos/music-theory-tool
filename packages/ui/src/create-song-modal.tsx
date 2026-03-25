@@ -89,12 +89,12 @@ export function CreateSongModal({ isOpen, onClose, onSave }: CreateSongModalProp
     const [view, setView] = useState<"manual" | "llm">("manual");
     const [llmJson, setLlmJson] = useState("");
     const [llmParseError, setLlmParseError] = useState("");
+    const [promptCopied, setPromptCopied] = useState(false);
 
     const llmPrompt = `Under finner du en JSON-struktur for hvordan en sang skal se ut i min database. Vennligst se på vedlagt bilde eller PDF av noter/låt, og returner en ferdig utfylt JSON basert på denne strukturen.
 
 Slik skal outputen se ut:
 {
-  "id": "optional-song-id",
   "title": "",
   "artist": "",
   "key": "",
@@ -120,9 +120,16 @@ REGLER FOR SEKSJONER:
 REGLER FOR chordLines:
 - Akkorder separeres med " - " (mellomrom-bindestrek-mellomrom).
 - Hver linje i chordLines representerer én linje/rad med akkorder.
-- Taktskifter (f.eks. 5/4, 6/4, 3/4) skrives INLINE med akkordene, f.eks.: "5/4 Cmaj7 - G/B - 6/4 B/D# - Em"
+- Taktartskifter skrives INLINE foran akkordene de gjelder for, som et eget token separert med mellomrom (IKKE med " - ").
+  Eksempel: "5/4 Cmaj7 - G/B - 6/4 B/D# - Em" betyr at Cmaj7 og G/B spilles i 5/4, mens B/D# og Em spilles i 6/4.
+  Skriv kun taktart der den faktisk endres. Hvis hele seksjonen er i 4/4, utelat taktarten.
 - IKKE inkluder repetisjoner som "x2", "x4" osv. som akkorder. Hvis en linje gjentas, skriv den ut eksplisitt som separate linjer, eller noter det i "notes"-feltet.
 - IKKE inkluder taktangivelser som "(4 takter)" eller lignende som akkorder.
+
+REGLER FOR degreeLines:
+- degreeLines skal IKKE inneholde taktarter. Taktarter hører kun hjemme i chordLines.
+- Grader/trinn skrives med romertall: i, ii, III, IV, V, vi, vii osv.
+- Bruk " - " som separator, tilsvarende chordLines (men uten taktarter).
 
 Viktig: Returner kun gyldig JSON. Ingen forklaringer, markdown eller ekstra tekst.`;
 
@@ -134,6 +141,7 @@ Viktig: Returner kun gyldig JSON. Ingen forklaringer, markdown eller ekstra teks
         setError("");
         setLlmParseError("");
         setLlmJson("");
+        setPromptCopied(false);
     };
 
     const handleSubmit = async (e: React.FormEvent) => {
@@ -184,11 +192,16 @@ Viktig: Returner kun gyldig JSON. Ingen forklaringer, markdown eller ekstra teks
             }
 
             setIsSubmitting(true);
-            const normalized: CreateSongData = {
+
+            // Treat empty or whitespace-only id as undefined
+            const songId = (typeof parsed.id === "string" && parsed.id.trim()) ? parsed.id.trim() : undefined;
+
+            const normalizedData: CreateSongData = {
                 ...parsed,
-                artist: typeof parsed.artist === "string" ? parsed.artist : undefined,
-                key: typeof parsed.key === "string" ? parsed.key : undefined,
-                notes: typeof parsed.notes === "string" ? parsed.notes : undefined,
+                id: songId,
+                artist: typeof parsed.artist === "string" && parsed.artist.trim() ? parsed.artist : undefined,
+                key: typeof parsed.key === "string" && parsed.key.trim() ? parsed.key : undefined,
+                notes: typeof parsed.notes === "string" && parsed.notes.trim() ? parsed.notes : undefined,
                 arrangement: Array.isArray(parsed.arrangement)
                     ? parsed.arrangement.filter((item: unknown): item is string => typeof item === "string")
                     : [],
@@ -222,13 +235,13 @@ Viktig: Returner kun gyldig JSON. Ingen forklaringer, markdown eller ekstra teks
                             degreeLines: Array.isArray(candidate.degreeLines)
                                 ? candidate.degreeLines.filter((line): line is string => typeof line === "string")
                                 : [],
-                            notes: typeof candidate.notes === "string" ? candidate.notes : undefined,
+                            notes: typeof candidate.notes === "string" && candidate.notes.trim() ? candidate.notes : undefined,
                         };
                     })
                     : [],
             };
 
-            await onSave(normalized);
+            await onSave(normalizedData);
             resetAndClose();
             setTitle("");
             setArtist("");
@@ -245,6 +258,8 @@ Viktig: Returner kun gyldig JSON. Ingen forklaringer, markdown eller ekstra teks
     const copyPrompt = async () => {
         try {
             await navigator.clipboard.writeText(llmPrompt);
+            setPromptCopied(true);
+            setTimeout(() => setPromptCopied(false), 2000);
         } catch {
             setLlmParseError("Kunne ikke kopiere prompt automatisk. Marker og kopier manuelt.");
         }
@@ -259,12 +274,12 @@ Viktig: Returner kun gyldig JSON. Ingen forklaringer, markdown eller ekstra teks
             />
 
             <div className={cn(
-                "bg-card rounded-xl shadow-lg border border-border w-full max-w-md overflow-hidden relative z-10",
+                "bg-card rounded-xl shadow-lg border border-border w-full max-w-lg overflow-hidden relative z-10 max-h-[90vh] flex flex-col",
                 "animate-in fade-in zoom-in-95 duration-200"
             )}>
-                <form onSubmit={handleSubmit}>
+                <form onSubmit={handleSubmit} className="flex flex-col overflow-hidden">
                     {/* Header */}
-                    <div className="p-4 border-b border-border bg-muted/50 flex items-center justify-between">
+                    <div className="flex-none p-4 border-b border-border bg-muted/50 flex items-center justify-between">
                         <h3 className="font-bold text-lg text-card-foreground">Ny låt</h3>
                         <Button
                             type="button"
@@ -280,8 +295,8 @@ Viktig: Returner kun gyldig JSON. Ingen forklaringer, markdown eller ekstra teks
                         </Button>
                     </div>
 
-                    {/* Content */}
-                    <div className="p-6 space-y-4">
+                    {/* Content - scrollable */}
+                    <div className="flex-1 overflow-y-auto p-4 space-y-4">
                         {view === "manual" && error && (
                             <div className="bg-destructive/10 text-destructive text-sm p-3 rounded-md border border-destructive/20">
                                 {error}
@@ -349,36 +364,48 @@ Viktig: Returner kun gyldig JSON. Ingen forklaringer, markdown eller ekstra teks
 
                                 <div className="rounded-md border border-border bg-muted/30 p-3">
                                     <p className="text-sm text-muted-foreground mb-3">Eller bruk en språkmodell for å generere ferdig JSON fra noter/PDF.</p>
-                                    <Button type="button" variant="secondary" onClick={() => setView("llm")}>Legg til med en chatbot / LLM</Button>
+                                    <Button type="button" variant="secondary" onClick={() => setView("llm")} className="w-full">Importer med LLM</Button>
                                 </div>
                             </>
                         ) : (
                             <>
-                                <div className="rounded-md border border-border bg-muted/30 p-3 space-y-2">
-                                    <p className="font-medium text-sm">LLM-import</p>
-                                    <p className="text-sm text-muted-foreground">
-                                        Kopier prompten under, lim den inn i ChatGPT (eller lignende) sammen med bilde/PDF av låta,
-                                        og lim deretter inn JSON-resultatet her.
-                                    </p>
-                                </div>
-
+                                {/* Step 1: Copy prompt */}
                                 <div className="space-y-2">
-                                    <div className="flex items-center justify-between gap-2">
-                                        <Label htmlFor="llm-prompt">Kopierbart prompt</Label>
-                                        <Button type="button" variant="outline" size="sm" onClick={copyPrompt}>Kopier prompt</Button>
+                                    <div className="flex items-center gap-2">
+                                        <span className="flex-none size-5 rounded-full bg-primary text-primary-foreground text-xs font-bold flex items-center justify-center">1</span>
+                                        <Label className="text-sm font-medium">Kopier prompten</Label>
                                     </div>
-                                    <Textarea id="llm-prompt" value={llmPrompt} readOnly className="min-h-56 font-mono text-xs" />
+                                    <p className="text-xs text-muted-foreground ml-7">
+                                        Lim den inn i ChatGPT (e.l.) sammen med bilde/PDF av låta.
+                                    </p>
+                                    <div className="ml-7">
+                                        <details className="group">
+                                            <summary className="cursor-pointer text-xs text-muted-foreground hover:text-foreground select-none">
+                                                Vis prompt
+                                            </summary>
+                                            <Textarea value={llmPrompt} readOnly className="mt-2 min-h-32 font-mono text-[10px] leading-tight" />
+                                        </details>
+                                        <Button type="button" variant="outline" size="sm" onClick={copyPrompt} className="mt-2">
+                                            {promptCopied ? "Kopiert!" : "Kopier prompt"}
+                                        </Button>
+                                    </div>
                                 </div>
 
+                                {/* Step 2: Paste JSON */}
                                 <div className="space-y-2">
-                                    <Label htmlFor="llm-result">Last opp resultat fra språkmodell (JSON)</Label>
-                                    <Textarea
-                                        id="llm-result"
-                                        value={llmJson}
-                                        onChange={(e) => setLlmJson(e.target.value)}
-                                        placeholder='Lim inn JSON her, f.eks. { "title": "...", "sections": [] }'
-                                        className="min-h-40 font-mono text-xs"
-                                    />
+                                    <div className="flex items-center gap-2">
+                                        <span className="flex-none size-5 rounded-full bg-primary text-primary-foreground text-xs font-bold flex items-center justify-center">2</span>
+                                        <Label htmlFor="llm-result" className="text-sm font-medium">Lim inn JSON-resultatet</Label>
+                                    </div>
+                                    <div className="ml-7">
+                                        <Textarea
+                                            id="llm-result"
+                                            value={llmJson}
+                                            onChange={(e) => setLlmJson(e.target.value)}
+                                            placeholder='{ "title": "...", "sections": [...] }'
+                                            className="min-h-32 font-mono text-xs"
+                                        />
+                                    </div>
                                 </div>
 
                                 {llmParseError && (
@@ -391,7 +418,7 @@ Viktig: Returner kun gyldig JSON. Ingen forklaringer, markdown eller ekstra teks
                     </div>
 
                     {/* Footer */}
-                    <div className="p-4 border-t border-border bg-muted/50 flex justify-end gap-2">
+                    <div className="flex-none p-4 border-t border-border bg-muted/50 flex justify-end gap-2">
                         <Button
                             type="button"
                             variant="ghost"
@@ -420,7 +447,7 @@ Viktig: Returner kun gyldig JSON. Ingen forklaringer, markdown eller ekstra teks
                                     Tilbake
                                 </Button>
                                 <Button type="button" onClick={handleImportFromLlm} disabled={isSubmitting || !llmJson.trim()}>
-                                    {isSubmitting ? "Importerer..." : "Importer JSON"}
+                                    {isSubmitting ? "Importerer..." : "Importer"}
                                 </Button>
                             </>
                         )}

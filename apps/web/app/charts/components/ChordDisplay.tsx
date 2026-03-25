@@ -15,6 +15,11 @@ function isTimeSignature(token: string): boolean {
     return /^\d+\/\d+$/.test(token);
 }
 
+/** Strip time signature tokens from a degree line so degree indices stay aligned with chords */
+function stripTimeSignatures(tokens: string[]): string[] {
+    return tokens.filter(t => !isTimeSignature(t));
+}
+
 type Token = { type: "chord"; chord: string; degree?: string; isRepeated: boolean; chordIndex: number } | { type: "timesig"; value: string };
 
 export function ChordDisplay({ chordLine, degreeLine, className, onClick, onChordClick, hideRepeats, showAsPercent }: ChordDisplayProps) {
@@ -27,9 +32,11 @@ export function ChordDisplay({ chordLine, degreeLine, className, onClick, onChor
 
         return cLines.map((line, lineIndex) => {
             const rawTokens = line.split(/[\s|-]+/).filter(Boolean);
-            const degrees = dLines[lineIndex]
+            const rawDegrees = dLines[lineIndex]
                 ? dLines[lineIndex].split(/[\s|-]+/).filter(Boolean)
                 : [];
+            // Strip any time signatures the LLM may have put in degreeLines
+            const degrees = stripTimeSignatures(rawDegrees);
 
             const tokens: Token[] = [];
             let chordCount = 0;
@@ -95,7 +102,8 @@ export function ChordDisplay({ chordLine, degreeLine, className, onClick, onChor
                                 return (
                                     <div
                                         key={`ts-${rowIndex}-${tokenIndex}`}
-                                        className="flex flex-col items-center justify-center px-1.5 py-1 rounded bg-muted-foreground/10 ring-1 ring-border/40 select-none"
+                                        onClick={(e) => e.stopPropagation()}
+                                        className="flex flex-col items-center justify-center px-1.5 py-1 rounded bg-muted-foreground/10 ring-1 ring-border/40 select-none cursor-default"
                                         title={`Taktart: ${token.value}`}
                                     >
                                         <span className="text-[10px] font-bold leading-tight text-muted-foreground">{num}</span>

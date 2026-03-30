@@ -20,6 +20,7 @@
     "@repo/theory": "workspace:*",
     "@repo/ui": "workspace:*",
     "@repo/voicings": "workspace:*",
+    "jose": "^6.2.2",
     "next": "16.0.10",
     "react": "^19.2.0",
     "react-dom": "^19.1.0",

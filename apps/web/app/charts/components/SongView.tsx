@@ -149,6 +149,21 @@ export function SongView({ song, onChange, onBackToList }: SongViewProps) {
   );
   const [showMobileTimeline, setShowMobileTimeline] = useState(false);
   const [showMobileSettings, setShowMobileSettings] = useState(false);
+  const [isSubMdViewport, setIsSubMdViewport] = useState(false);
+
+  useEffect(() => {
+    const mediaQuery = window.matchMedia("(max-width: 767px)");
+    const updateViewport = () => setIsSubMdViewport(mediaQuery.matches);
+
+    updateViewport();
+    mediaQuery.addEventListener("change", updateViewport);
+
+    return () => mediaQuery.removeEventListener("change", updateViewport);
+  }, []);
+
+  const effectiveSectionLayoutMode = isSubMdViewport
+    ? "single"
+    : sectionLayoutMode;
 
   // Version history state
   const [showOriginal, setShowOriginal] = useState(false);
@@ -773,7 +788,7 @@ export function SongView({ song, onChange, onBackToList }: SongViewProps) {
             <SectionList
               sections={visibleSections}
               songKey={displaySong.key}
-              layoutMode={sectionLayoutMode}
+              layoutMode={effectiveSectionLayoutMode}
               hideRepeats={hideRepeats}
               showAsPercent={showAsPercent}
               onUpdate={isReadonly ? undefined : updateSection}

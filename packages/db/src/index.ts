@@ -14,4 +14,7 @@ export type {
     OriginalSong,
     OriginalSection,
     SavedProgression,
+    User,
+    MagicLink,
+    Session,
 } from "@prisma/client";

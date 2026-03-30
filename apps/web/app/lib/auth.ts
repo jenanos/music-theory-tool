@@ -29,7 +29,7 @@ export interface SessionUser {
 
 export async function createMagicLink(email: string): Promise<string> {
   // Find or create user
-  let user = await prisma.user.findUnique({ where: { email } });
+  const user = await prisma.user.findUnique({ where: { email } });
 
   if (!user) {
     // Only allow known emails - do not auto-create users

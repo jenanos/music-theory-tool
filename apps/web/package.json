@@ -12,6 +12,7 @@
     "test": "vitest run"
   },
   "dependencies": {
+    "@auth/prisma-adapter": "^2.11.1",
     "@dnd-kit/core": "^6.3.1",
     "@dnd-kit/sortable": "^10.0.0",
     "@dnd-kit/utilities": "^3.2.2",
@@ -20,8 +21,8 @@
     "@repo/theory": "workspace:*",
     "@repo/ui": "workspace:*",
     "@repo/voicings": "workspace:*",
-    "jose": "^6.2.2",
     "next": "16.0.10",
+    "next-auth": "5.0.0-beta.30",
     "react": "^19.2.0",
     "react-dom": "^19.1.0",
     "resend": "^6.9.4",

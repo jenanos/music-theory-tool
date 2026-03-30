@@ -15,6 +15,7 @@ export type {
     OriginalSection,
     SavedProgression,
     User,
-    MagicLink,
+    Account,
     Session,
+    VerificationToken,
 } from "@prisma/client";

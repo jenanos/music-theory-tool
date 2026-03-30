@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { signIn } from "next-auth/react";
 import { useSearchParams, useRouter } from "next/navigation";
 import { Suspense } from "react";
 
@@ -11,6 +12,7 @@ function LoginForm() {
   const searchParams = useSearchParams();
   const router = useRouter();
   const urlError = searchParams.get("error");
+  const callbackUrl = searchParams.get("callbackUrl") ?? "/";
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -18,22 +20,21 @@ function LoginForm() {
     setError(null);
 
     try {
-      const response = await fetch("/api/auth/magic-link", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email }),
+      const result = await signIn("resend", {
+        email,
+        redirectTo: callbackUrl,
+        redirect: false,
       });
 
-      const data = await response.json();
-
-      if (data.success) {
-        router.push("/login/verify");
-      } else {
-        setError(data.error ?? "Noe gikk galt. Prøv igjen.");
+      if (result?.error) {
+        setError("Noe gikk galt. Prøv igjen.");
+        setIsSubmitting(false);
+        return;
       }
+
+      router.push("/login/verify");
     } catch {
       setError("Noe gikk galt. Prøv igjen.");
-    } finally {
       setIsSubmitting(false);
     }
   };
@@ -85,11 +86,13 @@ function LoginForm() {
 
 export default function LoginPage() {
   return (
-    <Suspense fallback={
-      <main className="flex h-full flex-col items-center justify-center bg-background text-foreground p-4">
-        <div className="h-8 w-8 animate-spin rounded-full border-4 border-primary/30 border-t-primary" />
-      </main>
-    }>
+    <Suspense
+      fallback={
+        <main className="flex h-full flex-col items-center justify-center bg-background text-foreground p-4">
+          <div className="h-8 w-8 animate-spin rounded-full border-4 border-primary/30 border-t-primary" />
+        </main>
+      }
+    >
       <LoginForm />
     </Suspense>
   );

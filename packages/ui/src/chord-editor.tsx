@@ -3,9 +3,9 @@
 
 import { useState, useEffect, useMemo, useRef } from "react";
 import { getChordDegree, getNextChordSuggestionsFromSequence } from "@repo/theory";
-import { Button } from "./button";
-import { Label } from "./label";
-import { Textarea } from "./textarea";
+import { Button } from "./ui/button";
+import { Label } from "./ui/label";
+import { Textarea } from "./ui/textarea";
 import { cn } from "./utils";
 
 type SuggestionProfile = "triad" | "seventh" | "jazz";

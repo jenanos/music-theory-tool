@@ -3,10 +3,10 @@
 
 import React, { useState } from "react";
 import { TONIC_OPTIONS, SCALES, type ModeId } from "@repo/theory";
-import { Button } from "./button";
-import { Input } from "./input";
-import { Label } from "./label";
-import { Textarea } from "./textarea";
+import { Button } from "./ui/button";
+import { Input } from "./ui/input";
+import { Label } from "./ui/label";
+import { Textarea } from "./ui/textarea";
 import { cn } from "./utils";
 
 const HARMONY_SCALES = SCALES.filter(s => s.isHarmony);

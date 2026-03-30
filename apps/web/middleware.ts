@@ -5,7 +5,7 @@ import { jwtVerify } from "jose";
 const SESSION_COOKIE = "session_token";
 
 // Routes that require authentication (any logged-in user)
-const PROTECTED_ROUTES = ["/charts", "/progressions", "/practice"];
+const PROTECTED_ROUTES = ["/", "/charts", "/progressions", "/practice"];
 
 // Routes that require admin role
 const ADMIN_ROUTES = ["/", "/progressions", "/practice"];
@@ -33,7 +33,9 @@ export async function middleware(request: NextRequest) {
   }
 
   // Check if route needs protection
-  const needsAuth = PROTECTED_ROUTES.some((route) => pathname.startsWith(route)) || pathname === "/";
+  const needsAuth = PROTECTED_ROUTES.some((route) =>
+    pathname === route || (route !== "/" && pathname.startsWith(route)),
+  );
   if (!needsAuth) {
     return NextResponse.next();
   }

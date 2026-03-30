@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect, useCallback } from "react";
 import { Fretboard } from "./Fretboard";
-import { PracticeSettings, PracticeMode } from "./PracticeSettings";
+import { PracticeSettings, PracticeMode, STRING_NAMES } from "./PracticeSettings";
 
 const NOTES = ["C", "C#", "D", "D#", "E", "F", "F#", "G", "G#", "A", "A#", "B"];
 const STRING_OPEN_NOTES = [4, 11, 7, 2, 9, 4];
@@ -127,14 +127,11 @@ export const GameController = () => {
                                 </div>
                                 <div className="text-sm md:text-xl text-primary font-medium whitespace-nowrap">
                                     {currentQuestion.targetString
-                                        ? <span className="md:hidden">på {["", "High E", "B", "G", "D", "A", "Low E"][currentQuestion.targetString]}</span>
+                                        ? <span className="md:hidden">på {STRING_NAMES[currentQuestion.targetString - 1]}</span>
                                         : <span className="md:hidden">hvilken som helst streng</span>
                                     }
                                     <span className="hidden md:inline">{currentQuestion.targetString
-                                        ? `på ${(currentQuestion.targetString === 1 || currentQuestion.targetString === 6) ? 'E' :
-                                            currentQuestion.targetString === 2 ? 'B' :
-                                                currentQuestion.targetString === 3 ? 'G' :
-                                                    currentQuestion.targetString === 4 ? 'D' : 'A'}-strengen`
+                                        ? `på ${STRING_NAMES[currentQuestion.targetString - 1]}-strengen`
                                         : "hvor som helst på gripebrettet"
                                     }</span>
                                 </div>

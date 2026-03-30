@@ -5,6 +5,7 @@ import { prisma } from "@repo/db";
 const SESSION_COOKIE = "session_token";
 const SESSION_DURATION_MS = 30 * 24 * 60 * 60 * 1000; // 30 days
 const MAGIC_LINK_DURATION_MS = 15 * 60 * 1000; // 15 minutes
+const isDevelopment = process.env.NODE_ENV === "development";
 
 function getJwtSecret() {
   const secret = process.env.AUTH_SECRET;
@@ -172,6 +173,51 @@ export async function destroySession(): Promise<void> {
     const cookieStore = await cookies();
     cookieStore.delete(SESSION_COOKIE);
   }
+}
+
+// ---------------------------------------------------------------------------
+// Dev Callback URL (server-side storage for magic link in development)
+// ---------------------------------------------------------------------------
+
+type DevCallbackState = {
+  url: string;
+  createdAt: number;
+};
+
+const g = globalThis as unknown as {
+  __devCallbackState?: DevCallbackState | null;
+};
+
+function isAllowedDevCallbackUrl(url: string): boolean {
+  try {
+    const parsed = new URL(url);
+    const isHttp = parsed.protocol === "http:" || parsed.protocol === "https:";
+    const isLocalHost =
+      parsed.hostname === "localhost" || parsed.hostname === "127.0.0.1";
+    return isHttp && isLocalHost;
+  } catch {
+    return false;
+  }
+}
+
+export function setDevCallbackUrl(url: string): void {
+  if (!isDevelopment) return;
+  if (!isAllowedDevCallbackUrl(url)) {
+    g.__devCallbackState = null;
+    return;
+  }
+  g.__devCallbackState = { url, createdAt: Date.now() };
+}
+
+export function getDevCallbackUrl(): string | null {
+  if (!isDevelopment) return null;
+  const state = g.__devCallbackState;
+  if (!state) return null;
+  if (Date.now() - state.createdAt > 10 * 60_000) {
+    g.__devCallbackState = null;
+    return null;
+  }
+  return state.url;
 }
 
 // ---------------------------------------------------------------------------

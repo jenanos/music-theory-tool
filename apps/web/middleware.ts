@@ -11,7 +11,7 @@ const PROTECTED_ROUTES = ["/", "/charts", "/progressions", "/practice"];
 const ADMIN_ROUTES = ["/", "/progressions", "/practice"];
 
 // Public routes (no auth required)
-const PUBLIC_ROUTES = ["/login", "/api/auth"];
+const PUBLIC_ROUTES = ["/login", "/login/verify", "/api/auth"];
 
 function getJwtSecret() {
   const secret = process.env.AUTH_SECRET;

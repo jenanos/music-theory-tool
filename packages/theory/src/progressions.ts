@@ -583,6 +583,18 @@ export const CHORD_PROGRESSIONS: ChordProgression[] = [
         usageExamples: "J.S. Bach – preludier og fuger"
     },
 
+    {
+        id: "maj_adv_09",
+        name: "Cush Chromatic Rise",
+        mode: "ionian",
+        type: "seventh",
+        weight: 5,
+        tags: ["modal_interchange", "chromatic", "jazz", "cush_chords"],
+        roman: ["I", "bIImaj7", "bIII", "iv7"],
+        description: "Chromatic cush voicing progression using modal interchange. Parallel movement with borrowed bII and bIII chords. Technique attributed to Clare Fischer.",
+        usageExamples: "Clare Fischer – chromatic cush voicings"
+    },
+
     // ==================== Major - Secondary Dominants ====================
     {
         id: "maj_sec_01",

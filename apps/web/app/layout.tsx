@@ -2,8 +2,9 @@ import "@repo/ui/styles.css";
 import "./globals.css";
 import type { Metadata } from "next";
 import { Outfit } from "next/font/google";
-import Link from "next/link";
 import Image from "next/image";
+import { AuthProvider } from "./lib/auth-context";
+import { Navigation } from "./Navigation";
 
 const outfit = Outfit({ subsets: ["latin"] });
 
@@ -36,36 +37,12 @@ export default function RootLayout({
           />
         </div>
 
-        <nav className="border-b border-white/10 bg-card/60 backdrop-blur-xl shrink-0">
-          <div className="mx-auto flex w-full max-w-[1920px] items-center justify-between px-4 py-2 md:px-6 md:py-3">
-            <Link href="/" className="font-semibold text-foreground text-sm md:text-base">
-              🎸 Gitarist-støtteapp
-            </Link>
-            <div className="flex gap-2 md:gap-4 text-xs md:text-sm">
-              <Link
-                href="/"
-                className="text-muted-foreground hover:text-primary hover:underline"
-              >
-                Akkorder
-              </Link>
-              <Link
-                href="/progressions"
-                className="text-muted-foreground hover:text-primary hover:underline"
-              >
-                Progresjoner
-              </Link>
-              <Link
-                href="/charts"
-                className="text-muted-foreground hover:text-primary hover:underline"
-              >
-                Blekker
-              </Link>
-            </div>
+        <AuthProvider>
+          <Navigation />
+          <div className="flex-1 overflow-hidden">
+            {children}
           </div>
-        </nav>
-        <div className="flex-1 overflow-hidden">
-          {children}
-        </div>
+        </AuthProvider>
       </body>
     </html>
   );

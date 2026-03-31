@@ -114,9 +114,11 @@ export async function PUT(request: Request, { params }: { params: Params }) {
                     updateData.visibility = parsed.visibility;
                 }
                 if (parsed.groupId !== undefined) {
-                    updateData.group = parsed.groupId
-                        ? { connect: { id: parsed.groupId } }
-                        : { disconnect: true };
+                    if (parsed.groupId) {
+                        updateData.group = { connect: { id: parsed.groupId } };
+                    } else {
+                        updateData.groupId = null;
+                    }
                 }
 
                 await tx.song.update({

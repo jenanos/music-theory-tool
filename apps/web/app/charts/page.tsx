@@ -126,7 +126,7 @@ export default function ChartsPage() {
                 sections: data.sections ?? [],
                 arrangement: data.arrangement ?? [],
                 visibility: data.visibility ?? "private",
-                userId: user?.id ?? null,
+                userId: user!.id,
                 groupId: data.groupId ?? null,
             };
 

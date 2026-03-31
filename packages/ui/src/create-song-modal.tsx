@@ -37,6 +37,73 @@ interface GroupOption {
     name: string;
 }
 
+const VISIBILITY_OPTIONS = [
+    { value: "private" as const, label: "Privat", desc: "Kun for deg" },
+    { value: "group" as const, label: "Gruppe", desc: "Delt med en gruppe" },
+    { value: "shared" as const, label: "Felles", desc: "Synlig for alle" },
+] as const;
+
+function VisibilitySelector({
+    visibility,
+    onVisibilityChange,
+    selectedGroupId,
+    onGroupIdChange,
+    groups,
+    idSuffix = "",
+}: {
+    visibility: SongVisibility;
+    onVisibilityChange: (v: SongVisibility) => void;
+    selectedGroupId: string;
+    onGroupIdChange: (id: string) => void;
+    groups: GroupOption[];
+    idSuffix?: string;
+}) {
+    return (
+        <div className="space-y-2">
+            <Label>Synlighet</Label>
+            <div className="flex gap-2">
+                {VISIBILITY_OPTIONS.map((opt) => (
+                    <button
+                        key={opt.value}
+                        type="button"
+                        onClick={() => onVisibilityChange(opt.value)}
+                        className={cn(
+                            "flex-1 rounded-md border p-2 text-left transition-colors",
+                            visibility === opt.value
+                                ? "border-primary bg-primary/10 text-foreground"
+                                : "border-border bg-muted text-muted-foreground hover:border-foreground/30"
+                        )}
+                    >
+                        <div className="text-sm font-medium">{opt.label}</div>
+                        <div className="text-[10px]">{opt.desc}</div>
+                    </button>
+                ))}
+            </div>
+            {visibility === "group" && groups.length > 0 && (
+                <div className="mt-2">
+                    <Label htmlFor={`song-group${idSuffix}`}>Gruppe</Label>
+                    <select
+                        id={`song-group${idSuffix}`}
+                        className="w-full rounded-md border border-border bg-muted px-3 py-2 text-sm font-medium focus:ring-2 focus:ring-primary mt-1"
+                        value={selectedGroupId}
+                        onChange={(e) => onGroupIdChange(e.target.value)}
+                    >
+                        <option value="">Velg gruppe...</option>
+                        {groups.map((g) => (
+                            <option key={g.id} value={g.id}>{g.name}</option>
+                        ))}
+                    </select>
+                </div>
+            )}
+            {visibility === "group" && groups.length === 0 && (
+                <p className="text-xs text-muted-foreground mt-1">
+                    Du har ingen grupper ennå. Be admin om å opprette en.
+                </p>
+            )}
+        </div>
+    );
+}
+
 const PRESET_LABELS = ["Intro", "Vers", "Pre-chorus", "Refreng", "Bridge", "Mellomspill", "Outro"];
 
 /** Try to split a label like "Vers del 1 (atmos)" into { label: "Vers", description: "del 1 (atmos)" } */
@@ -390,52 +457,13 @@ Viktig: Returner kun gyldig JSON. Ingen forklaringer, markdown eller ekstra teks
                                 </div>
 
                                 {/* Visibility selector */}
-                                <div className="space-y-2">
-                                    <Label>Synlighet</Label>
-                                    <div className="flex gap-2">
-                                        {([
-                                            { value: "private" as const, label: "Privat", desc: "Kun for deg" },
-                                            { value: "group" as const, label: "Gruppe", desc: "Delt med en gruppe" },
-                                            { value: "shared" as const, label: "Felles", desc: "Synlig for alle" },
-                                        ] as const).map((opt) => (
-                                            <button
-                                                key={opt.value}
-                                                type="button"
-                                                onClick={() => setVisibility(opt.value)}
-                                                className={cn(
-                                                    "flex-1 rounded-md border p-2 text-left transition-colors",
-                                                    visibility === opt.value
-                                                        ? "border-primary bg-primary/10 text-foreground"
-                                                        : "border-border bg-muted text-muted-foreground hover:border-foreground/30"
-                                                )}
-                                            >
-                                                <div className="text-sm font-medium">{opt.label}</div>
-                                                <div className="text-[10px]">{opt.desc}</div>
-                                            </button>
-                                        ))}
-                                    </div>
-                                    {visibility === "group" && groups.length > 0 && (
-                                        <div className="mt-2">
-                                            <Label htmlFor="song-group">Gruppe</Label>
-                                            <select
-                                                id="song-group"
-                                                className="w-full rounded-md border border-border bg-muted px-3 py-2 text-sm font-medium focus:ring-2 focus:ring-primary mt-1"
-                                                value={selectedGroupId}
-                                                onChange={(e) => setSelectedGroupId(e.target.value)}
-                                            >
-                                                <option value="">Velg gruppe...</option>
-                                                {groups.map((g) => (
-                                                    <option key={g.id} value={g.id}>{g.name}</option>
-                                                ))}
-                                            </select>
-                                        </div>
-                                    )}
-                                    {visibility === "group" && groups.length === 0 && (
-                                        <p className="text-xs text-muted-foreground mt-1">
-                                            Du har ingen grupper ennå. Be admin om å opprette en.
-                                        </p>
-                                    )}
-                                </div>
+                                <VisibilitySelector
+                                    visibility={visibility}
+                                    onVisibilityChange={setVisibility}
+                                    selectedGroupId={selectedGroupId}
+                                    onGroupIdChange={setSelectedGroupId}
+                                    groups={groups}
+                                />
 
                                 <div className="rounded-md border border-border bg-muted/30 p-3">
                                     <p className="text-sm text-muted-foreground mb-3">Eller bruk en språkmodell for å generere ferdig JSON fra noter/PDF.</p>
@@ -490,52 +518,14 @@ Viktig: Returner kun gyldig JSON. Ingen forklaringer, markdown eller ekstra teks
                                 )}
 
                                 {/* Visibility selector in LLM view */}
-                                <div className="space-y-2">
-                                    <Label>Synlighet</Label>
-                                    <div className="flex gap-2">
-                                        {([
-                                            { value: "private" as const, label: "Privat", desc: "Kun for deg" },
-                                            { value: "group" as const, label: "Gruppe", desc: "Delt med en gruppe" },
-                                            { value: "shared" as const, label: "Felles", desc: "Synlig for alle" },
-                                        ] as const).map((opt) => (
-                                            <button
-                                                key={opt.value}
-                                                type="button"
-                                                onClick={() => setVisibility(opt.value)}
-                                                className={cn(
-                                                    "flex-1 rounded-md border p-2 text-left transition-colors",
-                                                    visibility === opt.value
-                                                        ? "border-primary bg-primary/10 text-foreground"
-                                                        : "border-border bg-muted text-muted-foreground hover:border-foreground/30"
-                                                )}
-                                            >
-                                                <div className="text-sm font-medium">{opt.label}</div>
-                                                <div className="text-[10px]">{opt.desc}</div>
-                                            </button>
-                                        ))}
-                                    </div>
-                                    {visibility === "group" && groups.length > 0 && (
-                                        <div className="mt-2">
-                                            <Label htmlFor="song-group-llm">Gruppe</Label>
-                                            <select
-                                                id="song-group-llm"
-                                                className="w-full rounded-md border border-border bg-muted px-3 py-2 text-sm font-medium focus:ring-2 focus:ring-primary mt-1"
-                                                value={selectedGroupId}
-                                                onChange={(e) => setSelectedGroupId(e.target.value)}
-                                            >
-                                                <option value="">Velg gruppe...</option>
-                                                {groups.map((g) => (
-                                                    <option key={g.id} value={g.id}>{g.name}</option>
-                                                ))}
-                                            </select>
-                                        </div>
-                                    )}
-                                    {visibility === "group" && groups.length === 0 && (
-                                        <p className="text-xs text-muted-foreground mt-1">
-                                            Du har ingen grupper ennå. Be admin om å opprette en.
-                                        </p>
-                                    )}
-                                </div>
+                                <VisibilitySelector
+                                    visibility={visibility}
+                                    onVisibilityChange={setVisibility}
+                                    selectedGroupId={selectedGroupId}
+                                    onGroupIdChange={setSelectedGroupId}
+                                    groups={groups}
+                                    idSuffix="-llm"
+                                />
                             </>
                         )}
                     </div>

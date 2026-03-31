@@ -371,6 +371,19 @@ async function seed() {
         }
     }
 
+    // Seed dev users (upsert to avoid duplicates)
+    const devEmail = process.env.DEV_ADMIN_EMAIL ?? "dev@localhost";
+    console.log(`  Upserting dev admin user: ${devEmail}`);
+    await prisma.user.upsert({
+        where: { email: devEmail },
+        update: { role: "admin" },
+        create: {
+            email: devEmail,
+            name: "Dev Admin",
+            role: "admin",
+        },
+    });
+
     await prisma.$transaction(async (tx) => {
         console.log("  Clearing existing data...");
         await tx.section.deleteMany();

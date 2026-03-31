@@ -157,10 +157,21 @@ export function hasAccess(
 }
 
 export async function requireAuth() {
-  const { redirect } = await import("next/navigation");
   const session = await auth();
   if (!session?.user?.id) {
+    const { redirect } = await import("next/navigation");
     redirect("/login");
+    throw new Error("unreachable"); // redirect() throws, but TS needs this
+  }
+  return session;
+}
+
+export async function requireAdmin() {
+  const session = await requireAuth();
+  const role = (session.user as SessionUser).role;
+  if (role !== "admin") {
+    const { redirect } = await import("next/navigation");
+    redirect("/charts");
   }
   return session;
 }

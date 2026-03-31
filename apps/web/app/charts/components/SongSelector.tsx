@@ -2,7 +2,22 @@
 "use client";
 
 import { useState } from "react";
-import { Song } from "../data";
+import { Song, SongVisibility } from "../data";
+
+type VisibilityFilter = "all" | SongVisibility;
+
+const VISIBILITY_LABELS: Record<VisibilityFilter, string> = {
+    all: "Alle",
+    private: "Mine",
+    group: "Gruppe",
+    shared: "Felles",
+};
+
+const VISIBILITY_BADGE: Record<SongVisibility, { label: string; className: string }> = {
+    private: { label: "Privat", className: "bg-blue-500/20 text-blue-400" },
+    group: { label: "Gruppe", className: "bg-purple-500/20 text-purple-400" },
+    shared: { label: "Felles", className: "bg-green-500/20 text-green-400" },
+};
 
 interface SongSelectorProps {
     songs: Song[];
@@ -11,14 +26,34 @@ interface SongSelectorProps {
     onAddSong?: () => void;
     onDeleteSong?: (songId: string) => Promise<void>;
     isMobile?: boolean;
+    visibilityFilter: VisibilityFilter;
+    onVisibilityFilterChange: (filter: VisibilityFilter) => void;
+    currentUserId?: string;
+    isAdmin?: boolean;
 }
 
-export function SongSelector({ songs, onSelectSong, selectedSongId, onAddSong, onDeleteSong, isMobile }: SongSelectorProps) {
+export function SongSelector({
+    songs,
+    onSelectSong,
+    selectedSongId,
+    onAddSong,
+    onDeleteSong,
+    isMobile,
+    visibilityFilter,
+    onVisibilityFilterChange,
+    currentUserId,
+    isAdmin,
+}: SongSelectorProps) {
     const [search, setSearch] = useState("");
 
     const filteredSongs = songs.filter((song) =>
         song.title.toLowerCase().includes(search.toLowerCase())
     );
+
+    const canDeleteSong = (song: Song) => {
+        if (isAdmin) return true;
+        return song.userId === currentUserId;
+    };
 
     return (
         <div className={`flex flex-col border-r border-border bg-muted h-full ${isMobile ? "w-full" : "w-64"}`}>
@@ -37,6 +72,24 @@ export function SongSelector({ songs, onSelectSong, selectedSongId, onAddSong, o
                         </button>
                     )}
                 </div>
+
+                {/* Visibility filter tabs */}
+                <div className="flex gap-1 mb-2">
+                    {(Object.keys(VISIBILITY_LABELS) as VisibilityFilter[]).map((filter) => (
+                        <button
+                            key={filter}
+                            onClick={() => onVisibilityFilterChange(filter)}
+                            className={`flex-1 rounded-md px-2 py-1 text-xs font-medium transition-colors ${
+                                visibilityFilter === filter
+                                    ? "bg-primary text-primary-foreground"
+                                    : "text-muted-foreground hover:bg-muted/80 hover:text-foreground"
+                            }`}
+                        >
+                            {VISIBILITY_LABELS[filter]}
+                        </button>
+                    ))}
+                </div>
+
                 <input
                     type="text"
                     placeholder="Søk..."
@@ -58,12 +111,19 @@ export function SongSelector({ songs, onSelectSong, selectedSongId, onAddSong, o
                             onClick={() => onSelectSong(song.id)}
                             className="flex-1 px-4 py-3 text-left text-sm"
                         >
-                            <div className="truncate">{song.title}</div>
+                            <div className="flex items-center gap-2">
+                                <span className="truncate">{song.title}</span>
+                                {song.visibility && (
+                                    <span className={`inline-flex shrink-0 items-center rounded px-1.5 py-0.5 text-[10px] font-medium ${VISIBILITY_BADGE[song.visibility].className}`}>
+                                        {VISIBILITY_BADGE[song.visibility].label}
+                                    </span>
+                                )}
+                            </div>
                             {song.artist && (
                                 <div className="truncate text-xs text-muted-foreground">{song.artist}</div>
                             )}
                         </button>
-                        {onDeleteSong && (
+                        {onDeleteSong && canDeleteSong(song) && (
                             <button
                                 onClick={async (e) => {
                                     e.stopPropagation();

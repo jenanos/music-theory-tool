@@ -3,6 +3,9 @@ import {
     progressionCreateSchema,
     songCreateSchema,
     toSongResponse,
+    visibilitySchema,
+    groupCreateSchema,
+    groupMemberAddSchema,
 } from "../src";
 
 describe("db validation and mapping", () => {
@@ -35,6 +38,9 @@ describe("db validation and mapping", () => {
             key: "C",
             notes: null,
             arrangement: ["verse"],
+            visibility: "private",
+            userId: "user-1",
+            groupId: null,
             createdAt: new Date(),
             updatedAt: new Date(),
             sections: [
@@ -51,5 +57,54 @@ describe("db validation and mapping", () => {
         });
 
         expect(response.sections[0]?.id).toBe("verse");
+        expect(response.visibility).toBe("private");
+        expect(response.userId).toBe("user-1");
+        expect(response.groupId).toBeNull();
+    });
+
+    it("validates song create with visibility", () => {
+        const parsed = songCreateSchema.parse({
+            title: "Band Song",
+            visibility: "group",
+            groupId: "group-1",
+        });
+
+        expect(parsed.visibility).toBe("group");
+        expect(parsed.groupId).toBe("group-1");
+    });
+
+    it("defaults song visibility to private", () => {
+        const parsed = songCreateSchema.parse({
+            title: "My Song",
+        });
+
+        expect(parsed.visibility).toBe("private");
+    });
+
+    it("rejects invalid visibility values", () => {
+        expect(() =>
+            visibilitySchema.parse("invalid")
+        ).toThrow();
+    });
+
+    it("validates group create schema", () => {
+        const parsed = groupCreateSchema.parse({ name: "My Band" });
+        expect(parsed.name).toBe("My Band");
+    });
+
+    it("validates group member add schema", () => {
+        const parsed = groupMemberAddSchema.parse({
+            email: "member@example.com",
+            role: "member",
+        });
+        expect(parsed.email).toBe("member@example.com");
+        expect(parsed.role).toBe("member");
+    });
+
+    it("defaults group member role to member", () => {
+        const parsed = groupMemberAddSchema.parse({
+            email: "member@example.com",
+        });
+        expect(parsed.role).toBe("member");
     });
 });

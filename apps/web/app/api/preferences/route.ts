@@ -8,7 +8,7 @@ type PageId = (typeof VALID_PAGES)[number];
 const DEFAULT_ENABLED_PAGES: PageId[] = ["charts", "progressions"];
 
 function isValidPage(page: string): page is PageId {
-    return VALID_PAGES.includes(page as PageId);
+    return (VALID_PAGES as readonly string[]).includes(page);
 }
 
 // GET /api/preferences - Fetch current user's preferences

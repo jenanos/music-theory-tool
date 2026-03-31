@@ -91,8 +91,8 @@ function AuthContextProvider({ children }: { children: ReactNode }) {
           const data = await response.json();
           setEnabledPages(data.enabledPages ?? DEFAULT_ENABLED_PAGES);
         }
-      } catch {
-        // Use defaults on error
+      } catch (error) {
+        console.error("Failed to fetch preferences:", error);
       } finally {
         setPrefsLoaded(true);
       }

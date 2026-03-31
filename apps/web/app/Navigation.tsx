@@ -63,6 +63,14 @@ export function Navigation() {
               Øvelse
             </Link>
           )}
+          {isAdmin && (
+            <Link
+              href="/admin/groups"
+              className="text-muted-foreground hover:text-primary hover:underline"
+            >
+              Grupper
+            </Link>
+          )}
           <button
             onClick={logout}
             className="text-muted-foreground hover:text-destructive hover:underline ml-2"

@@ -20,8 +20,9 @@ pnpm test                     # Vitest across all packages
 pnpm format                   # Prettier
 
 # Database (requires Docker)
-pnpm dev:db:up                # Start PostgreSQL container
-pnpm dev:db:down              # Stop PostgreSQL container
+pnpm db:up                    # Start PostgreSQL container
+pnpm db:down                  # Stop PostgreSQL container
+pnpm db:reset                 # Recreate PostgreSQL container and volume
 pnpm db:migrate:dev           # Run Prisma migrations
 pnpm db:seed                  # Seed database
 pnpm db:generate              # Regenerate Prisma client
@@ -99,11 +100,11 @@ cd packages/ui && pnpm dlx shadcn@latest add <component>
 ## Dev Setup
 
 ```bash
-cp .env.dev.example .env.dev
+cp .env.example .env
 cp apps/web/.env.local.example apps/web/.env.local
 cp apps/band/.env.local.example apps/band/.env.local
 pnpm install
-pnpm dev:db:up
+docker compose up -d
 pnpm db:migrate:dev
 pnpm db:seed
 ```

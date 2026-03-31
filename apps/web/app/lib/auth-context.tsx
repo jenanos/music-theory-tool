@@ -1,6 +1,7 @@
 "use client";
 
-import { createContext, useContext, useEffect, useState, useCallback } from "react";
+import { SessionProvider, useSession, signOut } from "next-auth/react";
+import { createContext, useContext, useCallback } from "react";
 import type { ReactNode } from "react";
 
 export type UserRole = "admin" | "member";
@@ -26,43 +27,42 @@ const AuthContext = createContext<AuthContextType>({
   refresh: async () => {},
 });
 
-export function AuthProvider({ children }: { children: ReactNode }) {
-  const [user, setUser] = useState<SessionUser | null>(null);
-  const [isLoading, setIsLoading] = useState(true);
+function AuthContextProvider({ children }: { children: ReactNode }) {
+  const { data: session, status, update } = useSession();
 
-  const refresh = useCallback(async () => {
-    try {
-      const res = await fetch("/api/auth/session");
-      if (res.ok) {
-        const data = await res.json();
-        setUser(data.user);
-      } else {
-        setUser(null);
-      }
-    } catch {
-      setUser(null);
-    } finally {
-      setIsLoading(false);
-    }
+  const user: SessionUser | null =
+    session?.user
+      ? {
+          id: session.user.id ?? "",
+          email: session.user.email ?? "",
+          name: session.user.name ?? null,
+          role:
+            ((session.user as SessionUser).role as UserRole) ?? "member",
+        }
+      : null;
+
+  const logout = useCallback(async () => {
+    await signOut({ callbackUrl: "/login" });
   }, []);
 
-  useEffect(() => {
-    refresh();
-  }, [refresh]);
-
-  const logout = async () => {
-    try {
-      await fetch("/api/auth/logout", { method: "POST" });
-    } finally {
-      setUser(null);
-      window.location.href = "/login";
-    }
-  };
+  const refresh = useCallback(async () => {
+    await update();
+  }, [update]);
 
   return (
-    <AuthContext.Provider value={{ user, isLoading, logout, refresh }}>
+    <AuthContext.Provider
+      value={{ user, isLoading: status === "loading", logout, refresh }}
+    >
       {children}
     </AuthContext.Provider>
+  );
+}
+
+export function AuthProvider({ children }: { children: ReactNode }) {
+  return (
+    <SessionProvider>
+      <AuthContextProvider>{children}</AuthContextProvider>
+    </SessionProvider>
   );
 }
 

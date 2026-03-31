@@ -1,20 +1,143 @@
-import { SignJWT, jwtVerify } from "jose";
-import { cookies } from "next/headers";
+import NextAuth from "next-auth";
+import type { NextAuthConfig } from "next-auth";
+import { PrismaAdapter } from "@auth/prisma-adapter";
 import { prisma } from "@repo/db";
+import Resend from "next-auth/providers/resend";
 
-const SESSION_COOKIE = "session_token";
-const SESSION_DURATION_MS = 30 * 24 * 60 * 60 * 1000; // 30 days
-const MAGIC_LINK_DURATION_MS = 15 * 60 * 1000; // 15 minutes
-
-function getJwtSecret() {
-  const secret = process.env.AUTH_SECRET;
-  if (!secret) {
-    throw new Error("AUTH_SECRET environment variable is required");
-  }
-  return new TextEncoder().encode(secret);
-}
+const isDevelopment = process.env.NODE_ENV === "development";
 
 export type UserRole = "admin" | "member";
+
+// ---------------------------------------------------------------------------
+// Dev Callback URL (server-side storage for magic link in development)
+// ---------------------------------------------------------------------------
+
+type DevCallbackState = {
+  url: string;
+  createdAt: number;
+};
+
+const g = globalThis as unknown as {
+  __devCallbackState?: DevCallbackState | null;
+};
+
+function isAllowedDevCallbackUrl(url: string): boolean {
+  try {
+    const parsed = new URL(url);
+    const isHttp = parsed.protocol === "http:" || parsed.protocol === "https:";
+    const isLocalHost =
+      parsed.hostname === "localhost" || parsed.hostname === "127.0.0.1";
+    return isHttp && isLocalHost;
+  } catch {
+    return false;
+  }
+}
+
+export function setDevCallbackUrl(url: string): void {
+  if (!isDevelopment) return;
+  if (!isAllowedDevCallbackUrl(url)) {
+    g.__devCallbackState = null;
+    return;
+  }
+  g.__devCallbackState = { url, createdAt: Date.now() };
+}
+
+export function getDevCallbackUrl(): string | null {
+  if (!isDevelopment) return null;
+  const state = g.__devCallbackState;
+  if (!state) return null;
+  if (Date.now() - state.createdAt > 10 * 60_000) {
+    g.__devCallbackState = null;
+    return null;
+  }
+  return state.url;
+}
+
+// ---------------------------------------------------------------------------
+// Prisma adapter with verification token fallback
+// ---------------------------------------------------------------------------
+
+const prismaAdapter = PrismaAdapter(prisma);
+const baseUseVerificationToken =
+  prismaAdapter.useVerificationToken?.bind(prismaAdapter);
+
+const adapter: typeof prismaAdapter = {
+  ...prismaAdapter,
+  async useVerificationToken(params) {
+    if (params.identifier) {
+      if (!baseUseVerificationToken) {
+        throw new Error("Prisma adapter mangler useVerificationToken");
+      }
+      return baseUseVerificationToken(params);
+    }
+
+    // @auth/core may omit identifier from the callback URL query params.
+    // The Prisma adapter requires both fields for the compound unique lookup,
+    // so we fall back to finding by token alone when identifier is missing.
+    const existing = await prisma.verificationToken.findFirst({
+      where: { token: params.token },
+    });
+    if (!existing) return null;
+
+    return prisma.verificationToken.delete({
+      where: {
+        identifier_token: {
+          identifier: existing.identifier,
+          token: existing.token,
+        },
+      },
+    });
+  },
+};
+
+// ---------------------------------------------------------------------------
+// NextAuth config
+// ---------------------------------------------------------------------------
+
+const config = {
+  adapter,
+  providers: [
+    Resend({
+      apiKey: process.env.RESEND_API_KEY,
+      from:
+        process.env.EMAIL_FROM ??
+        "Music Theory Tool <noreply@resend.dev>",
+      ...(isDevelopment && {
+        sendVerificationRequest({ url }: { url: string }) {
+          setDevCallbackUrl(url);
+          console.log("\n════════════════════════════════════════");
+          console.log("  🔗 Magic link klar på /login/verify");
+          console.log("════════════════════════════════════════\n");
+        },
+      }),
+    }),
+  ],
+  pages: {
+    signIn: "/login",
+    verifyRequest: "/login/verify",
+  },
+  callbacks: {
+    session({ session, user }) {
+      session.user.id = user.id;
+      // Attach role from the database user
+      const dbUser = user as unknown as { role?: string };
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any -- NextAuth types don't include custom fields
+      (session.user as any).role = dbUser.role ?? "member";
+      return session;
+    },
+  },
+} satisfies NextAuthConfig;
+
+const nextAuth = NextAuth(config);
+
+export const handlers: typeof nextAuth.handlers = nextAuth.handlers;
+export const auth: typeof nextAuth.auth = nextAuth.auth;
+export const signIn: typeof nextAuth.signIn = nextAuth.signIn;
+export const signOut: typeof nextAuth.signOut = nextAuth.signOut;
+
+// ---------------------------------------------------------------------------
+// Session types & helpers
+// ---------------------------------------------------------------------------
 
 export interface SessionUser {
   id: string;
@@ -23,164 +146,32 @@ export interface SessionUser {
   role: UserRole;
 }
 
-// ---------------------------------------------------------------------------
-// Magic Link
-// ---------------------------------------------------------------------------
-
-export async function createMagicLink(email: string): Promise<string> {
-  // Find or create user
-  const user = await prisma.user.findUnique({ where: { email } });
-
-  if (!user) {
-    // Only allow known emails - do not auto-create users
-    throw new Error("Ingen bruker med denne e-postadressen.");
-  }
-
-  const token = crypto.randomUUID();
-  const expiresAt = new Date(Date.now() + MAGIC_LINK_DURATION_MS);
-
-  await prisma.magicLink.create({
-    data: { token, userId: user.id, expiresAt },
-  });
-
-  return token;
-}
-
-export async function verifyMagicLink(token: string): Promise<SessionUser> {
-  const magicLink = await prisma.magicLink.findUnique({
-    where: { token },
-    include: { user: true },
-  });
-
-  if (!magicLink) {
-    throw new Error("Ugyldig lenke.");
-  }
-
-  if (magicLink.usedAt) {
-    throw new Error("Denne lenken er allerede brukt.");
-  }
-
-  if (magicLink.expiresAt < new Date()) {
-    throw new Error("Lenken har utløpt.");
-  }
-
-  // Mark as used
-  await prisma.magicLink.update({
-    where: { id: magicLink.id },
-    data: { usedAt: new Date() },
-  });
-
-  // Create session
-  const sessionToken = await createSessionToken(magicLink.user);
-
-  // Set cookie
-  const cookieStore = await cookies();
-  cookieStore.set(SESSION_COOKIE, sessionToken, {
-    httpOnly: true,
-    secure: process.env.NODE_ENV === "production",
-    sameSite: "lax",
-    maxAge: SESSION_DURATION_MS / 1000,
-    path: "/",
-  });
-
-  return {
-    id: magicLink.user.id,
-    email: magicLink.user.email,
-    name: magicLink.user.name,
-    role: magicLink.user.role as UserRole,
-  };
-}
-
-// ---------------------------------------------------------------------------
-// Session (JWT-backed, stored in DB for revocation)
-// ---------------------------------------------------------------------------
-
-async function createSessionToken(user: {
-  id: string;
-  email: string;
-  name: string | null;
-  role: string;
-}): Promise<string> {
-  const expiresAt = new Date(Date.now() + SESSION_DURATION_MS);
-  const dbSession = await prisma.session.create({
-    data: {
-      token: crypto.randomUUID(),
-      userId: user.id,
-      expiresAt,
-    },
-  });
-
-  // Sign a JWT embedding the session ID
-  const jwt = await new SignJWT({
-    sessionId: dbSession.id,
-    userId: user.id,
-    email: user.email,
-    name: user.name,
-    role: user.role,
-  })
-    .setProtectedHeader({ alg: "HS256" })
-    .setExpirationTime(expiresAt)
-    .setIssuedAt()
-    .sign(getJwtSecret());
-
-  return jwt;
-}
-
-export async function getSession(): Promise<SessionUser | null> {
-  try {
-    const cookieStore = await cookies();
-    const token = cookieStore.get(SESSION_COOKIE)?.value;
-    if (!token) return null;
-
-    const { payload } = await jwtVerify(token, getJwtSecret());
-
-    // Verify session still exists in DB
-    const dbSession = await prisma.session.findUnique({
-      where: { id: payload.sessionId as string },
-      include: { user: true },
-    });
-
-    if (!dbSession || dbSession.expiresAt < new Date()) {
-      return null;
-    }
-
-    return {
-      id: dbSession.user.id,
-      email: dbSession.user.email,
-      name: dbSession.user.name,
-      role: dbSession.user.role as UserRole,
-    };
-  } catch {
-    return null;
-  }
-}
-
-export async function destroySession(): Promise<void> {
-  try {
-    const cookieStore = await cookies();
-    const token = cookieStore.get(SESSION_COOKIE)?.value;
-    if (!token) return;
-
-    const { payload } = await jwtVerify(token, getJwtSecret());
-    await prisma.session.delete({
-      where: { id: payload.sessionId as string },
-    }).catch(() => { /* Already deleted */ });
-
-    cookieStore.delete(SESSION_COOKIE);
-  } catch {
-    // Best effort cleanup
-    const cookieStore = await cookies();
-    cookieStore.delete(SESSION_COOKIE);
-  }
-}
-
-// ---------------------------------------------------------------------------
-// Helpers
-// ---------------------------------------------------------------------------
-
-export function hasAccess(user: SessionUser | null, requiredRole?: UserRole): boolean {
+export function hasAccess(
+  user: SessionUser | null,
+  requiredRole?: UserRole,
+): boolean {
   if (!user) return false;
   if (!requiredRole) return true;
-  if (requiredRole === "member") return true; // Both admin and member have member access
+  if (requiredRole === "member") return true;
   return user.role === "admin";
+}
+
+export async function requireAuth() {
+  const session = await auth();
+  if (!session?.user?.id) {
+    const { redirect } = await import("next/navigation");
+    redirect("/login");
+    throw new Error("unreachable"); // redirect() throws, but TS needs this
+  }
+  return session;
+}
+
+export async function requireAdmin() {
+  const session = await requireAuth();
+  const role = (session.user as SessionUser).role;
+  if (role !== "admin") {
+    const { redirect } = await import("next/navigation");
+    redirect("/charts");
+  }
+  return session;
 }

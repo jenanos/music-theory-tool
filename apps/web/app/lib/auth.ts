@@ -5,6 +5,12 @@ import { prisma } from "@repo/db";
 import Resend from "next-auth/providers/resend";
 
 const isDevelopment = process.env.NODE_ENV === "development";
+const devAuthSecret = "music-theory-tool-dev-auth-secret";
+const devAuthUrl = "http://localhost:3001";
+const authSecret =
+  process.env.AUTH_SECRET ?? (isDevelopment ? devAuthSecret : undefined);
+const authUrl =
+  process.env.AUTH_URL ?? (isDevelopment ? devAuthUrl : undefined);
 
 export type UserRole = "admin" | "member";
 
@@ -17,8 +23,16 @@ type DevCallbackState = {
   createdAt: number;
 };
 
+type RecentVerificationToken = {
+  identifier: string;
+  token: string;
+  expires: Date;
+  usedAt: number;
+};
+
 const g = globalThis as unknown as {
   __devCallbackState?: DevCallbackState | null;
+  __recentVerificationTokens?: Map<string, RecentVerificationToken>;
 };
 
 function isAllowedDevCallbackUrl(url: string): boolean {
@@ -42,15 +56,61 @@ export function setDevCallbackUrl(url: string): void {
   g.__devCallbackState = { url, createdAt: Date.now() };
 }
 
-export function getDevCallbackUrl(): string | null {
+export function consumeDevCallbackUrl(): string | null {
   if (!isDevelopment) return null;
   const state = g.__devCallbackState;
   if (!state) return null;
+  g.__devCallbackState = null;
   if (Date.now() - state.createdAt > 10 * 60_000) {
-    g.__devCallbackState = null;
     return null;
   }
   return state.url;
+}
+
+function isRecordNotFoundError(error: unknown): boolean {
+  return (
+    !!error &&
+    typeof error === "object" &&
+    "code" in error &&
+    error.code === "P2025"
+  );
+}
+
+function getRecentVerificationTokens(): Map<string, RecentVerificationToken> {
+  if (!g.__recentVerificationTokens) {
+    g.__recentVerificationTokens = new Map();
+  }
+  return g.__recentVerificationTokens;
+}
+
+function rememberVerificationToken(token: RecentVerificationToken): void {
+  if (!isDevelopment) return;
+  const recentTokens = getRecentVerificationTokens();
+  recentTokens.set(token.token, token);
+
+  const cutoff = Date.now() - 60_000;
+  for (const [key, value] of recentTokens.entries()) {
+    if (value.usedAt < cutoff) {
+      recentTokens.delete(key);
+    }
+  }
+}
+
+function getRememberedVerificationToken(params: {
+  identifier?: string;
+  token: string;
+}): RecentVerificationToken | null {
+  if (!isDevelopment) return null;
+  const remembered = getRecentVerificationTokens().get(params.token);
+  if (!remembered) return null;
+  if (Date.now() - remembered.usedAt > 60_000) {
+    getRecentVerificationTokens().delete(params.token);
+    return null;
+  }
+  if (params.identifier && params.identifier !== remembered.identifier) {
+    return null;
+  }
+  return remembered;
 }
 
 // ---------------------------------------------------------------------------
@@ -58,35 +118,49 @@ export function getDevCallbackUrl(): string | null {
 // ---------------------------------------------------------------------------
 
 const prismaAdapter = PrismaAdapter(prisma);
-const baseUseVerificationToken =
-  prismaAdapter.useVerificationToken?.bind(prismaAdapter);
 
 const adapter: typeof prismaAdapter = {
   ...prismaAdapter,
   async useVerificationToken(params) {
-    if (params.identifier) {
-      if (!baseUseVerificationToken) {
-        throw new Error("Prisma adapter mangler useVerificationToken");
-      }
-      return baseUseVerificationToken(params);
-    }
-
-    // @auth/core may omit identifier from the callback URL query params.
-    // The Prisma adapter requires both fields for the compound unique lookup,
-    // so we fall back to finding by token alone when identifier is missing.
     const existing = await prisma.verificationToken.findFirst({
-      where: { token: params.token },
-    });
-    if (!existing) return null;
-
-    return prisma.verificationToken.delete({
       where: {
-        identifier_token: {
-          identifier: existing.identifier,
-          token: existing.token,
-        },
+        token: params.token,
+        ...(params.identifier ? { identifier: params.identifier } : {}),
       },
     });
+    if (!existing) {
+      return getRememberedVerificationToken(params);
+    }
+
+    try {
+      const deleted = await prisma.verificationToken.delete({
+        where: {
+          identifier_token: {
+            identifier: existing.identifier,
+            token: existing.token,
+          },
+        },
+      });
+      rememberVerificationToken({
+        identifier: deleted.identifier,
+        token: deleted.token,
+        expires: deleted.expires,
+        usedAt: Date.now(),
+      });
+      return deleted;
+    } catch (error) {
+      if (isRecordNotFoundError(error)) {
+        const remembered = {
+          identifier: existing.identifier,
+          token: existing.token,
+          expires: existing.expires,
+          usedAt: Date.now(),
+        };
+        rememberVerificationToken(remembered);
+        return remembered;
+      }
+      throw error;
+    }
   },
 };
 
@@ -96,6 +170,8 @@ const adapter: typeof prismaAdapter = {
 
 const config = {
   adapter,
+  secret: authSecret,
+  trustHost: Boolean(authUrl) || isDevelopment,
   providers: [
     Resend({
       apiKey: process.env.RESEND_API_KEY,

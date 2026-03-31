@@ -1,3 +1,4 @@
+import { redirect } from "next/navigation";
 import Link from "next/link";
 
 function isSafeDevRedirectUrl(url: string): boolean {
@@ -16,11 +17,15 @@ export default async function VerifyPage() {
   let devCallbackUrl: string | null = null;
 
   if (process.env.NODE_ENV === "development") {
-    const { getDevCallbackUrl } = await import("../../lib/auth");
-    const callbackUrl = getDevCallbackUrl();
+    const { consumeDevCallbackUrl } = await import("../../lib/auth");
+    const callbackUrl = consumeDevCallbackUrl();
     if (callbackUrl && isSafeDevRedirectUrl(callbackUrl)) {
       devCallbackUrl = callbackUrl;
     }
+  }
+
+  if (devCallbackUrl) {
+    redirect(devCallbackUrl);
   }
 
   return (

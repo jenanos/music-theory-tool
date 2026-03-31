@@ -1,7 +1,7 @@
 {
   "$schema": "https://turborepo.dev/schema.json",
   "ui": "tui",
-  "globalEnv": ["NODE_ENV", "AUTH_SECRET", "AUTH_URL", "RESEND_API_KEY", "EMAIL_FROM"],
+  "globalEnv": ["NODE_ENV", "DATABASE_URL", "AUTH_SECRET", "AUTH_URL", "DEV_ADMIN_EMAIL", "RESEND_API_KEY", "EMAIL_FROM"],
   "tasks": {
     "build": {
       "dependsOn": [

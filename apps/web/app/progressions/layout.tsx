@@ -1,10 +1,10 @@
-import { requireAdmin } from "../lib/auth";
+import { requirePageAccess } from "../lib/auth";
 
 export default async function ProgressionsLayout({
   children,
 }: {
   children: React.ReactNode;
 }) {
-  await requireAdmin();
+  await requirePageAccess("progressions");
   return <>{children}</>;
 }

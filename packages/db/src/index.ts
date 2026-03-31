@@ -15,6 +15,7 @@ export type {
     OriginalSection,
     SavedProgression,
     User,
+    UserPreference,
     Account,
     Session,
     VerificationToken,

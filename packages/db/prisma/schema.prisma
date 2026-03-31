@@ -19,8 +19,9 @@ model User {
   createdAt     DateTime  @default(now()) @map("created_at")
   updatedAt     DateTime  @updatedAt @map("updated_at")
 
-  accounts Account[]
-  sessions Session[]
+  accounts   Account[]
+  sessions   Session[]
+  preference UserPreference?
 
   @@map("users")
 }
@@ -120,6 +121,18 @@ model OriginalSection {
 
   @@index([songId, orderIndex])
   @@map("original_sections")
+}
+
+model UserPreference {
+  id           String   @id @default(uuid())
+  userId       String   @unique @map("user_id")
+  enabledPages String[] @default(["charts", "progressions"]) @map("enabled_pages")
+  createdAt    DateTime @default(now()) @map("created_at")
+  updatedAt    DateTime @updatedAt @map("updated_at")
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("user_preferences")
 }
 
 model SavedProgression {

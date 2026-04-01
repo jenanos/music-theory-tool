@@ -1,25 +1,61 @@
 import { NextResponse } from "next/server";
 import { prisma, songUpdateSchema, toSongResponse, type Prisma } from "@repo/db";
 import { ZodError } from "zod";
+import { auth, type SessionUser } from "../../../lib/auth";
 
 type Params = Promise<{ id: string }>;
+
+/** Check if the current user can access/modify the given song */
+async function canAccessSong(
+    user: SessionUser,
+    songId: string,
+    requireWrite: boolean
+): Promise<{ allowed: boolean; song: Prisma.SongGetPayload<{ include: { sections: true } }> | null }> {
+    const song = await prisma.song.findUnique({
+        where: { id: songId },
+        include: { sections: { orderBy: { orderIndex: "asc" } } },
+    });
+    if (!song) return { allowed: false, song: null };
+
+    // Admin can always access
+    if (user.role === "admin") return { allowed: true, song };
+
+    // Owner can always access
+    if (song.userId === user.id) return { allowed: true, song };
+
+    // Shared songs: readable by everyone
+    if (song.visibility === "shared" && !requireWrite) {
+        return { allowed: true, song };
+    }
+
+    // Group songs: readable by group members, writable by group members
+    if (song.visibility === "group" && song.groupId) {
+        const membership = await prisma.groupMember.findUnique({
+            where: { userId_groupId: { userId: user.id, groupId: song.groupId } },
+        });
+        if (membership) return { allowed: true, song };
+    }
+
+    return { allowed: false, song };
+}
 
 // GET /api/songs/[id] - Fetch a single song
 export async function GET(request: Request, { params }: { params: Params }) {
     try {
-        const { id } = await params;
+        const session = await auth();
+        if (!session?.user?.id) {
+            return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+        }
 
-        const song = await prisma.song.findUnique({
-            where: { id },
-            include: {
-                sections: {
-                    orderBy: { orderIndex: "asc" },
-                },
-            },
-        });
+        const { id } = await params;
+        const user = session.user as SessionUser;
+        const { allowed, song } = await canAccessSong(user, id, false);
 
         if (!song) {
             return NextResponse.json({ error: "Song not found" }, { status: 404 });
+        }
+        if (!allowed) {
+            return NextResponse.json({ error: "Forbidden" }, { status: 403 });
         }
 
         return NextResponse.json(toSongResponse(song));
@@ -35,26 +71,33 @@ export async function GET(request: Request, { params }: { params: Params }) {
 // PUT /api/songs/[id] - Update a song
 export async function PUT(request: Request, { params }: { params: Params }) {
     try {
-        const { id } = await params;
-        const body = await request.json();
-        const parsed = songUpdateSchema.parse(body);
+        const session = await auth();
+        if (!session?.user?.id) {
+            return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+        }
 
-        // Check if song exists
-        const existingSong = await prisma.song.findUnique({
-            where: { id },
-            select: { id: true },
-        });
+        const { id } = await params;
+        const user = session.user as SessionUser;
+        const { allowed, song: existingSong } = await canAccessSong(user, id, true);
 
         if (!existingSong) {
             return NextResponse.json({ error: "Song not found" }, { status: 404 });
         }
+        if (!allowed) {
+            return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+        }
+
+        const body = await request.json();
+        const parsed = songUpdateSchema.parse(body);
 
         const hasSongFieldUpdate =
             parsed.title !== undefined ||
             parsed.artist !== undefined ||
             parsed.key !== undefined ||
             parsed.notes !== undefined ||
-            parsed.arrangement !== undefined;
+            parsed.arrangement !== undefined ||
+            parsed.visibility !== undefined ||
+            parsed.groupId !== undefined;
 
         await prisma.$transaction(async (tx) => {
             if (hasSongFieldUpdate) {
@@ -66,6 +109,16 @@ export async function PUT(request: Request, { params }: { params: Params }) {
                 if (parsed.notes !== undefined) updateData.notes = parsed.notes;
                 if (parsed.arrangement !== undefined) {
                     updateData.arrangement = parsed.arrangement;
+                }
+                if (parsed.visibility !== undefined) {
+                    updateData.visibility = parsed.visibility;
+                }
+                if (parsed.groupId !== undefined) {
+                    if (parsed.groupId) {
+                        updateData.group = { connect: { id: parsed.groupId } };
+                    } else {
+                        updateData.groupId = null;
+                    }
                 }
 
                 await tx.song.update({
@@ -116,19 +169,30 @@ export async function DELETE(
     { params }: { params: Params }
 ) {
     try {
-        const { id } = await params;
+        const session = await auth();
+        if (!session?.user?.id) {
+            return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+        }
 
-        // Check if song exists
-        const existingSong = await prisma.song.findUnique({
+        const { id } = await params;
+        const user = session.user as SessionUser;
+
+        const song = await prisma.song.findUnique({
             where: { id },
-            select: { id: true },
+            select: { id: true, userId: true, visibility: true, groupId: true },
         });
 
-        if (!existingSong) {
+        if (!song) {
             return NextResponse.json({ error: "Song not found" }, { status: 404 });
         }
 
-        // Delete song (sections are deleted automatically due to cascade)
+        // Only admin or owner can delete
+        const isOwner = song.userId === user.id;
+        const isAdmin = user.role === "admin";
+        if (!isOwner && !isAdmin) {
+            return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+        }
+
         await prisma.song.delete({ where: { id } });
 
         return NextResponse.json({ success: true });

@@ -1,11 +1,43 @@
 import { NextResponse } from "next/server";
-import { prisma, songCreateSchema, toSongResponse } from "@repo/db";
+import { prisma, songCreateSchema, toSongResponse, type Prisma } from "@repo/db";
 import { ZodError } from "zod";
+import { auth, type SessionUser } from "../../lib/auth";
 
-// GET /api/songs - Fetch all songs with their sections
+// GET /api/songs - Fetch songs visible to the current user
 export async function GET() {
     try {
+        const session = await auth();
+        if (!session?.user?.id) {
+            return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+        }
+
+        const user = session.user as SessionUser;
+        const isAdmin = user.role === "admin";
+
+        let where: Prisma.SongWhereInput = {};
+
+        if (!isAdmin) {
+            // Get user's group IDs
+            const memberships = await prisma.groupMember.findMany({
+                where: { userId: user.id },
+                select: { groupId: true },
+            });
+            const groupIds = memberships.map((m) => m.groupId);
+
+            where = {
+                OR: [
+                    { userId: user.id },                  // Own songs
+                    { visibility: "shared" },              // Shared with everyone
+                    ...(groupIds.length > 0
+                        ? [{ visibility: "group" as const, groupId: { in: groupIds } }]
+                        : []),
+                ],
+            };
+        }
+        // Admin: no filter — sees all songs
+
         const songs = await prisma.song.findMany({
+            where,
             include: {
                 sections: {
                     orderBy: { orderIndex: "asc" },
@@ -26,9 +58,30 @@ export async function GET() {
 // POST /api/songs - Create a new song
 export async function POST(request: Request) {
     try {
+        const session = await auth();
+        if (!session?.user?.id) {
+            return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+        }
+
+        const user = session.user as SessionUser;
         const body = await request.json();
         const parsed = songCreateSchema.parse(body);
         const songId = parsed.id ?? crypto.randomUUID();
+
+        // Validate group membership if creating a group song
+        if (parsed.visibility === "group" && parsed.groupId) {
+            const membership = await prisma.groupMember.findUnique({
+                where: {
+                    userId_groupId: { userId: user.id, groupId: parsed.groupId },
+                },
+            });
+            if (!membership && user.role !== "admin") {
+                return NextResponse.json(
+                    { error: "Not a member of the specified group" },
+                    { status: 403 }
+                );
+            }
+        }
 
         await prisma.$transaction(async (tx) => {
             await tx.song.create({
@@ -39,6 +92,9 @@ export async function POST(request: Request) {
                     key: parsed.key ?? null,
                     notes: parsed.notes ?? null,
                     arrangement: parsed.arrangement ?? [],
+                    visibility: parsed.visibility ?? "private",
+                    userId: user.id,
+                    groupId: parsed.visibility === "group" ? (parsed.groupId ?? null) : null,
                 },
             });
 

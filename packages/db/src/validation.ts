@@ -11,6 +11,8 @@ export const sectionInputSchema = z.object({
     notes: optionalNullableString,
 });
 
+export const visibilitySchema = z.enum(["private", "group", "shared"]);
+
 export const songCreateSchema = z.object({
     id: z.string().trim().min(1).optional(),
     title: z.string().trim().min(1, "Title is required"),
@@ -19,6 +21,8 @@ export const songCreateSchema = z.object({
     notes: optionalNullableString,
     arrangement: z.array(z.string()).optional().default([]),
     sections: z.array(sectionInputSchema).optional().default([]),
+    visibility: visibilitySchema.optional().default("private"),
+    groupId: z.string().trim().min(1).optional().nullable(),
 });
 
 export const songUpdateSchema = z.object({
@@ -28,6 +32,8 @@ export const songUpdateSchema = z.object({
     notes: optionalNullableString,
     arrangement: z.array(z.string()).optional(),
     sections: z.array(sectionInputSchema).optional(),
+    visibility: visibilitySchema.optional(),
+    groupId: z.string().trim().min(1).optional().nullable(),
 });
 
 export const progressionCreateSchema = z.object({
@@ -35,4 +41,13 @@ export const progressionCreateSchema = z.object({
     tonic: z.string().trim().min(1, "Tonic is required"),
     mode: z.string().trim().min(1, "Mode is required"),
     sequence: z.array(z.string()).min(1, "Sequence must contain at least one chord"),
+});
+
+export const groupCreateSchema = z.object({
+    name: z.string().trim().min(1, "Group name is required"),
+});
+
+export const groupMemberAddSchema = z.object({
+    email: z.string().trim().email("Valid email is required"),
+    role: z.enum(["admin", "member"]).optional().default("member"),
 });

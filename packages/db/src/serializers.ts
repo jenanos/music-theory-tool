@@ -22,6 +22,9 @@ export type SongResponse = {
     notes: string | null;
     arrangement: string[];
     sections: SongSectionResponse[];
+    visibility: string;
+    userId: string | null;
+    groupId: string | null;
 };
 
 type SongWithSections = Song & { sections: Section[] };
@@ -47,6 +50,9 @@ export function toSongResponse(song: SongWithSections): SongResponse {
         notes: song.notes,
         arrangement: song.arrangement ?? [],
         sections: song.sections.map((section) => toSectionResponse(song.id, section)),
+        visibility: song.visibility ?? "private",
+        userId: song.userId ?? null,
+        groupId: song.groupId ?? null,
     };
 }
 
@@ -59,5 +65,8 @@ export function toOriginalSongResponse(song: OriginalSongWithSections): SongResp
         notes: song.notes,
         arrangement: song.arrangement ?? [],
         sections: song.sections.map((section) => toSectionResponse(song.id, section)),
+        visibility: "shared",
+        userId: null,
+        groupId: null,
     };
 }

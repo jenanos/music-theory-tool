@@ -21,6 +21,8 @@ export function Navigation() {
 
   if (!user) return null;
 
+  const isAdmin = user.role === "admin";
+
   // Determine home link: first enabled page's path
   const firstEnabled = ALL_PAGES.find((p) => isPageEnabled(p.id));
   const homeHref = firstEnabled?.path ?? "/charts";
@@ -44,6 +46,14 @@ export function Navigation() {
               {page.label}
             </Link>
           ))}
+          {isAdmin && (
+            <Link
+              href="/admin/groups"
+              className="text-muted-foreground hover:text-primary hover:underline"
+            >
+              Grupper
+            </Link>
+          )}
           <Link
             href="/settings"
             className="text-muted-foreground hover:text-primary hover:underline"

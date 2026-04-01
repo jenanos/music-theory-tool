@@ -19,9 +19,11 @@ model User {
   createdAt     DateTime  @default(now()) @map("created_at")
   updatedAt     DateTime  @updatedAt @map("updated_at")
 
-  accounts   Account[]
-  sessions   Session[]
-  preference UserPreference?
+  accounts         Account[]
+  sessions         Session[]
+  songs            Song[]
+  groupMemberships GroupMember[]
+  preference       UserPreference?
 
   @@map("users")
 }
@@ -66,16 +68,51 @@ model VerificationToken {
   @@map("verification_tokens")
 }
 
+// ─── Groups ──────────────────────────────────────────────────────
+
+model Group {
+  id        String   @id @default(uuid())
+  name      String
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  members GroupMember[]
+  songs   Song[]
+
+  @@map("groups")
+}
+
+model GroupMember {
+  id      String @id @default(uuid())
+  userId  String @map("user_id")
+  groupId String @map("group_id")
+  role    String @default("member") // "admin" | "member"
+
+  user  User  @relation(fields: [userId], references: [id], onDelete: Cascade)
+  group Group @relation(fields: [groupId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, groupId])
+  @@map("group_members")
+}
+
+// ─── Songs ──────────────────────────────────────────────────────
+
 model Song {
-  id          String    @id
+  id          String   @id
   title       String
   artist      String?
   key         String?
   notes       String?
-  arrangement String[]  @default([])
-  createdAt   DateTime  @default(now()) @map("created_at")
-  updatedAt   DateTime  @updatedAt @map("updated_at")
+  arrangement String[] @default([])
+  visibility  String   @default("private") // "private" | "group" | "shared"
+  userId      String?  @map("user_id")
+  groupId     String?  @map("group_id")
+  createdAt   DateTime @default(now()) @map("created_at")
+  updatedAt   DateTime @updatedAt @map("updated_at")
   sections    Section[]
+
+  user  User?  @relation(fields: [userId], references: [id])
+  group Group? @relation(fields: [groupId], references: [id])
 
   @@map("songs")
 }

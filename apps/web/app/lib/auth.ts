@@ -251,3 +251,28 @@ export async function requireAdmin() {
   }
   return session;
 }
+
+export type PageId = "chords" | "progressions" | "charts" | "practice";
+
+const DEFAULT_ENABLED_PAGES: PageId[] = ["charts", "progressions"];
+
+export async function requirePageAccess(pageId: PageId) {
+  const session = await requireAuth();
+  const user = session.user as SessionUser;
+
+  // Admins always have access to all pages
+  if (user.role === "admin") return session;
+
+  const preference = await prisma.userPreference.findUnique({
+    where: { userId: user.id },
+  });
+
+  const enabledPages = (preference?.enabledPages ?? DEFAULT_ENABLED_PAGES) as PageId[];
+
+  if (!enabledPages.includes(pageId)) {
+    const { redirect } = await import("next/navigation");
+    redirect("/charts");
+  }
+
+  return session;
+}

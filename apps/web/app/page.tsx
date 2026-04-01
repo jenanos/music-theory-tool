@@ -1,7 +1,7 @@
-import { requireAdmin } from "./lib/auth";
+import { requirePageAccess } from "./lib/auth";
 import { DiatonicChordsPage } from "./components/DiatonicChordsPage";
 
 export default async function Page() {
-  await requireAdmin();
+  await requirePageAccess("chords");
   return <DiatonicChordsPage />;
 }

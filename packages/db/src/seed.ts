@@ -374,7 +374,7 @@ async function seed() {
     // Seed dev users (upsert to avoid duplicates)
     const devEmail = process.env.DEV_ADMIN_EMAIL ?? "dev@localhost";
     console.log(`  Upserting dev admin user: ${devEmail}`);
-    await prisma.user.upsert({
+    const adminUser = await prisma.user.upsert({
         where: { email: devEmail },
         update: { role: "admin" },
         create: {
@@ -383,6 +383,23 @@ async function seed() {
             role: "admin",
         },
     });
+
+    // Seed a default group ("Bandet")
+    console.log("  Upserting default group: Bandet");
+    let group = await prisma.group.findFirst({ where: { name: "Bandet" } });
+    if (!group) {
+        group = await prisma.group.create({
+            data: {
+                name: "Bandet",
+                members: {
+                    create: {
+                        userId: adminUser.id,
+                        role: "admin",
+                    },
+                },
+            },
+        });
+    }
 
     await prisma.$transaction(async (tx) => {
         console.log("  Clearing existing data...");
@@ -403,7 +420,13 @@ async function seed() {
                 arrangement: song.arrangement ?? [],
             };
 
-            await tx.song.create({ data: songData });
+            await tx.song.create({
+                data: {
+                    ...songData,
+                    visibility: "shared",
+                    userId: adminUser.id,
+                },
+            });
             await tx.originalSong.create({ data: songData });
 
             if (song.sections.length > 0) {

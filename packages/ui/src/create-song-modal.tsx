@@ -26,6 +26,82 @@ interface CreateSongData {
         degreeLines: string[];
         notes?: string;
     }[];
+    visibility?: "private" | "group" | "shared";
+    groupId?: string | null;
+}
+
+type SongVisibility = "private" | "group" | "shared";
+
+interface GroupOption {
+    id: string;
+    name: string;
+}
+
+const VISIBILITY_OPTIONS = [
+    { value: "private" as const, label: "Privat", desc: "Kun for deg" },
+    { value: "group" as const, label: "Gruppe", desc: "Delt med en gruppe" },
+    { value: "shared" as const, label: "Felles", desc: "Synlig for alle" },
+] as const;
+
+function VisibilitySelector({
+    visibility,
+    onVisibilityChange,
+    selectedGroupId,
+    onGroupIdChange,
+    groups,
+    idSuffix = "",
+}: {
+    visibility: SongVisibility;
+    onVisibilityChange: (v: SongVisibility) => void;
+    selectedGroupId: string;
+    onGroupIdChange: (id: string) => void;
+    groups: GroupOption[];
+    idSuffix?: string;
+}) {
+    return (
+        <div className="space-y-2">
+            <Label>Synlighet</Label>
+            <div className="flex gap-2">
+                {VISIBILITY_OPTIONS.map((opt) => (
+                    <button
+                        key={opt.value}
+                        type="button"
+                        onClick={() => onVisibilityChange(opt.value)}
+                        className={cn(
+                            "flex-1 rounded-md border p-2 text-left transition-colors",
+                            visibility === opt.value
+                                ? "border-primary bg-primary/10 text-foreground"
+                                : "border-border bg-muted text-muted-foreground hover:border-foreground/30"
+                        )}
+                    >
+                        <div className="text-sm font-medium">{opt.label}</div>
+                        <div className="text-[10px]">{opt.desc}</div>
+                    </button>
+                ))}
+            </div>
+            {visibility === "group" && groups.length > 0 && (
+                <div className="mt-2">
+                    <Label htmlFor={`song-group${idSuffix}`}>Gruppe</Label>
+                    <select
+                        id={`song-group${idSuffix}`}
+                        className="w-full rounded-md border border-border bg-muted px-3 py-2 text-sm font-medium focus:ring-2 focus:ring-primary mt-1"
+                        value={selectedGroupId}
+                        onChange={(e) => onGroupIdChange(e.target.value)}
+                    >
+                        <option value="">Velg gruppe...</option>
+                        {groups.map((g) => (
+                            <option key={g.id} value={g.id}>{g.name}</option>
+                        ))}
+                    </select>
+                </div>
+            )}
+            {visibility === "group" && groups.length === 0 && (
+                <p className="text-xs text-muted-foreground mt-1">
+                    Du har ingen grupper ennå. Be admin om å opprette en.
+                </p>
+            )}
+        </div>
+    );
 }
 
 const PRESET_LABELS = ["Intro", "Vers", "Pre-chorus", "Refreng", "Bridge", "Mellomspill", "Outro"];
@@ -77,9 +153,10 @@ interface CreateSongModalProps {
     isOpen: boolean;
     onClose: () => void;
     onSave: (data: CreateSongData) => Promise<void>;
+    groups?: GroupOption[];
 }
 
-export function CreateSongModal({ isOpen, onClose, onSave }: CreateSongModalProps) {
+export function CreateSongModal({ isOpen, onClose, onSave, groups = [] }: CreateSongModalProps) {
     const [title, setTitle] = useState("");
     const [artist, setArtist] = useState("");
     const [tonic, setTonic] = useState("C");
@@ -90,6 +167,8 @@ export function CreateSongModal({ isOpen, onClose, onSave }: CreateSongModalProp
     const [llmJson, setLlmJson] = useState("");
     const [llmParseError, setLlmParseError] = useState("");
     const [promptCopied, setPromptCopied] = useState(false);
+    const [visibility, setVisibility] = useState<SongVisibility>("private");
+    const [selectedGroupId, setSelectedGroupId] = useState<string>("");
 
     const llmPrompt = `Under finner du en JSON-struktur for hvordan en sang skal se ut i min database. Vennligst se på vedlagt bilde eller PDF av noter/låt, og returner en ferdig utfylt JSON basert på denne strukturen.
 
@@ -142,6 +221,8 @@ Viktig: Returner kun gyldig JSON. Ingen forklaringer, markdown eller ekstra teks
         setLlmParseError("");
         setLlmJson("");
         setPromptCopied(false);
+        setVisibility("private");
+        setSelectedGroupId("");
     };
 
     const handleSubmit = async (e: React.FormEvent) => {
@@ -151,11 +232,22 @@ Viktig: Returner kun gyldig JSON. Ingen forklaringer, markdown eller ekstra teks
             return;
         }
 
+        if (visibility === "group" && !selectedGroupId) {
+            setError("Velg en gruppe for gruppesynlighet");
+            return;
+        }
+
         setIsSubmitting(true);
         setError("");
 
         try {
-            await onSave({ title, artist, key: `${tonic} ${modeId}` });
+            await onSave({
+                title,
+                artist,
+                key: `${tonic} ${modeId}`,
+                visibility,
+                groupId: visibility === "group" ? selectedGroupId : null,
+            });
             resetAndClose();
             // Reset form
             setTitle("");
@@ -239,6 +331,8 @@ Viktig: Returner kun gyldig JSON. Ingen forklaringer, markdown eller ekstra teks
                         };
                     })
                     : [],
+                visibility,
+                groupId: visibility === "group" ? selectedGroupId : null,
             };
 
             await onSave(normalizedData);
@@ -362,6 +456,15 @@ Viktig: Returner kun gyldig JSON. Ingen forklaringer, markdown eller ekstra teks
                                     </div>
                                 </div>
 
+                                {/* Visibility selector */}
+                                <VisibilitySelector
+                                    visibility={visibility}
+                                    onVisibilityChange={setVisibility}
+                                    selectedGroupId={selectedGroupId}
+                                    onGroupIdChange={setSelectedGroupId}
+                                    groups={groups}
+                                />
+
                                 <div className="rounded-md border border-border bg-muted/30 p-3">
                                     <p className="text-sm text-muted-foreground mb-3">Eller bruk en språkmodell for å generere ferdig JSON fra noter/PDF.</p>
                                     <Button type="button" variant="secondary" onClick={() => setView("llm")} className="w-full">Importer med LLM</Button>
@@ -413,6 +516,16 @@ Viktig: Returner kun gyldig JSON. Ingen forklaringer, markdown eller ekstra teks
                                         {llmParseError}
                                     </div>
                                 )}
+
+                                {/* Visibility selector in LLM view */}
+                                <VisibilitySelector
+                                    visibility={visibility}
+                                    onVisibilityChange={setVisibility}
+                                    selectedGroupId={selectedGroupId}
+                                    onGroupIdChange={setSelectedGroupId}
+                                    groups={groups}
+                                    idSuffix="-llm"
+                                />
                             </>
                         )}
                     </div>

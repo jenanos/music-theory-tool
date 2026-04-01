@@ -2,40 +2,59 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { Song } from "./data";
+import { Song, SongVisibility, GroupInfo } from "./data";
 import { SongSelector } from "./components/SongSelector";
 import { SongView } from "./components/SongView";
 import { CreateSongModal } from "@repo/ui/create-song-modal";
 import { useIsMobile } from "@repo/ui/use-mobile";
+import { useAuth } from "../lib/auth-context";
+
+type VisibilityFilter = "all" | SongVisibility;
 
 export default function ChartsPage() {
+    const { user } = useAuth();
     const [songs, setSongs] = useState<Song[]>([]);
+    const [groups, setGroups] = useState<GroupInfo[]>([]);
     const [selectedSongId, setSelectedSongId] = useState<string | undefined>();
     const [isLoading, setIsLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
     const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
+    const [visibilityFilter, setVisibilityFilter] = useState<VisibilityFilter>("all");
     const isMobile = useIsMobile();
     const [showMobileList, setShowMobileList] = useState(true);
 
-    // Fetch songs from API on mount
+    const isAdmin = user?.role === "admin";
+
+    // Fetch songs and groups from API on mount
     useEffect(() => {
-        async function fetchSongs() {
+        async function fetchData() {
             try {
-                const response = await fetch("/api/songs");
-                if (!response.ok) {
-                    throw new Error("Failed to fetch songs");
+                const [songsRes, groupsRes] = await Promise.all([
+                    fetch("/api/songs"),
+                    fetch("/api/groups"),
+                ]);
+                if (!songsRes.ok) throw new Error("Failed to fetch songs");
+                const songsData = await songsRes.json();
+                setSongs(songsData);
+                setSelectedSongId((prev) => prev ?? songsData[0]?.id);
+
+                if (groupsRes.ok) {
+                    setGroups(await groupsRes.json());
                 }
-                const data = await response.json();
-                setSongs(data);
-                setSelectedSongId((prev) => prev ?? data[0]?.id);
             } catch (err) {
                 setError(err instanceof Error ? err.message : "Unknown error");
             } finally {
                 setIsLoading(false);
             }
         }
-        fetchSongs();
+        fetchData();
     }, []);
+
+    // Filter songs based on visibility
+    const filteredSongs =
+        visibilityFilter === "all"
+            ? songs
+            : songs.filter((s) => s.visibility === visibilityFilter);
 
     const selectedSong = songs.find((s) => s.id === selectedSongId);
 
@@ -65,7 +84,6 @@ export default function ChartsPage() {
             }
         } catch (err) {
             console.error("Error updating song:", err);
-            // Optionally: revert optimistic update or show error to user
         }
     };
 
@@ -83,6 +101,8 @@ export default function ChartsPage() {
             degreeLines: string[];
             notes?: string;
         }[];
+        visibility?: SongVisibility;
+        groupId?: string | null;
     }) => {
         const response = await fetch("/api/songs", {
             method: "POST",
@@ -105,6 +125,9 @@ export default function ChartsPage() {
                 notes: data.notes,
                 sections: data.sections ?? [],
                 arrangement: data.arrangement ?? [],
+                visibility: data.visibility ?? "private",
+                userId: user!.id,
+                groupId: data.groupId ?? null,
             };
 
             setSongs((prev) => [...prev, newSong]);
@@ -169,17 +192,22 @@ export default function ChartsPage() {
                 isOpen={isCreateModalOpen}
                 onClose={() => setIsCreateModalOpen(false)}
                 onSave={handleCreateSong}
+                groups={groups}
             />
 
             {/* Mobile: show list OR view; Desktop: show both side-by-side */}
             {(!isMobile || showMobileList) && (
                 <SongSelector
-                    songs={songs}
+                    songs={filteredSongs}
                     onSelectSong={handleSelectSong}
                     selectedSongId={selectedSongId}
                     onAddSong={() => setIsCreateModalOpen(true)}
                     onDeleteSong={handleDeleteSong}
                     isMobile={isMobile}
+                    visibilityFilter={visibilityFilter}
+                    onVisibilityFilterChange={setVisibilityFilter}
+                    currentUserId={user?.id}
+                    isAdmin={isAdmin}
                 />
             )}
             {(!isMobile || !showMobileList) && (

@@ -32,6 +32,10 @@ export function buildEmailCallbackUrl(params: {
   return url.toString();
 }
 
+function formatOtpForDisplay(token: string): string {
+  return token.replace(/(.{4})/g, "$1 ").trim();
+}
+
 function escapeHtml(value: string): string {
   return value
     .replace(/&/g, "&amp;")
@@ -47,7 +51,6 @@ export function buildEmailSignInHtml(params: {
   host: string;
 }): string {
   const safeUrl = escapeHtml(params.url);
-  const safeToken = escapeHtml(params.token);
   const safeHost = escapeHtml(params.host);
 
   return `
@@ -63,7 +66,7 @@ export function buildEmailSignInHtml(params: {
         </a>
       </p>
       <p style="margin: 0 0 8px;">Eller skriv inn denne engangskoden i appen:</p>
-      <p style="margin: 0 0 24px; font-size: 28px; font-weight: 700; letter-spacing: 0.3em;">${safeToken}</p>
+      <p style="margin: 0 0 24px; font-size: 28px; font-weight: 700; letter-spacing: 0.16em;">${escapeHtml(formatOtpForDisplay(params.token))}</p>
       <p style="margin: 0; color: #6b7280;">Lenken og koden virker i ${EMAIL_SIGN_IN_EXPIRES_MINUTES} minutter.</p>
     </div>
   `;

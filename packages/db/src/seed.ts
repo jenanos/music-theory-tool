@@ -372,7 +372,7 @@ async function seed() {
     }
 
     // Seed dev users (upsert to avoid duplicates)
-    const devEmail = process.env.DEV_ADMIN_EMAIL ?? "dev@localhost";
+    const devEmail = process.env.DEV_ADMIN_EMAIL ?? "dev@example.com";
     console.log(`  Upserting dev admin user: ${devEmail}`);
     const adminUser = await prisma.user.upsert({
         where: { email: devEmail },

@@ -71,15 +71,33 @@ function normalizeEmail(email: string): string {
   return email.trim().toLowerCase();
 }
 
-async function isEmailAllowed(email: string): Promise<boolean> {
+function isAdminEmail(email: string): boolean {
+  const adminEmail = process.env.ADMIN_EMAIL;
+  return Boolean(
+    adminEmail && normalizeEmail(email) === normalizeEmail(adminEmail),
+  );
+}
+
+// Allow sign-in for the configured admin email (auto-promoted to admin
+// below) or any user that has already been invited into the DB.
+async function authorizeSignIn(email: string): Promise<boolean> {
   const normalized = normalizeEmail(email);
 
-  const adminEmail = process.env.ADMIN_EMAIL;
-  if (adminEmail && normalized === normalizeEmail(adminEmail)) {
+  if (isAdminEmail(normalized)) {
+    // Idempotently guarantee the admin email always has role="admin",
+    // even if db:bootstrap-admin hasn't run yet (e.g. local dev flows)
+    // or if the admin email was changed after first login.
+    await prisma.user.upsert({
+      where: { email: normalized },
+      update: { role: "admin" },
+      create: { email: normalized, role: "admin" },
+    });
     return true;
   }
 
-  const existingUser = await prisma.user.findUnique({ where: { email: normalized } });
+  const existingUser = await prisma.user.findUnique({
+    where: { email: normalized },
+  });
   return existingUser !== null;
 }
 
@@ -133,7 +151,7 @@ const config = {
   callbacks: {
     async signIn({ user }) {
       if (!user.email) return false;
-      return isEmailAllowed(user.email);
+      return authorizeSignIn(user.email);
     },
     session({ session, user }) {
       session.user.id = user.id;

@@ -22,6 +22,11 @@ if [ "${RUN_DB_MIGRATIONS:-true}" = "true" ]; then
   wait_for_db
 fi
 
+if [ -n "${ADMIN_EMAIL:-}" ]; then
+  echo "Bootstrapping admin user for $ADMIN_EMAIL..."
+  pnpm --filter @repo/db run db:bootstrap-admin
+fi
+
 if [ "${SEED_DB_ON_START:-false}" = "true" ]; then
   echo "Running seed (if empty)..."
   pnpm --filter @repo/db run db:seed:if-empty

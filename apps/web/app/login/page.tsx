@@ -4,6 +4,7 @@ import { useState } from "react";
 import { signIn } from "next-auth/react";
 import { useSearchParams, useRouter } from "next/navigation";
 import { Suspense } from "react";
+import { sanitizeCallbackUrl } from "../lib/auth-urls";
 
 function LoginForm() {
   const [email, setEmail] = useState("");
@@ -12,16 +13,17 @@ function LoginForm() {
   const searchParams = useSearchParams();
   const router = useRouter();
   const urlError = searchParams.get("error");
-  const callbackUrl = searchParams.get("callbackUrl") ?? "/";
+  const callbackUrl = sanitizeCallbackUrl(searchParams.get("callbackUrl"));
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsSubmitting(true);
     setError(null);
+    const normalizedEmail = email.trim().toLowerCase();
 
     try {
       const result = await signIn("resend", {
-        email,
+        email: normalizedEmail,
         redirectTo: callbackUrl,
         redirect: false,
       });
@@ -32,7 +34,11 @@ function LoginForm() {
         return;
       }
 
-      router.push("/login/verify");
+      const params = new URLSearchParams({
+        email: normalizedEmail,
+        callbackUrl,
+      });
+      router.push(`/login/verify?${params.toString()}`);
     } catch {
       setError("Noe gikk galt. Prøv igjen.");
       setIsSubmitting(false);
@@ -45,7 +51,7 @@ function LoginForm() {
         <div className="text-center space-y-2">
           <h1 className="text-2xl font-bold">🎸 Logg inn</h1>
           <p className="text-sm text-muted-foreground">
-            Skriv inn e-postadressen din for å motta en innloggingslenke.
+            Skriv inn e-postadressen din for å motta både magic link og engangskode.
           </p>
         </div>
 
@@ -76,7 +82,7 @@ function LoginForm() {
             disabled={isSubmitting}
             className="w-full rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground hover:bg-primary/90 disabled:opacity-50"
           >
-            {isSubmitting ? "Sender..." : "Send innloggingslenke"}
+            {isSubmitting ? "Sender..." : "Send magic link og kode"}
           </button>
         </form>
       </div>

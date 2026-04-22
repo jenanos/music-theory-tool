@@ -43,11 +43,20 @@ export const progressionCreateSchema = z.object({
     sequence: z.array(z.string()).min(1, "Sequence must contain at least one chord"),
 });
 
+export const PAGE_IDS = ["chords", "progressions", "charts", "practice"] as const;
+export const pageIdSchema = z.enum(PAGE_IDS);
+
 export const groupCreateSchema = z.object({
     name: z.string().trim().min(1, "Group name is required"),
+    enabledPages: z.array(pageIdSchema).optional().default(["charts", "progressions"]),
+});
+
+export const groupUpdateSchema = z.object({
+    name: z.string().trim().min(1).optional(),
+    enabledPages: z.array(pageIdSchema).optional(),
 });
 
 export const groupMemberAddSchema = z.object({
-    email: z.string().trim().email("Valid email is required"),
+    email: z.string().trim().toLowerCase().email("Valid email is required"),
     role: z.enum(["admin", "member"]).optional().default("member"),
 });

@@ -23,7 +23,6 @@ model User {
   sessions         Session[]
   songs            Song[]
   groupMemberships GroupMember[]
-  preference       UserPreference?
 
   @@map("users")
 }
@@ -71,10 +70,11 @@ model VerificationToken {
 // ─── Groups ──────────────────────────────────────────────────────
 
 model Group {
-  id        String   @id @default(uuid())
-  name      String
-  createdAt DateTime @default(now()) @map("created_at")
-  updatedAt DateTime @updatedAt @map("updated_at")
+  id           String   @id @default(uuid())
+  name         String
+  enabledPages String[] @default(["charts", "progressions"]) @map("enabled_pages")
+  createdAt    DateTime @default(now()) @map("created_at")
+  updatedAt    DateTime @updatedAt @map("updated_at")
 
   members GroupMember[]
   songs   Song[]
@@ -158,18 +158,6 @@ model OriginalSection {
 
   @@index([songId, orderIndex])
   @@map("original_sections")
-}
-
-model UserPreference {
-  id           String   @id @default(uuid())
-  userId       String   @unique @map("user_id")
-  enabledPages String[] @default(["charts", "progressions"]) @map("enabled_pages")
-  createdAt    DateTime @default(now()) @map("created_at")
-  updatedAt    DateTime @updatedAt @map("updated_at")
-
-  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
-
-  @@map("user_preferences")
 }
 
 model SavedProgression {

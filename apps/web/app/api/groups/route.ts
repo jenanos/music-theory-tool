@@ -41,6 +41,7 @@ export async function GET() {
             groups.map((g) => ({
                 id: g.id,
                 name: g.name,
+                enabledPages: g.enabledPages,
                 members: g.members.map((m) => ({
                     id: m.id,
                     userId: m.userId,
@@ -79,6 +80,7 @@ export async function POST(request: Request) {
         const group = await prisma.group.create({
             data: {
                 name: parsed.name,
+                enabledPages: parsed.enabledPages,
                 members: {
                     create: {
                         userId: user.id,

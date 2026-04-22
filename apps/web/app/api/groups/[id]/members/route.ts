@@ -5,7 +5,10 @@ import { auth, type SessionUser } from "../../../../lib/auth";
 
 type Params = Promise<{ id: string }>;
 
-// POST /api/groups/[id]/members - Add a member to a group (admin only)
+// POST /api/groups/[id]/members - Invite a user to a group (admin only).
+// If no user with the given email exists yet, a new user row is created so
+// the invited person can sign in via magic link / OTP. This is the invite
+// flow: being added as a group member is what grants the right to log in.
 export async function POST(
     request: Request,
     { params }: { params: Params }
@@ -35,23 +38,17 @@ export async function POST(
         const body = await request.json();
         const parsed = groupMemberAddSchema.parse(body);
 
-        // Find user by email
-        const targetUser = await prisma.user.findUnique({
+        // Upsert: create a User row if this email hasn't been invited before.
+        const invitedUser = await prisma.user.upsert({
             where: { email: parsed.email },
+            update: {},
+            create: { email: parsed.email },
             select: { id: true },
         });
 
-        if (!targetUser) {
-            return NextResponse.json(
-                { error: "User not found with that email" },
-                { status: 404 }
-            );
-        }
-
-        // Check if already a member
         const existing = await prisma.groupMember.findUnique({
             where: {
-                userId_groupId: { userId: targetUser.id, groupId },
+                userId_groupId: { userId: invitedUser.id, groupId },
             },
         });
 
@@ -64,7 +61,7 @@ export async function POST(
 
         const member = await prisma.groupMember.create({
             data: {
-                userId: targetUser.id,
+                userId: invitedUser.id,
                 groupId,
                 role: parsed.role,
             },

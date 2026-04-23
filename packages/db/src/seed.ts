@@ -371,15 +371,21 @@ async function seed() {
         }
     }
 
-    // Seed dev users (upsert to avoid duplicates)
-    const devEmail = process.env.DEV_ADMIN_EMAIL ?? "dev@example.com";
-    console.log(`  Upserting dev admin user: ${devEmail}`);
+    // Seed admin user. Prefer ADMIN_EMAIL (same var bootstrap-admin uses
+    // in prod and the signIn callback uses to gate access). Falls back to
+    // the legacy DEV_ADMIN_EMAIL for backwards compat, then a placeholder.
+    const adminEmail =
+        [process.env.ADMIN_EMAIL, process.env.DEV_ADMIN_EMAIL, "dev@example.com"]
+            .map((email) => email?.trim())
+            .find((email) => email)
+            ?.toLowerCase() ?? "dev@example.com";
+    console.log(`  Upserting admin user: ${adminEmail}`);
     const adminUser = await prisma.user.upsert({
-        where: { email: devEmail },
+        where: { email: adminEmail },
         update: { role: "admin" },
         create: {
-            email: devEmail,
-            name: "Dev Admin",
+            email: adminEmail,
+            name: "Admin",
             role: "admin",
         },
     });

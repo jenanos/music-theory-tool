@@ -6,28 +6,42 @@ voicings og enkle substitusjonsforslag.
 
 ## Kom i gang
 
-Installer avhengigheter og start web-appen:
+Installer avhengigheter og kopier env-filer:
 
 ```sh
 pnpm install
 cp .env.example .env
 cp apps/web/.env.local.example apps/web/.env.local
 cp apps/band/.env.local.example apps/band/.env.local
+```
+
+Fyll inn **`apps/web/.env.local`** før du starter:
+
+- `ADMIN_EMAIL` — en ekte innboks du kan motta e-post på. Denne
+  brukes som admin-bruker i appen og må brukes til å logge inn.
+- `RESEND_API_KEY` — API-nøkkel fra [Resend](https://resend.com/api-keys).
+  Kreves også i dev nå, siden dev-bypassen er fjernet. På Resend
+  sin gratis-plan kan du bare sende til e-posten du registrerte
+  kontoen med, og avsender må være `onboarding@resend.dev` med mindre
+  du har verifisert eget domene.
+- `EMAIL_FROM` — default `Music Theory Tool <onboarding@resend.dev>`
+  funker på gratis-planen.
+
+Start så Postgres og appen:
+
+```sh
 docker compose up -d
+pnpm db:generate
+pnpm --filter @repo/db db:migrate:dev
+pnpm --filter @repo/db db:seed   # oppretter admin-bruker + "Bandet"-gruppe
 pnpm --filter web dev
 ```
 
-Web-appen kjører da på `http://localhost:3001`.
+Web-appen kjører på `http://localhost:3001`. Logg inn med adressen du
+satte i `ADMIN_EMAIL` — du får magic link og 8-sifret engangskode i
+innboksen, og blir promotert til admin på første innlogging.
 
 Band-appen kjører på `http://localhost:3002` med `pnpm --filter band dev`.
-
-Initialiser databasen med:
-
-```sh
-pnpm db:generate
-pnpm --filter @repo/db db:migrate:dev
-pnpm --filter @repo/db db:seed
-```
 
 ## Funksjonalitet
 

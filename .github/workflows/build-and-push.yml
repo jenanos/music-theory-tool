@@ -46,7 +46,7 @@ jobs:
         id: meta
         uses: docker/metadata-action@v5
         with:
-          images: ${{ env.REGISTRY }}/${{ steps.owner.outputs.lowercase }}/music-theory-web
+          images: ${{ env.REGISTRY }}/${{ steps.owner.outputs.lowercase }}/music-theory-tool
           tags: |
             type=ref,event=branch
             type=sha,prefix=

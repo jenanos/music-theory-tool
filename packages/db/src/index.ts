@@ -1,4 +1,5 @@
 export { prisma } from "./client";
+export { Prisma } from "@prisma/client";
 export {
     songCreateSchema,
     songUpdateSchema,
@@ -6,19 +7,18 @@ export {
     sectionInputSchema,
     visibilitySchema,
     groupCreateSchema,
+    groupUpdateSchema,
     groupMemberAddSchema,
 } from "./validation";
 export { toSongResponse, toOriginalSongResponse } from "./serializers";
 export type { SongResponse, SongSectionResponse } from "./serializers";
 export type {
-    Prisma,
     Song,
     Section,
     OriginalSong,
     OriginalSection,
     SavedProgression,
     User,
-    UserPreference,
     Account,
     Session,
     VerificationToken,

@@ -1,7 +1,7 @@
 import NextAuth from "next-auth";
 import type { NextAuthConfig } from "next-auth";
 import { PrismaAdapter } from "@auth/prisma-adapter";
-import { prisma } from "@repo/db";
+import { Prisma, prisma } from "@repo/db";
 import ResendProvider from "next-auth/providers/resend";
 import {
   buildEmailSignInHtml,
@@ -21,11 +21,92 @@ const authUrl =
 export type UserRole = "admin" | "member";
 
 // ---------------------------------------------------------------------------
+// Prisma adapter with defensive wrappers
+// ---------------------------------------------------------------------------
+
+const prismaAdapter = PrismaAdapter(prisma);
+const baseUseVerificationToken = prismaAdapter.useVerificationToken?.bind(prismaAdapter);
+const baseDeleteSession = prismaAdapter.deleteSession?.bind(prismaAdapter);
+
+function isPrismaErrorWithCode(error: unknown, code: string) {
+  return (
+    error instanceof Prisma.PrismaClientKnownRequestError && error.code === code
+  );
+}
+
+const adapter: typeof prismaAdapter = {
+  ...prismaAdapter,
+  async deleteSession(sessionToken) {
+    if (!baseDeleteSession) return null;
+
+    try {
+      const deletedSession = await baseDeleteSession(sessionToken);
+      return deletedSession ?? null;
+    } catch (error) {
+      // Auth.js may try to clear a stale session cookie during sign-in.
+      // Missing session rows should be treated as already signed out.
+      if (isPrismaErrorWithCode(error, "P2025")) {
+        return null;
+      }
+      throw error;
+    }
+  },
+  async useVerificationToken(params) {
+    // Require identifier (email) for the compound lookup. A token-only
+    // fallback would let a caller redeem an OTP without knowing whose
+    // code it is.
+    if (!params.identifier) return null;
+    if (!baseUseVerificationToken) {
+      throw new Error("Prisma adapter mangler useVerificationToken");
+    }
+    return baseUseVerificationToken(params);
+  },
+};
+
+// ---------------------------------------------------------------------------
+// Invite-only access control
+// ---------------------------------------------------------------------------
+
+function normalizeEmail(email: string): string {
+  return email.trim().toLowerCase();
+}
+
+function isAdminEmail(email: string): boolean {
+  const adminEmail = process.env.ADMIN_EMAIL;
+  return Boolean(
+    adminEmail && normalizeEmail(email) === normalizeEmail(adminEmail),
+  );
+}
+
+// Allow sign-in for the configured admin email (auto-promoted to admin
+// below) or any user that has already been invited into the DB.
+async function authorizeSignIn(email: string): Promise<boolean> {
+  const normalized = normalizeEmail(email);
+
+  if (isAdminEmail(normalized)) {
+    // Idempotently guarantee the admin email always has role="admin",
+    // even if db:bootstrap-admin hasn't run yet (e.g. local dev flows)
+    // or if the admin email was changed after first login.
+    await prisma.user.upsert({
+      where: { email: normalized },
+      update: { role: "admin" },
+      create: { email: normalized, role: "admin" },
+    });
+    return true;
+  }
+
+  const existingUser = await prisma.user.findUnique({
+    where: { email: normalized },
+  });
+  return existingUser !== null;
+}
+
+// ---------------------------------------------------------------------------
 // NextAuth config
 // ---------------------------------------------------------------------------
 
 const config = {
-  adapter: PrismaAdapter(prisma),
+  adapter,
   secret: authSecret,
   trustHost: Boolean(authUrl) || isDevelopment,
   providers: [
@@ -68,9 +149,12 @@ const config = {
     verifyRequest: "/login/verify",
   },
   callbacks: {
+    async signIn({ user }) {
+      if (!user.email) return false;
+      return authorizeSignIn(user.email);
+    },
     session({ session, user }) {
       session.user.id = user.id;
-      // Attach role from the database user
       const dbUser = user as unknown as { role?: string };
       // eslint-disable-next-line @typescript-eslint/no-explicit-any -- NextAuth types don't include custom fields
       (session.user as any).role = dbUser.role ?? "member";
@@ -122,31 +206,50 @@ export async function requireAdmin() {
   const role = (session.user as SessionUser).role;
   if (role !== "admin") {
     const { redirect } = await import("next/navigation");
-    redirect("/charts");
+    redirect("/settings");
   }
   return session;
 }
 
+// ---------------------------------------------------------------------------
+// Page access (group-based)
+// ---------------------------------------------------------------------------
+
 export type PageId = "chords" | "progressions" | "charts" | "practice";
 
-const DEFAULT_ENABLED_PAGES: PageId[] = ["charts", "progressions"];
+export async function getEffectiveEnabledPages(userId: string, role: UserRole): Promise<PageId[]> {
+  if (role === "admin") {
+    return ["chords", "progressions", "charts", "practice"];
+  }
+
+  const memberships = await prisma.groupMember.findMany({
+    where: { userId },
+    include: { group: { select: { enabledPages: true } } },
+  });
+
+  const union = new Set<string>();
+  for (const membership of memberships) {
+    for (const page of membership.group.enabledPages) {
+      union.add(page);
+    }
+  }
+
+  return Array.from(union).filter((p): p is PageId =>
+    p === "chords" || p === "progressions" || p === "charts" || p === "practice",
+  );
+}
 
 export async function requirePageAccess(pageId: PageId) {
   const session = await requireAuth();
   const user = session.user as SessionUser;
 
-  // Admins always have access to all pages
   if (user.role === "admin") return session;
 
-  const preference = await prisma.userPreference.findUnique({
-    where: { userId: user.id },
-  });
-
-  const enabledPages = (preference?.enabledPages ?? DEFAULT_ENABLED_PAGES) as PageId[];
+  const enabledPages = await getEffectiveEnabledPages(user.id, user.role);
 
   if (!enabledPages.includes(pageId)) {
     const { redirect } = await import("next/navigation");
-    redirect("/charts");
+    redirect("/settings");
   }
 
   return session;

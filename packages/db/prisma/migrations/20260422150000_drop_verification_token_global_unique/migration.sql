@@ -1,0 +1,12 @@
+-- Drop the global UNIQUE on verification_tokens.token. The official
+-- Auth.js Prisma schema only enforces uniqueness on (identifier, token),
+-- not on token alone. The global unique caused two simultaneous sign-in
+-- requests that happened to generate the same OTP digits to collide on
+-- insert (8-digit OTPs have ~1-in-100M collision odds per pair, growing
+-- with the number of unexpired tokens). Removing it lets two different
+-- users hold the same OTP independently; (identifier, token) still keeps
+-- per-user uniqueness so a single user can't be locked into the same
+-- token twice.
+--
+-- Addresses Codex P2 from PR #32.
+DROP INDEX IF EXISTS "verification_tokens_token_key";

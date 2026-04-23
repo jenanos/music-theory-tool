@@ -377,7 +377,8 @@ async function seed() {
     const adminEmail =
         [process.env.ADMIN_EMAIL, process.env.DEV_ADMIN_EMAIL, "dev@example.com"]
             .map((email) => email?.trim())
-            .find((email) => email)!.toLowerCase();
+            .find((email) => email)
+            ?.toLowerCase() ?? "dev@example.com";
     console.log(`  Upserting admin user: ${adminEmail}`);
     const adminUser = await prisma.user.upsert({
         where: { email: adminEmail },

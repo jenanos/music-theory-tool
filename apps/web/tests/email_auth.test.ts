@@ -1,11 +1,15 @@
 import { describe, expect, it } from "vitest";
-import { sanitizeCallbackUrl } from "../app/lib/auth-urls";
+import { resolveRequestBaseUrl, sanitizeCallbackUrl } from "../app/lib/auth-urls";
 import {
   buildEmailCallbackUrl,
   EMAIL_OTP_LENGTH,
   generateEmailOtpToken,
   normalizeOtpToken,
 } from "../app/lib/email-auth";
+
+function makeRequest(url: string, headers: Record<string, string> = {}): Request {
+  return new Request(url, { headers });
+}
 
 describe("email auth helpers", () => {
   it("generates numeric OTP tokens with expected length", () => {
@@ -23,6 +27,36 @@ describe("email auth helpers", () => {
     expect(sanitizeCallbackUrl("/charts?mode=ionian")).toBe("/charts?mode=ionian");
     expect(sanitizeCallbackUrl("https://evil.example")).toBe("/");
     expect(sanitizeCallbackUrl("//evil.example")).toBe("/");
+  });
+
+  it("swaps unroutable 0.0.0.0 host for localhost when resolving base URL", () => {
+    const baseUrl = resolveRequestBaseUrl(
+      makeRequest("http://0.0.0.0:3001/api/auth/otp", { host: "0.0.0.0:3001" }),
+    );
+
+    expect(baseUrl).toBe("http://localhost:3001");
+  });
+
+  it("prefers x-forwarded headers when resolving base URL", () => {
+    const baseUrl = resolveRequestBaseUrl(
+      makeRequest("http://internal:3001/api/auth/otp", {
+        host: "internal:3001",
+        "x-forwarded-host": "app.example.com",
+        "x-forwarded-proto": "https",
+      }),
+    );
+
+    expect(baseUrl).toBe("https://app.example.com");
+  });
+
+  it("uses the Host header when no forwarded headers are present", () => {
+    const baseUrl = resolveRequestBaseUrl(
+      makeRequest("http://localhost:3001/api/auth/otp", {
+        host: "localhost:3001",
+      }),
+    );
+
+    expect(baseUrl).toBe("http://localhost:3001");
   });
 
   it("builds resend callback URLs with sanitized callback targets", () => {

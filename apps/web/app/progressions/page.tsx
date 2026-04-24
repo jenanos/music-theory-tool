@@ -144,6 +144,7 @@ export default function ProgressionsPage() {
     const [showSaveModal, setShowSaveModal] = useState(false);
     const [saveName, setSaveName] = useState("");
     const [isSaving, setIsSaving] = useState(false);
+    const [showMobileFilters, setShowMobileFilters] = useState(false);
 
     // Fetch saved progressions on mount
     useEffect(() => {
@@ -297,25 +298,35 @@ export default function ProgressionsPage() {
     return (
         <main className="flex h-full flex-col bg-background text-foreground overflow-hidden">
             {/* Header */}
-            <header className="shrink-0 border-b border-border bg-card px-6 py-4 shadow-sm z-10">
-                <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
-                    <div>
-                        <h1 className="text-xl font-bold leading-tight text-foreground">
-                            Akkordprogresjoner
-                        </h1>
-                        <Link
-                            href="/"
-                            className="text-xs font-medium text-primary hover:text-primary/80 hover:underline"
+            <header className="shrink-0 border-b border-border bg-card px-3 py-3 shadow-sm z-10 md:px-6 md:py-4">
+                <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between md:gap-4">
+                    <div className="flex items-start justify-between gap-2">
+                        <div className="min-w-0">
+                            <h1 className="text-lg md:text-xl font-bold leading-tight text-foreground">
+                                Akkordprogresjoner
+                            </h1>
+                            <Link
+                                href="/"
+                                className="text-xs font-medium text-primary hover:text-primary/80 hover:underline"
+                            >
+                                ← Tilbake til akkorder
+                            </Link>
+                        </div>
+                        <button
+                            type="button"
+                            onClick={() => setShowMobileFilters((v) => !v)}
+                            className="md:hidden shrink-0 rounded-md border border-border bg-muted px-3 py-1.5 text-xs font-medium text-foreground hover:bg-muted/80"
+                            aria-expanded={showMobileFilters}
                         >
-                            ← Tilbake til akkorder
-                        </Link>
+                            {showMobileFilters ? "Skjul filter" : `Filter${selectedTags.length > 0 ? ` (${selectedTags.length})` : ""}`}
+                        </button>
                     </div>
 
-                    <div className="flex flex-wrap items-center gap-3">
-                        <div className="flex flex-col">
+                    <div className="grid grid-cols-2 gap-2 sm:grid-cols-4 md:flex md:flex-wrap md:items-center md:gap-3">
+                        <div className="flex flex-col min-w-0">
                             <label className="text-[10px] uppercase font-bold text-muted-foreground mb-0.5">Grunntone</label>
                             <select
-                                className="rounded-md border border-border bg-muted px-3 py-1.5 text-sm font-medium focus:ring-2 focus:ring-primary"
+                                className="w-full rounded-md border border-border bg-muted px-2 py-1.5 text-sm font-medium focus:ring-2 focus:ring-primary md:px-3"
                                 onChange={(e) => setTonic(e.target.value)}
                                 value={tonic}
                             >
@@ -324,10 +335,10 @@ export default function ProgressionsPage() {
                                 ))}
                             </select>
                         </div>
-                        <div className="flex flex-col">
+                        <div className="flex flex-col min-w-0">
                             <label className="text-[10px] uppercase font-bold text-muted-foreground mb-0.5">Modalitet</label>
                             <select
-                                className="rounded-md border border-border bg-muted px-3 py-1.5 text-sm font-medium focus:ring-2 focus:ring-primary"
+                                className="w-full rounded-md border border-border bg-muted px-2 py-1.5 text-sm font-medium focus:ring-2 focus:ring-primary md:px-3"
                                 onChange={(e) => setModeId(e.target.value as ModeId)}
                                 value={modeId}
                             >
@@ -336,10 +347,10 @@ export default function ProgressionsPage() {
                                 ))}
                             </select>
                         </div>
-                        <div className="flex flex-col">
+                        <div className="flex flex-col min-w-0">
                             <label className="text-[10px] uppercase font-bold text-muted-foreground mb-0.5">Akkordtype</label>
                             <select
-                                className="rounded-md border border-border bg-muted px-3 py-1.5 text-sm font-medium focus:ring-2 focus:ring-primary"
+                                className="w-full rounded-md border border-border bg-muted px-2 py-1.5 text-sm font-medium focus:ring-2 focus:ring-primary md:px-3"
                                 onChange={(e) => setChordType(e.target.value as "triad" | "seventh" | "all")}
                                 value={chordType}
                             >
@@ -348,10 +359,10 @@ export default function ProgressionsPage() {
                                 <option value="seventh">Septim</option>
                             </select>
                         </div>
-                        <div className="flex flex-col">
+                        <div className="flex flex-col min-w-0">
                             <label className="text-[10px] uppercase font-bold text-muted-foreground mb-0.5">Profil</label>
                             <select
-                                className="rounded-md border border-border bg-muted px-3 py-1.5 text-sm font-medium focus:ring-2 focus:ring-primary"
+                                className="w-full rounded-md border border-border bg-muted px-2 py-1.5 text-sm font-medium focus:ring-2 focus:ring-primary md:px-3"
                                 onChange={(e) => setProfile(e.target.value as ChordRichnessProfile)}
                                 value={profile}
                             >
@@ -362,12 +373,50 @@ export default function ProgressionsPage() {
                         </div>
                     </div>
                 </div>
+
+                {/* Mobile filters panel */}
+                {showMobileFilters && (
+                    <div className="md:hidden mt-3 rounded-lg border border-border bg-muted/40 p-3">
+                        <div className="mb-3 flex items-center justify-between">
+                            <h2 className="text-xs font-bold uppercase tracking-wide text-muted-foreground">Filter</h2>
+                            {selectedTags.length > 0 && (
+                                <button
+                                    onClick={() => setSelectedTags([])}
+                                    className="text-xs text-destructive hover:underline"
+                                >
+                                    Nullstill
+                                </button>
+                            )}
+                        </div>
+                        <div className="space-y-3">
+                            {(Object.keys(CATEGORIES) as CategoryKey[]).map(key => (
+                                <div key={key}>
+                                    <h3 className="mb-1.5 text-xs font-semibold text-muted-foreground">{CATEGORIES[key].title}</h3>
+                                    <div className="flex flex-wrap gap-1.5">
+                                        {CATEGORIES[key].tags.map(tag => (
+                                            <button
+                                                key={tag}
+                                                onClick={() => toggleTag(tag)}
+                                                className={`rounded px-2 py-1 text-[11px] font-medium transition-colors ${selectedTags.includes(tag)
+                                                    ? "bg-primary/20 text-primary"
+                                                    : "bg-card text-muted-foreground hover:bg-muted/80 border border-border"
+                                                    }`}
+                                            >
+                                                {TAG_LABELS[tag] ?? tag}
+                                            </button>
+                                        ))}
+                                    </div>
+                                </div>
+                            ))}
+                        </div>
+                    </div>
+                )}
             </header>
 
             {/* Main Content */}
-            <div className="flex flex-1 overflow-hidden">
-                {/* Sidebar Filters */}
-                <aside className="w-64 shrink-0 overflow-y-auto border-r border-border bg-card p-6 hidden md:block">
+            <div className="flex flex-1 flex-col overflow-y-auto lg:flex-row lg:overflow-hidden">
+                {/* Sidebar Filters (desktop only) */}
+                <aside className="hidden md:block w-64 shrink-0 overflow-y-auto border-r border-border bg-card p-6">
                     <div className="mb-4 flex items-center justify-between">
                         <h2 className="text-xs font-bold uppercase tracking-wide text-muted-foreground">Filter</h2>
                         {selectedTags.length > 0 && (
@@ -404,7 +453,7 @@ export default function ProgressionsPage() {
                 </aside>
 
                 {/* Left: Progressions List */}
-                <div className="flex w-full flex-col overflow-y-auto bg-card/70 p-6 lg:w-1/2 border-r border-border">
+                <div className="flex w-full flex-col bg-card/70 p-4 md:p-6 border-b border-border lg:w-1/2 lg:border-b-0 lg:border-r lg:overflow-y-auto">
                     <h2 className="mb-4 text-xs font-bold uppercase tracking-wide text-muted-foreground">
                         Progresjoner ({progressions.length}) - {SCALES.find(s => s.id === modeId)?.name}
                     </h2>
@@ -499,8 +548,8 @@ export default function ProgressionsPage() {
                 </div>
 
                 {/* Right: Builder */}
-                <div className="flex-1 flex flex-col overflow-hidden bg-background">
-                    <div className="flex-1 overflow-y-auto p-6">
+                <div className="flex-1 flex flex-col bg-background lg:overflow-hidden">
+                    <div className="flex-1 p-4 md:p-6 lg:overflow-y-auto">
                         <div className="mb-6">
                             <div className="flex items-center justify-between mb-2">
                                 <h2 className="text-xs font-bold uppercase tracking-wide text-muted-foreground">
@@ -583,7 +632,7 @@ export default function ProgressionsPage() {
                                 </label>
                             </div>
 
-                            <div className="grid grid-cols-3 gap-2 sm:grid-cols-4 lg:grid-cols-4 xl:grid-cols-5">
+                            <div className="grid grid-cols-2 gap-2 sm:grid-cols-3 md:grid-cols-4 xl:grid-cols-5">
                                 {nextChordSuggestions.map((s, i) => (
                                     <button
                                         key={i}

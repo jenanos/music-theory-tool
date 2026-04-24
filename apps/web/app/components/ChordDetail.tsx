@@ -28,18 +28,18 @@ export function ChordDetail({
 
 
   return (
-    <section className="space-y-6">
-      <div className="rounded-xl border border-border bg-card p-6 shadow-sm">
-        <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
+    <section className="space-y-4 md:space-y-6">
+      <div className="rounded-xl border border-border bg-card p-4 md:p-6 shadow-sm">
+        <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between md:gap-4">
           <div>
-            <p className="text-sm uppercase tracking-wide text-muted-foreground">
+            <p className="text-xs md:text-sm uppercase tracking-wide text-muted-foreground">
               Akkorddetaljer
             </p>
-            <h2 className="text-3xl font-semibold text-foreground">
+            <h2 className="text-2xl md:text-3xl font-semibold text-foreground">
               {chord.symbol}
             </h2>
           </div>
-          <div className="flex flex-wrap gap-6 text-sm text-muted-foreground">
+          <div className="flex flex-wrap gap-4 md:gap-6 text-sm text-muted-foreground">
             <div>
               <p className="text-xs uppercase text-muted-foreground">Toner</p>
               <p className="font-semibold text-foreground">
@@ -56,8 +56,8 @@ export function ChordDetail({
         </div>
       </div>
 
-      <div className="grid gap-6 lg:grid-cols-[2fr,1fr]">
-        <div className="space-y-6">
+      <div className="grid gap-4 md:gap-6 lg:grid-cols-[2fr,1fr]">
+        <div className="space-y-4 md:space-y-6 min-w-0">
           <div>
             <h3 className="mb-3 text-sm font-semibold uppercase tracking-wide text-muted-foreground">
               Gripebrett (0–12 bånd)

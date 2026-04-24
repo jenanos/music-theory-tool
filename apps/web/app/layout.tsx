@@ -39,7 +39,7 @@ export default function RootLayout({
 
         <AuthProvider>
           <Navigation />
-          <div className="flex-1 overflow-hidden">
+          <div className="flex-1 overflow-y-auto">
             {children}
           </div>
         </AuthProvider>

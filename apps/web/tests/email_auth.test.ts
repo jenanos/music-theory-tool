@@ -59,6 +59,22 @@ describe("email auth helpers", () => {
     expect(baseUrl).toBe("http://localhost:3001");
   });
 
+  it("preserves IPv6 Host literals with a port", () => {
+    const baseUrl = resolveRequestBaseUrl(
+      makeRequest("http://[::1]:3001/api/auth/otp", { host: "[::1]:3001" }),
+    );
+
+    expect(baseUrl).toBe("http://[::1]:3001");
+  });
+
+  it("swaps the IPv6 unspecified address for localhost", () => {
+    const baseUrl = resolveRequestBaseUrl(
+      makeRequest("http://[::]:3001/api/auth/otp", { host: "[::]:3001" }),
+    );
+
+    expect(baseUrl).toBe("http://localhost:3001");
+  });
+
   it("builds resend callback URLs with sanitized callback targets", () => {
     const url = buildEmailCallbackUrl({
       baseUrl: "http://localhost:3001/login/verify",

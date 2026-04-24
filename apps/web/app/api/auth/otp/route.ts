@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
 import { prisma } from "@repo/db";
-import { sanitizeCallbackUrl } from "../../../lib/auth-urls";
+import { resolveRequestBaseUrl, sanitizeCallbackUrl } from "../../../lib/auth-urls";
 import {
   buildEmailCallbackUrl,
   EMAIL_OTP_LENGTH,
@@ -10,12 +10,12 @@ import {
 } from "../../../lib/email-auth";
 
 function buildVerifyRedirectUrl(params: {
-  request: NextRequest;
+  baseUrl: string;
   email: string;
   callbackUrl: string;
   error: string;
 }): string {
-  const url = new URL("/login/verify", params.request.url);
+  const url = new URL("/login/verify", params.baseUrl);
   if (params.email) {
     url.searchParams.set("email", params.email);
   }
@@ -29,6 +29,7 @@ function redirectTo(url: string) {
 }
 
 export async function POST(request: NextRequest) {
+  const baseUrl = resolveRequestBaseUrl(request);
   const formData = await request.formData();
   const email = String(formData.get("email") ?? "")
     .trim()
@@ -39,7 +40,7 @@ export async function POST(request: NextRequest) {
   if (!email || !/^\S+@\S+\.\S+$/.test(email)) {
     return redirectTo(
       buildVerifyRedirectUrl({
-        request,
+        baseUrl,
         email,
         callbackUrl,
         error: "Ugyldig e-postadresse.",
@@ -50,7 +51,7 @@ export async function POST(request: NextRequest) {
   if (!new RegExp(`^\\d{${EMAIL_OTP_LENGTH}}$`).test(otp)) {
     return redirectTo(
       buildVerifyRedirectUrl({
-        request,
+        baseUrl,
         email,
         callbackUrl,
         error: `Koden må være ${EMAIL_OTP_LENGTH} sifre.`,
@@ -67,7 +68,7 @@ export async function POST(request: NextRequest) {
   if (!authSecret) {
     return redirectTo(
       buildVerifyRedirectUrl({
-        request,
+        baseUrl,
         email,
         callbackUrl,
         error: "Innlogging er ikke konfigurert riktig.",
@@ -85,7 +86,7 @@ export async function POST(request: NextRequest) {
   if (!verificationToken || verificationToken.expires.valueOf() < Date.now()) {
     return redirectTo(
       buildVerifyRedirectUrl({
-        request,
+        baseUrl,
         email,
         callbackUrl,
         error: "Ugyldig eller utløpt engangskode.",
@@ -95,7 +96,7 @@ export async function POST(request: NextRequest) {
 
   return redirectTo(
     buildEmailCallbackUrl({
-      baseUrl: request.url,
+      baseUrl,
       token: otp,
       email,
       callbackUrl,

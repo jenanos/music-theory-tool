@@ -78,11 +78,11 @@ export function DiatonicChordsPage() {
   if (!selectedChord) return null;
 
   return (
-    <main className="flex h-full flex-col bg-background text-foreground">
+    <main className="flex h-full flex-col overflow-hidden bg-background text-foreground">
       {/* Top Toolbar */}
-      <header className="flex shrink-0 flex-col gap-4 border-b border-border bg-card px-6 py-4 shadow-sm sm:flex-row sm:items-center sm:justify-between">
+      <header className="flex shrink-0 flex-col gap-3 border-b border-border bg-card px-3 py-3 shadow-sm md:px-6 md:py-4 md:flex-row md:items-center md:justify-between md:gap-4">
         <div className="flex flex-col gap-1">
-          <h1 className="text-xl font-bold leading-tight text-foreground">
+          <h1 className="text-lg md:text-xl font-bold leading-tight text-foreground">
             Diatoniske akkorder
           </h1>
           <p className="text-xs text-muted-foreground">
@@ -90,7 +90,7 @@ export function DiatonicChordsPage() {
           </p>
         </div>
 
-        <div className="flex flex-col gap-3 sm:flex-row sm:items-stretch">
+        <div className="flex flex-col gap-2 md:flex-row md:items-stretch md:gap-3">
           {/* Harmony Controls */}
           <div className="flex flex-col gap-2 rounded-lg border border-border bg-muted px-3 py-2 text-xs">
             <div className="flex items-center gap-3">
@@ -191,9 +191,9 @@ export function DiatonicChordsPage() {
       </header>
 
       {/* Main Content Area */}
-      <div className="flex flex-1 overflow-hidden">
+      <div className="flex flex-1 flex-col overflow-y-auto lg:flex-row lg:overflow-hidden">
         {/* Left Panel: Table & Tips */}
-        <div className="flex w-full max-w-md flex-col overflow-y-auto border-r border-border bg-card/70 p-6 lg:w-1/3">
+        <div className="flex w-full flex-col border-b border-border bg-card/70 p-4 md:p-6 lg:w-1/3 lg:max-w-md lg:border-b-0 lg:border-r lg:overflow-y-auto">
           <div className="space-y-6">
             <section>
               <h2 className="mb-3 text-xs font-bold uppercase tracking-wide text-muted-foreground">
@@ -220,7 +220,7 @@ export function DiatonicChordsPage() {
         </div>
 
         {/* Right Panel: Detail View */}
-        <div className="flex-1 overflow-y-auto p-6 bg-background">
+        <div className="flex-1 p-4 md:p-6 bg-background lg:overflow-y-auto">
           <ChordDetail
             chord={selectedChord}
             substitutions={substitutions}

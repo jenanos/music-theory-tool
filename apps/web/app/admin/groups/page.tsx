@@ -156,7 +156,7 @@ export default function AdminGroupsPage() {
     }
 
     return (
-        <div className="mx-auto max-w-3xl p-6 space-y-8">
+        <div className="mx-auto max-w-3xl p-4 md:p-6 space-y-6 md:space-y-8">
             <div>
                 <h1 className="text-2xl font-bold text-foreground">Grupper</h1>
                 <p className="text-sm text-muted-foreground mt-1">
@@ -172,7 +172,7 @@ export default function AdminGroupsPage() {
             )}
 
             {/* Create group */}
-            <div className="flex gap-2">
+            <div className="flex flex-col gap-2 sm:flex-row">
                 <input
                     type="text"
                     value={newGroupName}
@@ -249,11 +249,11 @@ export default function AdminGroupsPage() {
                             </p>
                             <div className="space-y-1">
                                 {group.members.map((member) => (
-                                    <div key={member.id} className="flex items-center justify-between py-1 px-2 rounded text-sm">
-                                        <div>
+                                    <div key={member.id} className="flex items-center justify-between gap-2 py-1 px-2 rounded text-sm">
+                                        <div className="min-w-0 flex-1 break-words">
                                             <span className="text-foreground">{member.name || member.email}</span>
                                             {member.name && (
-                                                <span className="text-muted-foreground ml-1 text-xs">({member.email})</span>
+                                                <span className="text-muted-foreground ml-1 text-xs break-all">({member.email})</span>
                                             )}
                                             {member.role === "admin" && (
                                                 <span className="ml-2 inline-flex items-center rounded bg-primary/20 px-1.5 py-0.5 text-[10px] font-medium text-primary">
@@ -276,7 +276,7 @@ export default function AdminGroupsPage() {
 
                             {/* Add member */}
                             {addingMemberToGroupId === group.id ? (
-                                <div className="flex gap-2 mt-2">
+                                <div className="flex flex-col gap-2 mt-2 sm:flex-row">
                                     <input
                                         type="email"
                                         value={newMemberEmail}

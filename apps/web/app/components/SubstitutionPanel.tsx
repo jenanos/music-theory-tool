@@ -71,8 +71,8 @@ export function SubstitutionPanel({ substitutions, onSelect }: SubstitutionPanel
               onClick={() => onSelect?.(item)}
             >
               <div className="w-full">
-                <div className="flex items-center justify-between mb-1">
-                  <div className="flex items-center gap-2">
+                <div className="flex items-center justify-between mb-1 gap-2">
+                  <div className="flex flex-wrap items-center gap-2 min-w-0">
                     <span className="font-bold text-lg text-primary">
                       {item.substituteSymbol}
                     </span>

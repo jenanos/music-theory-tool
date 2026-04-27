@@ -32,8 +32,11 @@ export function AlphaTabPreview({ alphaTex }: AlphaTabPreviewProps) {
             useWorkers: false,
           },
           display: {
+            layoutMode: "Parchment",
             scale: 0.95,
             staveProfile: "Tab",
+            stretchForce: 0.65,
+            systemsLayoutMode: "Automatic",
           },
         });
         api.tex(alphaTex);
@@ -56,7 +59,7 @@ export function AlphaTabPreview({ alphaTex }: AlphaTabPreviewProps) {
     <div className="space-y-3">
       <div
         ref={hostRef}
-        className="min-h-40 overflow-x-auto rounded-md border border-border bg-white p-3 text-black"
+        className="min-h-40 w-full overflow-x-hidden rounded-md border border-border bg-white p-3 text-black [&_svg]:max-w-full"
       />
       {error && (
         <div className="rounded-md border border-destructive/30 bg-destructive/10 p-3 text-sm text-destructive">

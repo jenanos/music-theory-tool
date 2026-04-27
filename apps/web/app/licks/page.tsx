@@ -366,6 +366,10 @@ export default function LicksPage() {
                 </select>
               </label>
               <div className="min-w-0 text-sm text-muted-foreground">
+                <p className="mb-2 text-xs text-muted-foreground/80">
+                  Transponering bruker samme tonesett: C ionisk og D dorisk
+                  regnes som samme parent scale.
+                </p>
                 {selectedLick.description || "Ingen beskrivelse."}
               </div>
             </div>

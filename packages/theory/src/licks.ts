@@ -1,4 +1,5 @@
 import { parseKey, parseNoteName } from "./utils";
+import type { ModeId } from "./types";
 
 export const STANDARD_TUNING = ["E4", "B3", "G3", "D3", "A2", "E2"] as const;
 
@@ -99,6 +100,15 @@ const VALID_DURATIONS = new Set([
   "256",
 ]);
 const SUPPORTED_TECHNIQUE_SET = new Set<string>(SUPPORTED_LICK_TECHNIQUES);
+const MODE_TO_PARENT_IONIAN_SHIFT: Partial<Record<ModeId, number>> = {
+  ionian: 0,
+  dorian: -2,
+  phrygian: -4,
+  lydian: -5,
+  mixolydian: -7,
+  aeolian: -9,
+  locrian: -11,
+};
 
 export function transposeLickData(
   data: LickData,
@@ -117,8 +127,8 @@ export function transposeLickData(
   }
 
   const semitones = compactSemitoneDistance(
-    parseNoteName(source.tonic),
-    parseNoteName(target.tonic),
+    parentScalePc(source.tonic, source.mode),
+    parentScalePc(target.tonic, target.mode),
   );
   const maxFret = options.maxFret ?? data.maxFret ?? DEFAULT_MAX_FRET;
   const warnings: string[] = [];
@@ -187,7 +197,11 @@ export function validateLickData(data: LickData): string[] {
       }
     }
 
-    if (!isValidDuration(event.duration)) {
+    if (isDottedDuration(event.duration)) {
+      warnings.push(
+        `Event ${index}: dotted duration "${event.duration}" is rendered as ${stripDurationSuffixes(event.duration)} in v1`,
+      );
+    } else if (!isValidDuration(event.duration)) {
       warnings.push(
         `Event ${index}: duration must be one of 1, 2, 4, 8, 16, 32, 64, 128, 256 or a triplet token like 8t`,
       );
@@ -214,7 +228,7 @@ export function lickDataToAlphaTex(
   });
   const body = bodyEvents.join(" ");
 
-  return [...header, body].filter(Boolean).join("\n");
+  return [...header, ".", body].filter(Boolean).join("\n");
 }
 
 function cloneLickData(data: LickData): LickData {
@@ -235,14 +249,14 @@ function buildAlphaTexHeader(
   const tuning = metadata.tuning ?? data.tuning ?? STANDARD_TUNING;
   const header: string[] = [];
 
-  if (title) header.push(`\\title ${quoteAlphaTexString(title)}`);
+  if (title) header.push(`\\title (${quoteAlphaTexString(title)})`);
   if (metadata.subtitle)
-    header.push(`\\subtitle ${quoteAlphaTexString(metadata.subtitle)}`);
+    header.push(`\\subtitle (${quoteAlphaTexString(metadata.subtitle)})`);
   if (metadata.artist)
-    header.push(`\\artist ${quoteAlphaTexString(metadata.artist)}`);
+    header.push(`\\artist (${quoteAlphaTexString(metadata.artist)})`);
   if (tempo !== undefined) header.push(`\\tempo ${tempo}`);
   if (timeSignature)
-    header.push(`\\ts ${timeSignature[0]} ${timeSignature[1]}`);
+    header.push(`\\ts (${timeSignature[0]} ${timeSignature[1]})`);
   header.push(`\\tuning (${tuning.join(" ")})`);
 
   return header;
@@ -252,22 +266,24 @@ function eventToAlphaTex(event: LickEvent): string[] {
   if (isBarEvent(event)) return ["|"];
 
   const duration = durationToAlphaTex(event.duration);
-  const durationSuffix = duration.triplet
-    ? `.${duration.value} { tu 3 }`
-    : `.${duration.value}`;
+  const durationSuffix = `.${duration.value}`;
+  const beatEffects = duration.triplet ? " {tu 3}" : "";
 
   if (isRestEvent(event)) {
-    return [`r${durationSuffix}`];
+    return [`r${durationSuffix}${beatEffects}`];
   }
 
   const stringNumber = event.string ?? 1;
   const effects = effectsToAlphaTex(event);
   const fret = event.tie ? "-" : event.fret;
-  const note = `${fret}.${stringNumber}${durationSuffix}${effects}`;
+  const note = `${fret}.${stringNumber}${effects}${durationSuffix}${beatEffects}`;
 
   // Transition techniques need a following target note for alphaTab to draw the line.
   if (event.toFret !== undefined && hasTransitionTechnique(event)) {
-    return [note, `${event.toFret}.${stringNumber}${durationSuffix}`];
+    return [
+      note,
+      `${event.toFret}.${stringNumber}${durationSuffix}${beatEffects}`,
+    ];
   }
 
   return [note];
@@ -279,7 +295,7 @@ function durationToAlphaTex(duration: LickEvent["duration"]): {
 } {
   const raw = duration === undefined ? "4" : String(duration).trim();
   const triplet = raw.endsWith("t");
-  const value = triplet ? raw.slice(0, -1) : raw;
+  const value = stripDurationSuffixes(raw);
 
   return {
     value: VALID_DURATIONS.has(value) ? value : "4",
@@ -340,8 +356,17 @@ function isValidDuration(duration: LickEvent["duration"]): boolean {
   if (duration === undefined) return true;
 
   const raw = String(duration).trim();
-  const value = raw.endsWith("t") ? raw.slice(0, -1) : raw;
+  const value = stripDurationSuffixes(raw);
   return VALID_DURATIONS.has(value);
+}
+
+function isDottedDuration(duration: LickEvent["duration"]): boolean {
+  return typeof duration === "string" && duration.trim().endsWith(".");
+}
+
+function stripDurationSuffixes(duration: LickEvent["duration"]): string {
+  const raw = String(duration).trim();
+  return raw.replace(/t$/, "").replace(/\.+$/, "");
 }
 
 function addFretRangeWarning(
@@ -363,6 +388,12 @@ function addFretRangeWarning(
 function compactSemitoneDistance(sourcePc: number, targetPc: number): number {
   const upward = (((targetPc - sourcePc) % 12) + 12) % 12;
   return upward > 6 ? upward - 12 : upward;
+}
+
+function parentScalePc(tonic: string, mode: ModeId): number {
+  const tonicPc = parseNoteName(tonic);
+  const parentShift = MODE_TO_PARENT_IONIAN_SHIFT[mode] ?? 0;
+  return (((tonicPc + parentShift) % 12) + 12) % 12;
 }
 
 function quoteAlphaTexString(value: string): string {

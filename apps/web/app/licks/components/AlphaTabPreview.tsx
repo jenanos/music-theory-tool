@@ -25,8 +25,15 @@ export function AlphaTabPreview({ alphaTex }: AlphaTabPreviewProps) {
 
         hostRef.current.innerHTML = "";
         api = new alphaTab.AlphaTabApi(hostRef.current, {
+          core: {
+            enableLazyLoading: false,
+            engine: "svg",
+            fontDirectory: "/alphatab/font/",
+            useWorkers: false,
+          },
           display: {
             scale: 0.95,
+            staveProfile: "Tab",
           },
         });
         api.tex(alphaTex);
@@ -49,7 +56,7 @@ export function AlphaTabPreview({ alphaTex }: AlphaTabPreviewProps) {
     <div className="space-y-3">
       <div
         ref={hostRef}
-        className="min-h-40 overflow-x-auto rounded-md border border-border bg-background p-3"
+        className="min-h-40 overflow-x-auto rounded-md border border-border bg-white p-3 text-black"
       />
       {error && (
         <div className="rounded-md border border-destructive/30 bg-destructive/10 p-3 text-sm text-destructive">

@@ -22,6 +22,7 @@ model User {
   accounts         Account[]
   sessions         Session[]
   songs            Song[]
+  licks            Lick[]
   groupMemberships GroupMember[]
 
   @@map("users")
@@ -78,6 +79,7 @@ model Group {
 
   members GroupMember[]
   songs   Song[]
+  licks   Lick[]
 
   @@map("groups")
 }
@@ -98,17 +100,17 @@ model GroupMember {
 // ─── Songs ──────────────────────────────────────────────────────
 
 model Song {
-  id          String   @id
+  id          String    @id
   title       String
   artist      String?
   key         String?
   notes       String?
-  arrangement String[] @default([])
-  visibility  String   @default("private") // "private" | "group" | "shared"
-  userId      String?  @map("user_id")
-  groupId     String?  @map("group_id")
-  createdAt   DateTime @default(now()) @map("created_at")
-  updatedAt   DateTime @updatedAt @map("updated_at")
+  arrangement String[]  @default([])
+  visibility  String    @default("private") // "private" | "group" | "shared"
+  userId      String?   @map("user_id")
+  groupId     String?   @map("group_id")
+  createdAt   DateTime  @default(now()) @map("created_at")
+  updatedAt   DateTime  @updatedAt @map("updated_at")
   sections    Section[]
 
   user  User?  @relation(fields: [userId], references: [id])
@@ -130,6 +132,31 @@ model Section {
 
   @@index([songId, orderIndex])
   @@map("sections")
+}
+
+// ─── Licks ──────────────────────────────────────────────────────
+
+model Lick {
+  id          String   @id @default(uuid())
+  title       String
+  key         String?
+  description String?
+  tags        String[] @default([])
+  tuning      String?
+  data        Json
+  visibility  String   @default("private") // "private" | "group" | "shared"
+  userId      String?  @map("user_id")
+  groupId     String?  @map("group_id")
+  createdAt   DateTime @default(now()) @map("created_at")
+  updatedAt   DateTime @updatedAt @map("updated_at")
+
+  user  User?  @relation(fields: [userId], references: [id])
+  group Group? @relation(fields: [groupId], references: [id])
+
+  @@index([userId])
+  @@index([groupId])
+  @@index([visibility])
+  @@map("licks")
 }
 
 model OriginalSong {

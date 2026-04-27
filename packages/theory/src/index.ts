@@ -6,6 +6,7 @@ export * from "./types";
 export * from "./scales";
 export * from "./chord_richness";
 export * from "./transpose";
+export * from "./licks";
 
 import {
   noteName,

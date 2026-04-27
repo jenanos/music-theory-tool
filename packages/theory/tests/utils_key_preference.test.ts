@@ -1,5 +1,11 @@
 import { describe, expect, it } from "vitest";
-import { prefersFlatsForKey, parseKey } from "../src/utils";
+import {
+    getScaleIntervals,
+    noteName,
+    parseKey,
+    parseNoteName,
+    prefersFlatsForKey,
+} from "../src/utils";
 
 describe("prefersFlatsForKey", () => {
     it("uses explicit flat tonic", () => {
@@ -57,8 +63,37 @@ describe("parseKey", () => {
         expect(parseKey("Bb ionian")).toEqual({ tonic: "Bb", mode: "ionian" });
     });
 
+    it("parses localized and shorthand key labels", () => {
+        expect(parseKey("F dur")).toEqual({ tonic: "F", mode: "ionian" });
+        expect(parseKey("A moll")).toEqual({ tonic: "A", mode: "aeolian" });
+        expect(parseKey("E frygisk")).toEqual({ tonic: "E", mode: "phrygian" });
+        expect(parseKey("Bflat lydian")).toEqual({ tonic: "Bb", mode: "lydian" });
+        expect(parseKey("FM")).toEqual({ tonic: "F", mode: "ionian" });
+        expect(parseKey("Fm7")).toEqual({ tonic: "F", mode: "aeolian" });
+    });
+
     it("returns null for empty input", () => {
         expect(parseKey("")).toBeNull();
         expect(parseKey("   ")).toBeNull();
+    });
+});
+
+describe("note helpers", () => {
+    it("parses enharmonic note names", () => {
+        expect(parseNoteName("Gb")).toBe(6);
+        expect(parseNoteName("A#")).toBe(10);
+    });
+
+    it("throws for unknown notes", () => {
+        expect(() => parseNoteName("H")).toThrow("Ukjent tone");
+    });
+
+    it("wraps note names across negative and overflow pitch classes", () => {
+        expect(noteName(-1, false)).toBe("B");
+        expect(noteName(13, true)).toBe("Db");
+    });
+
+    it("falls back to ionian intervals for unknown modes", () => {
+        expect(getScaleIntervals("unknown-mode")).toEqual([0, 2, 4, 5, 7, 9, 11]);
     });
 });

@@ -4,9 +4,9 @@ import {
   EMAIL_OTP_LENGTH,
   EMAIL_SIGN_IN_EXPIRES_MINUTES,
 } from "../../lib/email-auth";
+import { OtpInput } from "./otp-input";
 
 type SearchParams = Record<string, string | string[] | undefined>;
-const OTP_INPUT_PATTERN = `[0-9]{${EMAIL_OTP_LENGTH}}`;
 
 function getSingleValue(value?: string | string[]) {
   return Array.isArray(value) ? value[0] : value;
@@ -51,17 +51,8 @@ export default async function VerifyPage(props: {
               <label htmlFor="otp" className="block text-sm font-medium">
                 Engangskode
               </label>
-              <input
-                id="otp"
-                name="otp"
-                type="text"
-                inputMode="numeric"
-                autoComplete="one-time-code"
-                pattern={OTP_INPUT_PATTERN}
-                minLength={EMAIL_OTP_LENGTH}
-                maxLength={EMAIL_OTP_LENGTH}
-                required
-                placeholder={"0".repeat(EMAIL_OTP_LENGTH)}
+              <OtpInput
+                length={EMAIL_OTP_LENGTH}
                 className="w-full rounded-md border border-border bg-card px-3 py-2 text-center text-lg tracking-[0.2em] focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary"
               />
             </div>

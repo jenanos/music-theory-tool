@@ -2,12 +2,20 @@ import { describe, expect, it } from "vitest";
 import {
     DEFAULT_CHORD_RICHNESS_PROFILE,
     generateChordVariants,
+    getChordCoreIntervals,
+    getChordCorePitchClasses,
     inferProfileFromSequence,
+    isDominantRoman,
+    normalizeChordSymbol,
     parseChordSymbol,
     toProfileBaseChordSymbol,
 } from "../src";
 
 describe("chord richness parsing", () => {
+    it("normalizes whitespace and unicode accidentals", () => {
+        expect(normalizeChordSymbol("  B♭maj7 / D ")).toBe("Bbmaj7/D");
+    });
+
     it("parses altered dominant slash chords", () => {
         const parsed = parseChordSymbol("G7(b9)/B");
         expect(parsed).toBeTruthy();
@@ -21,6 +29,22 @@ describe("chord richness parsing", () => {
         const parsed = parseChordSymbol("B♭maj7");
         expect(parsed?.root).toBe("Bb");
         expect(parsed?.seventhType).toBe("maj7");
+    });
+
+    it("returns null for empty normalized symbols", () => {
+        expect(parseChordSymbol("   ")).toBeNull();
+    });
+});
+
+describe("core interval helpers", () => {
+    it("derives suspended and diminished interval sets", () => {
+        expect(getChordCoreIntervals(parseChordSymbol("Gsus2")!)).toEqual([0, 2, 7]);
+        expect(getChordCoreIntervals(parseChordSymbol("Bdim7")!)).toEqual([0, 3, 6, 9]);
+    });
+
+    it("maps chord cores to pitch classes", () => {
+        const pitches = getChordCorePitchClasses(parseChordSymbol("G7/B")!).sort((a, b) => a - b);
+        expect(pitches).toEqual([2, 5, 7, 11]);
     });
 });
 
@@ -39,11 +63,23 @@ describe("profile inference and conversion", () => {
     });
 
     it.each([
+        { roman: "V", expected: true },
+        { roman: "V65", expected: true },
+        { roman: "V7/V", expected: true },
+        { roman: "bII7", expected: false },
+        { roman: "i", expected: false },
+    ])("detects whether $roman is dominant-like", ({ roman, expected }) => {
+        expect(isDominantRoman(roman)).toBe(expected);
+    });
+
+    it.each([
         { symbol: "G13/B", profile: "triad" as const, roman: "V", expected: "G/B" },
         { symbol: "G/B", profile: "seventh" as const, roman: "V6", expected: "G7/B" },
         { symbol: "F", profile: "seventh" as const, roman: "IV", expected: "Fmaj7" },
         { symbol: "Bdim", profile: "seventh" as const, roman: "vii°", expected: "Bdim7" },
         { symbol: "Bm7b5", profile: "triad" as const, roman: "viiø7", expected: "Bdim" },
+        { symbol: "Gsus4", profile: "jazz" as const, roman: "V", expected: "G9sus" },
+        { symbol: "C", profile: "seventh" as const, roman: "V/V", expected: "C7" },
     ])("maps $symbol -> $expected in $profile profile", ({ symbol, profile, roman, expected }) => {
         expect(toProfileBaseChordSymbol(symbol, profile, { roman })).toBe(expected);
     });

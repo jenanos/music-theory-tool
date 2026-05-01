@@ -17,6 +17,7 @@ import { useAuth } from "../lib/auth-context";
 import { AlphaTabPreview } from "./components/AlphaTabPreview";
 import {
   LickImportModal,
+  type LickEditableData,
   type GroupOption,
   type LickCreateData,
   type LickVisibility,
@@ -110,6 +111,7 @@ export default function LicksPage() {
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [isImportOpen, setIsImportOpen] = useState(false);
+  const [editingLick, setEditingLick] = useState<LickEditableData | null>(null);
 
   useEffect(() => {
     async function fetchData() {
@@ -201,6 +203,49 @@ export default function LicksPage() {
     setSelectedId(created.id);
   };
 
+  const handleUpdateLick = async (lickId: string, data: LickCreateData) => {
+    const response = await fetch(`/api/licks/${lickId}`, {
+      method: "PUT",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(data),
+    });
+
+    if (!response.ok) {
+      const body = await response.json().catch(() => null);
+      throw new Error(formatApiError(body, "Kunne ikke oppdatere lick."));
+    }
+
+    const updated = (await response.json()) as Lick;
+    setLicks((current) =>
+      current.map((item) => (item.id === updated.id ? updated : item)),
+    );
+    setSelectedId(updated.id);
+  };
+
+  const handleSaveLick = async (data: LickCreateData) => {
+    if (editingLick?.id) {
+      await handleUpdateLick(editingLick.id, data);
+      return;
+    }
+
+    await handleCreateLick(data);
+  };
+
+  const openCreateModal = () => {
+    setEditingLick(null);
+    setIsImportOpen(true);
+  };
+
+  const openEditModal = (lick: Lick) => {
+    setEditingLick(lick);
+    setIsImportOpen(true);
+  };
+
+  const closeLickModal = () => {
+    setIsImportOpen(false);
+    setEditingLick(null);
+  };
+
   const handleCreateExample = async () => {
     try {
       await handleCreateLick(createExampleLick());
@@ -230,6 +275,7 @@ export default function LicksPage() {
   const canDelete =
     selectedLick &&
     (user?.role === "admin" || selectedLick.userId === user?.id);
+  const canEdit = canDelete;
 
   if (isLoading) {
     return (
@@ -244,8 +290,9 @@ export default function LicksPage() {
       <LickImportModal
         isOpen={isImportOpen}
         groups={groups}
-        onClose={() => setIsImportOpen(false)}
-        onSave={handleCreateLick}
+        initialLick={editingLick}
+        onClose={closeLickModal}
+        onSave={handleSaveLick}
       />
 
       <aside className="flex max-h-[45vh] w-full flex-col border-b border-border bg-card/50 md:max-h-none md:w-80 md:border-b-0 md:border-r">
@@ -257,12 +304,8 @@ export default function LicksPage() {
                 Favoritter som kan transponeres.
               </p>
             </div>
-            <Button
-              type="button"
-              size="sm"
-              onClick={() => setIsImportOpen(true)}
-            >
-              Importer
+            <Button type="button" size="sm" onClick={openCreateModal}>
+              Legg til
             </Button>
           </div>
           <Input
@@ -358,8 +401,17 @@ export default function LicksPage() {
                     Slett
                   </Button>
                 )}
-                <Button type="button" onClick={() => setIsImportOpen(true)}>
-                  Importer nytt
+                {canEdit && (
+                  <Button
+                    type="button"
+                    variant="outline"
+                    onClick={() => openEditModal(selectedLick)}
+                  >
+                    Rediger
+                  </Button>
+                )}
+                <Button type="button" onClick={openCreateModal}>
+                  Legg til nytt
                 </Button>
               </div>
             </div>

@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
+import Link from "next/link";
 import {
   SCALES,
   TONIC_OPTIONS,
@@ -8,35 +9,15 @@ import {
   parseKey,
   transposeLickData,
   validateLickData,
-  type LickData,
   type ModeId,
 } from "@repo/theory";
 import { Button } from "@repo/ui/button";
 import { Input } from "@repo/ui/input";
 import { useAuth } from "../lib/auth-context";
 import { AlphaTabPreview } from "./components/AlphaTabPreview";
-import {
-  LickImportModal,
-  type LickEditableData,
-  type GroupOption,
-  type LickCreateData,
-  type LickVisibility,
-} from "./components/LickImportModal";
+import { type LickCreateData, type LickResponse } from "./components/types";
 
-interface Lick {
-  id: string;
-  title: string;
-  key: string | null;
-  description: string | null;
-  tags: string[];
-  tuning: string | null;
-  data: LickData;
-  visibility: LickVisibility;
-  userId: string | null;
-  groupId: string | null;
-  createdAt: string;
-  updatedAt: string;
-}
+type Lick = LickResponse;
 
 const HARMONY_SCALES = SCALES.filter((scale) => scale.isHarmony);
 
@@ -103,35 +84,31 @@ function createExampleLick(): LickCreateData {
 export default function LicksPage() {
   const { user } = useAuth();
   const [licks, setLicks] = useState<Lick[]>([]);
-  const [groups, setGroups] = useState<GroupOption[]>([]);
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [search, setSearch] = useState("");
   const [targetTonic, setTargetTonic] = useState("A");
   const [targetMode, setTargetMode] = useState<ModeId>("aeolian");
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [isImportOpen, setIsImportOpen] = useState(false);
-  const [editingLick, setEditingLick] = useState<LickEditableData | null>(null);
 
   useEffect(() => {
     async function fetchData() {
       try {
-        const [licksRes, groupsRes] = await Promise.all([
-          fetch("/api/licks"),
-          fetch("/api/groups"),
-        ]);
+        const licksRes = await fetch("/api/licks");
         if (!licksRes.ok) throw new Error("Kunne ikke hente licks.");
 
         const licksData = (await licksRes.json()) as Lick[];
+        const selectedFromUrl = new URLSearchParams(window.location.search).get(
+          "selected",
+        );
         setLicks(licksData);
-        setSelectedId((current) => current ?? licksData[0]?.id ?? null);
-
-        if (groupsRes.ok) {
-          const groupsData = (await groupsRes.json()) as GroupOption[];
-          setGroups(
-            groupsData.map((group) => ({ id: group.id, name: group.name })),
-          );
-        }
+        setSelectedId(
+          (current) =>
+            current ??
+            licksData.find((lick) => lick.id === selectedFromUrl)?.id ??
+            licksData[0]?.id ??
+            null,
+        );
       } catch (err) {
         setError(err instanceof Error ? err.message : "Ukjent feil.");
       } finally {
@@ -203,49 +180,6 @@ export default function LicksPage() {
     setSelectedId(created.id);
   };
 
-  const handleUpdateLick = async (lickId: string, data: LickCreateData) => {
-    const response = await fetch(`/api/licks/${lickId}`, {
-      method: "PUT",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(data),
-    });
-
-    if (!response.ok) {
-      const body = await response.json().catch(() => null);
-      throw new Error(formatApiError(body, "Kunne ikke oppdatere lick."));
-    }
-
-    const updated = (await response.json()) as Lick;
-    setLicks((current) =>
-      current.map((item) => (item.id === updated.id ? updated : item)),
-    );
-    setSelectedId(updated.id);
-  };
-
-  const handleSaveLick = async (data: LickCreateData) => {
-    if (editingLick?.id) {
-      await handleUpdateLick(editingLick.id, data);
-      return;
-    }
-
-    await handleCreateLick(data);
-  };
-
-  const openCreateModal = () => {
-    setEditingLick(null);
-    setIsImportOpen(true);
-  };
-
-  const openEditModal = (lick: Lick) => {
-    setEditingLick(lick);
-    setIsImportOpen(true);
-  };
-
-  const closeLickModal = () => {
-    setIsImportOpen(false);
-    setEditingLick(null);
-  };
-
   const handleCreateExample = async () => {
     try {
       await handleCreateLick(createExampleLick());
@@ -287,14 +221,6 @@ export default function LicksPage() {
 
   return (
     <div className="flex h-full w-full flex-col overflow-hidden bg-background md:flex-row">
-      <LickImportModal
-        isOpen={isImportOpen}
-        groups={groups}
-        initialLick={editingLick}
-        onClose={closeLickModal}
-        onSave={handleSaveLick}
-      />
-
       <aside className="flex max-h-[45vh] w-full flex-col border-b border-border bg-card/50 md:max-h-none md:w-80 md:border-b-0 md:border-r">
         <div className="space-y-3 border-b border-border p-4">
           <div className="flex items-center justify-between gap-2">
@@ -304,8 +230,8 @@ export default function LicksPage() {
                 Favoritter som kan transponeres.
               </p>
             </div>
-            <Button type="button" size="sm" onClick={openCreateModal}>
-              Legg til
+            <Button asChild size="sm">
+              <Link href="/licks/new">Legg til</Link>
             </Button>
           </div>
           <Input
@@ -402,16 +328,12 @@ export default function LicksPage() {
                   </Button>
                 )}
                 {canEdit && (
-                  <Button
-                    type="button"
-                    variant="outline"
-                    onClick={() => openEditModal(selectedLick)}
-                  >
-                    Rediger
+                  <Button asChild variant="outline">
+                    <Link href={`/licks/${selectedLick.id}/edit`}>Rediger</Link>
                   </Button>
                 )}
-                <Button type="button" onClick={openCreateModal}>
-                  Legg til nytt
+                <Button asChild>
+                  <Link href="/licks/new">Legg til nytt</Link>
                 </Button>
               </div>
             </div>

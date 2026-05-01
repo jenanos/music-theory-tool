@@ -74,10 +74,19 @@ const LLM_PROMPT = `Du er en presis transkribent for gitar-licks. Se på vedlagt
 Regler:
 - Returner kun gyldig JSON, uten markdown.
 - string er 1-6 der 1 er lys E-streng og 6 er mørk E-streng.
+- data.feel må være "straight", "swing" eller "triplets"; bruk "triplets" for triol-feel.
 - duration bruker "1", "2", "4", "8", "16" osv. Bruk "8t" for åttedels-trioler.
 - Ikke bruk punktede rytmer som "4." eller "8.". Bruk nærmeste grunnverdi ("4" eller "8") og beskriv punktéringen i description hvis den er viktig.
 - technique kan være "slide", "hammer", "pull", "bend", "vibrato", "tie" eller "ghost".
 - Hvis noe er usikkert, legg en kort forklaring i description, men gjett beste tab-data.`;
+
+function normalizeLickFeel(feel: unknown): LickData["feel"] {
+  if (feel === "triplet") return "triplets";
+  if (feel === "straight" || feel === "swing" || feel === "triplets") {
+    return feel;
+  }
+  return "straight";
+}
 
 export function LickImportModal({
   isOpen,
@@ -154,7 +163,7 @@ export function LickImportModal({
         data: {
           version: 1,
           meter: parsed.data.meter || "4/4",
-          feel: parsed.data.feel || "straight",
+          feel: normalizeLickFeel(parsed.data.feel),
           events: parsed.data.events,
         },
       });

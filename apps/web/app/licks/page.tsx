@@ -39,6 +39,36 @@ interface Lick {
 
 const HARMONY_SCALES = SCALES.filter((scale) => scale.isHarmony);
 
+function formatApiError(body: unknown, fallback: string): string {
+  if (!body || typeof body !== "object") return fallback;
+
+  const error =
+    "error" in body && typeof body.error === "string" ? body.error : fallback;
+  const issues =
+    "issues" in body && Array.isArray(body.issues) ? body.issues : [];
+
+  if (issues.length === 0) return error;
+
+  const details = issues
+    .map((issue) => {
+      if (!issue || typeof issue !== "object") return null;
+      const message =
+        "message" in issue && typeof issue.message === "string"
+          ? issue.message
+          : null;
+      const path =
+        "path" in issue && Array.isArray(issue.path)
+          ? issue.path.join(".")
+          : "";
+
+      if (!message) return null;
+      return path ? `${path}: ${message}` : message;
+    })
+    .filter((detail): detail is string => Boolean(detail));
+
+  return details.length > 0 ? `${error}: ${details.join("; ")}` : error;
+}
+
 function createExampleLick(): LickCreateData {
   return {
     title: "A minor pentatonic idea",
@@ -163,7 +193,7 @@ export default function LicksPage() {
 
     if (!response.ok) {
       const body = await response.json().catch(() => null);
-      throw new Error(body?.error ?? "Kunne ikke lagre lick.");
+      throw new Error(formatApiError(body, "Kunne ikke lagre lick."));
     }
 
     const created = (await response.json()) as Lick;

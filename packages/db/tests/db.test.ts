@@ -88,6 +88,20 @@ describe("db validation and mapping", () => {
     expect(parsed.data.events[0]?.ghost).toBe(false);
   });
 
+  it("normalizes singular triplet feel on imported licks", () => {
+    const parsed = lickCreateSchema.parse({
+      title: "C minor triplet run",
+      data: {
+        version: 1,
+        meter: "4/4",
+        feel: "triplet",
+        events: [],
+      },
+    });
+
+    expect(parsed.data.feel).toBe("triplets");
+  });
+
   it("validates lick updates with visibility", () => {
     const parsed = lickUpdateSchema.parse({
       visibility: "group",

@@ -25,6 +25,10 @@ export const lickTechniqueSchema = z.enum([
 ]);
 
 export const lickFeelSchema = z.enum(["straight", "swing", "triplets"]);
+const lickFeelInputSchema = z.preprocess(
+  (value) => (value === "triplet" ? "triplets" : value),
+  lickFeelSchema,
+);
 
 export const lickEventSchema = z.object({
   bar: z.number().int().min(1),
@@ -40,7 +44,7 @@ export const lickEventSchema = z.object({
 export const lickDataSchema = z.object({
   version: z.literal(1),
   meter: z.string().trim().min(1).optional().default("4/4"),
-  feel: lickFeelSchema.optional().default("straight"),
+  feel: lickFeelInputSchema.optional().default("straight"),
   events: z.array(lickEventSchema).default([]),
 });
 

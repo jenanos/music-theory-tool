@@ -30,16 +30,26 @@ const lickFeelInputSchema = z.preprocess(
   lickFeelSchema,
 );
 
-export const lickEventSchema = z.object({
-  bar: z.number().int().min(1),
-  beat: z.number().min(1),
-  duration: z.string().trim().min(1, "Duration is required"),
-  string: z.number().int().min(1).max(6),
-  fret: z.number().int().min(0),
-  technique: lickTechniqueSchema.optional(),
-  toFret: z.number().int().min(0).optional(),
-  ghost: z.boolean().optional().default(false),
-});
+export const lickEventSchema = z
+  .object({
+    bar: z.number().int().min(1),
+    beat: z.number().min(1),
+    duration: z.string().trim().min(1, "Duration is required"),
+    string: z.number().int().min(1).max(6).optional(),
+    fret: z.number().int().min(0).optional(),
+    rest: z.boolean().optional(),
+    technique: lickTechniqueSchema.optional(),
+    toFret: z.number().int().min(0).optional(),
+    ghost: z.boolean().optional().default(false),
+  })
+  .refine(
+    (event) =>
+      event.rest === true ||
+      (typeof event.string === "number" && typeof event.fret === "number"),
+    {
+      message: "Event must be a rest or include both string and fret",
+    },
+  );
 
 export const lickDataSchema = z.object({
   version: z.literal(1),

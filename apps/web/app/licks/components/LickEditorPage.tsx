@@ -9,7 +9,7 @@ import { Input } from "@repo/ui/input";
 import { Label } from "@repo/ui/label";
 import { Textarea } from "@repo/ui/textarea";
 import { AlphaTabPreview } from "./AlphaTabPreview";
-import { alphaTexToLickData } from "./alphaTexConversion";
+import { TablatureEditor } from "./TablatureEditor";
 import {
   formatApiError,
   type GroupOption,
@@ -115,13 +115,6 @@ function parseTags(value: string): string[] {
     .filter(Boolean);
 }
 
-function draftToAlphaTex(draft: LickCreateData): string {
-  return lickDataToAlphaTex(draft.data, {
-    title: draft.title || "Lick",
-    subtitle: draft.key ?? undefined,
-  });
-}
-
 function parseLlmDraft(jsonText: string): LickCreateData {
   const parsed = JSON.parse(jsonText) as Partial<LickCreateData>;
   if (!parsed || typeof parsed !== "object") {
@@ -161,9 +154,6 @@ export function LickEditorPage({ lickId }: LickEditorPageProps) {
   const [draft, setDraft] = useState<LickCreateData>(() =>
     createInitialDraft(),
   );
-  const [alphaTex, setAlphaTex] = useState(() =>
-    draftToAlphaTex(createInitialDraft()),
-  );
   const [llmJson, setLlmJson] = useState("");
   const [visibility, setVisibility] = useState<LickVisibility>("private");
   const [selectedGroupId, setSelectedGroupId] = useState("");
@@ -196,7 +186,6 @@ export function LickEditorPage({ lickId }: LickEditorPageProps) {
           const loaded = (await lickRes.json()) as LickResponse;
           const nextDraft = normalizeLoadedLick(loaded);
           setDraft(nextDraft);
-          setAlphaTex(draftToAlphaTex(nextDraft));
           setVisibility(nextDraft.visibility ?? "private");
           setSelectedGroupId(nextDraft.groupId ?? "");
         }
@@ -211,12 +200,16 @@ export function LickEditorPage({ lickId }: LickEditorPageProps) {
   }, [lickId]);
 
   const previewAlphaTex = useMemo(
-    () => alphaTex.trim() || draftToAlphaTex(draft),
-    [alphaTex, draft],
+    () =>
+      lickDataToAlphaTex(draft.data, {
+        title: draft.title || "Lick",
+        subtitle: draft.key || undefined,
+      }),
+    [draft],
   );
 
-  const updateDraft = (nextDraft: LickCreateData) => {
-    setDraft(nextDraft);
+  const updateData = (data: LickData) => {
+    setDraft((current) => ({ ...current, data }));
   };
 
   const copyPrompt = async () => {
@@ -234,7 +227,6 @@ export function LickEditorPage({ lickId }: LickEditorPageProps) {
     try {
       const nextDraft = parseLlmDraft(llmJson);
       setDraft(nextDraft);
-      setAlphaTex(draftToAlphaTex(nextDraft));
       setVisibility(nextDraft.visibility ?? "private");
       setSelectedGroupId(nextDraft.groupId ?? "");
     } catch (err) {
@@ -255,7 +247,6 @@ export function LickEditorPage({ lickId }: LickEditorPageProps) {
     setIsSaving(true);
     setError(null);
     try {
-      const data = await alphaTexToLickData(previewAlphaTex);
       const payload: LickCreateData = {
         ...draft,
         title: draft.title.trim(),
@@ -265,7 +256,7 @@ export function LickEditorPage({ lickId }: LickEditorPageProps) {
         tuning: draft.tuning?.trim() || null,
         visibility,
         groupId: visibility === "group" ? selectedGroupId : null,
-        data,
+        data: draft.data,
       };
 
       const response = await fetch(
@@ -308,7 +299,7 @@ export function LickEditorPage({ lickId }: LickEditorPageProps) {
               {mode === "edit" ? "Rediger lick" : "Legg til lick"}
             </h1>
             <p className="text-sm text-muted-foreground">
-              AlphaTex med live alphaTab-preview.
+              WYSIWYG tab-editor med live preview.
             </p>
           </div>
           <div className="flex gap-2">
@@ -335,7 +326,7 @@ export function LickEditorPage({ lickId }: LickEditorPageProps) {
                 <Input
                   value={draft.title}
                   onChange={(event) =>
-                    updateDraft({ ...draft, title: event.target.value })
+                    setDraft({ ...draft, title: event.target.value })
                   }
                 />
               </label>
@@ -344,7 +335,7 @@ export function LickEditorPage({ lickId }: LickEditorPageProps) {
                 <Input
                   value={draft.key ?? ""}
                   onChange={(event) =>
-                    updateDraft({ ...draft, key: event.target.value })
+                    setDraft({ ...draft, key: event.target.value })
                   }
                   placeholder="A aeolian"
                 />
@@ -354,7 +345,7 @@ export function LickEditorPage({ lickId }: LickEditorPageProps) {
                 <Input
                   value={(draft.tags ?? []).join(", ")}
                   onChange={(event) =>
-                    updateDraft({
+                    setDraft({
                       ...draft,
                       tags: parseTags(event.target.value),
                     })
@@ -367,7 +358,7 @@ export function LickEditorPage({ lickId }: LickEditorPageProps) {
                 <Input
                   value={draft.tuning ?? ""}
                   onChange={(event) =>
-                    updateDraft({ ...draft, tuning: event.target.value })
+                    setDraft({ ...draft, tuning: event.target.value })
                   }
                   placeholder="EADGBE"
                 />
@@ -379,7 +370,7 @@ export function LickEditorPage({ lickId }: LickEditorPageProps) {
               <Textarea
                 value={draft.description ?? ""}
                 onChange={(event) =>
-                  updateDraft({ ...draft, description: event.target.value })
+                  setDraft({ ...draft, description: event.target.value })
                 }
                 className="min-h-24"
               />
@@ -443,26 +434,20 @@ export function LickEditorPage({ lickId }: LickEditorPageProps) {
             </div>
           </section>
 
-          <section className="grid gap-4 lg:grid-cols-2">
-            <div className="space-y-2">
-              <Label htmlFor="alphatex">AlphaTex</Label>
-              <Textarea
-                id="alphatex"
-                value={alphaTex}
-                onChange={(event) => setAlphaTex(event.target.value)}
-                className="min-h-[620px] font-mono text-xs"
-                spellCheck={false}
-              />
+          <section className="space-y-4">
+            <div>
+              <h2 className="text-sm font-semibold text-foreground">
+                Tabulatur
+              </h2>
+              <p className="text-xs text-muted-foreground">
+                Klikk en celle for å redigere. Bruk verktøylinjen for varighet
+                og teknikker.
+              </p>
             </div>
+            <TablatureEditor data={draft.data} onChange={updateData} />
+
             <div className="space-y-2">
-              <div>
-                <h2 className="text-sm font-semibold text-foreground">
-                  Preview
-                </h2>
-                <p className="text-xs text-muted-foreground">
-                  Samme renderer som bibliotekvisningen.
-                </p>
-              </div>
+              <h2 className="text-sm font-semibold text-foreground">Preview</h2>
               <AlphaTabPreview alphaTex={previewAlphaTex} />
             </div>
           </section>

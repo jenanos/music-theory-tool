@@ -66,14 +66,6 @@ export function AlphaTabPreview({ alphaTex }: AlphaTabPreviewProps) {
           {error}
         </div>
       )}
-      <details className="rounded-md border border-border bg-card/50 p-3">
-        <summary className="cursor-pointer text-xs font-medium text-muted-foreground hover:text-foreground">
-          Vis AlphaTex
-        </summary>
-        <pre className="mt-2 overflow-x-auto whitespace-pre-wrap text-xs text-muted-foreground">
-          {alphaTex}
-        </pre>
-      </details>
     </div>
   );
 }

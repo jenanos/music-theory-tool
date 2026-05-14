@@ -3,7 +3,14 @@ import "./globals.css";
 import type { Metadata } from "next";
 import { Outfit } from "next/font/google";
 import Image from "next/image";
+import { prisma } from "@repo/db";
 import { AuthProvider } from "./lib/auth-context";
+import { auth } from "./lib/auth";
+import {
+  DEFAULT_USER_THEME,
+  getThemeRootClass,
+  isUserTheme,
+} from "./lib/theme";
 import { Navigation } from "./Navigation";
 
 const outfit = Outfit({ subsets: ["latin"] });
@@ -14,30 +21,52 @@ export const metadata: Metadata = {
     "Utforsk diatoniske akkorder, se grep/voicings på gitaren, og få substitusjonsforslag basert på funksjon og delte toner.",
 };
 
-export default function RootLayout({
+export default async function RootLayout({
   children,
 }: {
   children: React.ReactNode;
 }) {
+  const session = await auth();
+  const storedTheme = session?.user?.id
+    ? (
+        await prisma.user.findUnique({
+          where: { id: session.user.id },
+          select: { theme: true },
+        })
+      )?.theme
+    : null;
+  const theme =
+    storedTheme && isUserTheme(storedTheme)
+      ? storedTheme
+      : DEFAULT_USER_THEME;
+
   return (
-    <html lang="no" className="dark">
-      <body className={`${outfit.className} bg-transparent text-foreground antialiased min-h-screen relative`} style={{ backgroundColor: '#011315' }}>
+    <html
+      lang="no"
+      className={getThemeRootClass(theme)}
+      data-theme={theme}
+      suppressHydrationWarning
+    >
+      <body
+        className={`${outfit.className} bg-transparent text-foreground antialiased min-h-screen relative`}
+      >
         {/* Background Image Layer */}
         <div className="fixed inset-0 -z-50 overflow-hidden">
           <Image
             src="/album-cover.webp"
             alt="Background"
             fill
-            className="object-cover scale-110 blur-[8px]"
+            className="object-cover scale-110 blur-[8px] transition-opacity duration-300"
+            style={{ opacity: "var(--app-background-image-opacity)" }}
             priority
           />
           <div
             className="absolute inset-0"
-            style={{ background: 'linear-gradient(to bottom, rgba(3, 43, 48, 0.4), rgba(1, 26, 29, 0.8))' }}
+            style={{ background: "var(--app-background-overlay)" }}
           />
         </div>
 
-        <AuthProvider>
+        <AuthProvider initialTheme={theme}>
           <Navigation />
           <div className="flex-1 overflow-y-auto">
             {children}

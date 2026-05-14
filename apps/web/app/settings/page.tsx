@@ -3,6 +3,10 @@
 import { useEffect, useState } from "react";
 import { useAuth, ALL_PAGES } from "../lib/auth-context";
 import type { PageId } from "../lib/auth-context";
+import {
+    USER_THEME_OPTIONS,
+    type UserTheme,
+} from "../lib/theme";
 
 interface GroupSummary {
     id: string;
@@ -12,9 +16,11 @@ interface GroupSummary {
 }
 
 export default function SettingsPage() {
-    const { user, isLoading, enabledPages } = useAuth();
+    const { user, isLoading, enabledPages, theme, updateTheme } = useAuth();
     const [groups, setGroups] = useState<GroupSummary[]>([]);
     const [groupsLoaded, setGroupsLoaded] = useState(false);
+    const [isSavingTheme, setIsSavingTheme] = useState(false);
+    const [themeMessage, setThemeMessage] = useState<string | null>(null);
 
     useEffect(() => {
         if (!user) return;
@@ -59,6 +65,24 @@ export default function SettingsPage() {
 
     const isAdmin = user.role === "admin";
 
+    const handleThemeChange = async (nextTheme: UserTheme) => {
+        if (nextTheme === theme || isSavingTheme) return;
+
+        setIsSavingTheme(true);
+        setThemeMessage(null);
+
+        try {
+            await updateTheme(nextTheme);
+            setThemeMessage("Tema lagret.");
+        } catch (error) {
+            setThemeMessage(
+                error instanceof Error ? error.message : "Kunne ikke lagre tema."
+            );
+        } finally {
+            setIsSavingTheme(false);
+        }
+    };
+
     return (
         <div className="mx-auto max-w-2xl px-4 py-8 md:px-6">
             <h1 className="text-2xl font-bold text-foreground mb-2">Innstillinger</h1>
@@ -87,6 +111,56 @@ export default function SettingsPage() {
                         <span className="text-foreground capitalize">{user.role}</span>
                     </div>
                 </div>
+            </section>
+
+            <section className="mt-6 rounded-xl border border-border bg-card/60 backdrop-blur-xl p-6">
+                <h2 className="text-lg font-semibold text-foreground mb-1">
+                    Fargetema
+                </h2>
+                <p className="text-sm text-muted-foreground mb-4">
+                    Velg mellom dagens Tynn Is-tema eller mer tradisjonell light
+                    mode og dark mode.
+                </p>
+
+                <div className="grid gap-3 sm:grid-cols-3">
+                    {USER_THEME_OPTIONS.map((option) => {
+                        const isActive = theme === option.id;
+                        return (
+                            <button
+                                key={option.id}
+                                type="button"
+                                onClick={() => handleThemeChange(option.id)}
+                                aria-pressed={isActive}
+                                disabled={isSavingTheme}
+                                className={`rounded-xl border p-4 text-left transition ${
+                                    isActive
+                                        ? "border-primary bg-primary/10 shadow-sm"
+                                        : "border-border bg-card/40 hover:border-primary/40 hover:bg-card/70"
+                                } ${isSavingTheme ? "opacity-70" : ""}`}
+                            >
+                                <div className="flex items-center justify-between gap-3">
+                                    <span className="font-medium text-foreground">
+                                        {option.label}
+                                    </span>
+                                    {isActive && (
+                                        <span className="rounded-full bg-primary/15 px-2 py-0.5 text-[11px] font-medium text-primary">
+                                            Valgt
+                                        </span>
+                                    )}
+                                </div>
+                                <p className="mt-2 text-sm text-muted-foreground">
+                                    {option.description}
+                                </p>
+                            </button>
+                        );
+                    })}
+                </div>
+
+                {themeMessage && (
+                    <p className="mt-4 text-sm text-muted-foreground">
+                        {themeMessage}
+                    </p>
+                )}
             </section>
 
             {/* Access summary */}

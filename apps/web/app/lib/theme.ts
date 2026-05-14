@@ -12,7 +12,8 @@ export const USER_THEME_OPTIONS: Array<{
   {
     id: "thin-ice",
     label: "Tynn Is",
-    description: "Dagens glassaktige tema med frostede flater og bakgrunnsbilde.",
+    description:
+      "Dagens glassaktige tema med frostede flater og bakgrunnsbilde.",
   },
   {
     id: "light",
@@ -27,10 +28,7 @@ export const USER_THEME_OPTIONS: Array<{
 ];
 
 export function isUserTheme(value: unknown): value is UserTheme {
-  return (
-    typeof value === "string" &&
-    USER_THEMES.includes(value as UserTheme)
-  );
+  return typeof value === "string" && USER_THEMES.includes(value as UserTheme);
 }
 
 export function getThemeRootClass(theme: UserTheme): string {

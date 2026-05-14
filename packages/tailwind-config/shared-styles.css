@@ -29,44 +29,44 @@ html[data-theme="thin-ice"] {
 
   /* Muted */
   --muted: rgba(255, 255, 255, 0.02);
-  --muted-foreground: #A1DCE3;
+  --muted-foreground: #a1dce3;
 
   /* Accent - Ice Blue/Cyan */
-  --accent: #A1DCE3;
-  --accent-bright: #B2EBF2;
+  --accent: #a1dce3;
+  --accent-bright: #b2ebf2;
   --accent-foreground: #011315;
 
   /* Sidebar */
   --sidebar-bg: rgba(2, 20, 23, 0.85);
 
   /* Destructive */
-  --destructive: #8A2C2C;
+  --destructive: #8a2c2c;
   --destructive-foreground: #f0f9fa;
 
   /* Borders and inputs */
   --border: rgba(255, 255, 255, 0.2);
   --input: rgba(255, 255, 255, 0.2);
-  --ring: #A1DCE3;
+  --ring: #a1dce3;
 
   /* Chart colors */
   --chart-1: #158391;
-  --chart-2: #A1DCE3;
+  --chart-2: #a1dce3;
   --chart-3: oklch(0.55 0.18 110);
-  --chart-4: oklch(0.50 0.18 310);
-  --chart-5: oklch(0.50 0.20 30);
+  --chart-4: oklch(0.5 0.18 310);
+  --chart-5: oklch(0.5 0.2 30);
 
   /* Radius */
   --radius: 0.625rem;
 
   /* Sidebar */
-  --sidebar: #032B30;
-  --sidebar-foreground: #F0F9FA;
+  --sidebar: #032b30;
+  --sidebar-foreground: #f0f9fa;
   --sidebar-primary: #158391;
-  --sidebar-primary-foreground: #F0F9FA;
-  --sidebar-accent: #A1DCE3;
-  --sidebar-accent-foreground: #032B30;
+  --sidebar-primary-foreground: #f0f9fa;
+  --sidebar-accent: #a1dce3;
+  --sidebar-accent-foreground: #032b30;
   --sidebar-border: rgba(161, 220, 227, 0.2);
-  --sidebar-ring: #A1DCE3;
+  --sidebar-ring: #a1dce3;
 
   /* App shell */
   --app-body-bg: #011315;

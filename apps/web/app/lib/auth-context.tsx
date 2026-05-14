@@ -148,9 +148,9 @@ function AuthContextProvider({
     });
 
     if (!response.ok) {
-      const data = (await response.json().catch(() => null)) as
-        | { error?: string }
-        | null;
+      const data = (await response.json().catch(() => null)) as {
+        error?: string;
+      } | null;
       throw new Error(data?.error ?? "Kunne ikke lagre tema.");
     }
 

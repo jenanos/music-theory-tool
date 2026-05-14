@@ -36,9 +36,7 @@ export default async function RootLayout({
       )?.theme
     : null;
   const theme =
-    storedTheme && isUserTheme(storedTheme)
-      ? storedTheme
-      : DEFAULT_USER_THEME;
+    storedTheme && isUserTheme(storedTheme) ? storedTheme : DEFAULT_USER_THEME;
 
   return (
     <html
@@ -68,9 +66,7 @@ export default async function RootLayout({
 
         <AuthProvider initialTheme={theme}>
           <Navigation />
-          <div className="flex-1 overflow-y-auto">
-            {children}
-          </div>
+          <div className="flex-1 overflow-y-auto">{children}</div>
         </AuthProvider>
       </body>
     </html>

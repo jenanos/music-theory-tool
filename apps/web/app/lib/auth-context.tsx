@@ -13,12 +13,18 @@ import type { ReactNode } from "react";
 
 export type UserRole = "admin" | "member";
 
-export type PageId = "chords" | "progressions" | "charts" | "practice";
+export type PageId =
+  | "chords"
+  | "progressions"
+  | "charts"
+  | "practice"
+  | "licks";
 
 export const ALL_PAGES: { id: PageId; label: string; path: string }[] = [
   { id: "chords", label: "Akkorder", path: "/" },
   { id: "progressions", label: "Progresjoner", path: "/progressions" },
   { id: "charts", label: "Blekker", path: "/charts" },
+  { id: "licks", label: "Licks", path: "/licks" },
   { id: "practice", label: "Øvelse", path: "/practice" },
 ];
 
@@ -59,11 +65,10 @@ function AuthContextProvider({ children }: { children: ReactNode }) {
             id: session.user.id ?? "",
             email: session.user.email ?? "",
             name: session.user.name ?? null,
-            role:
-              ((session.user as SessionUser).role as UserRole) ?? "member",
+            role: ((session.user as SessionUser).role as UserRole) ?? "member",
           }
         : null,
-    [session?.user]
+    [session?.user],
   );
 
   const isAdmin = user?.role === "admin";
@@ -99,7 +104,7 @@ function AuthContextProvider({ children }: { children: ReactNode }) {
       if (isAdmin) return true;
       return enabledPages.includes(pageId);
     },
-    [isAdmin, enabledPages]
+    [isAdmin, enabledPages],
   );
 
   const logout = useCallback(async () => {

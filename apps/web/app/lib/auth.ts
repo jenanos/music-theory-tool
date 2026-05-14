@@ -25,7 +25,8 @@ export type UserRole = "admin" | "member";
 // ---------------------------------------------------------------------------
 
 const prismaAdapter = PrismaAdapter(prisma);
-const baseUseVerificationToken = prismaAdapter.useVerificationToken?.bind(prismaAdapter);
+const baseUseVerificationToken =
+  prismaAdapter.useVerificationToken?.bind(prismaAdapter);
 const baseDeleteSession = prismaAdapter.deleteSession?.bind(prismaAdapter);
 
 function isPrismaErrorWithCode(error: unknown, code: string) {
@@ -112,9 +113,7 @@ const config = {
   providers: [
     ResendProvider({
       apiKey: process.env.RESEND_API_KEY,
-      from:
-        process.env.EMAIL_FROM ??
-        "Music Theory Tool <noreply@resend.dev>",
+      from: process.env.EMAIL_FROM ?? "Music Theory Tool <noreply@resend.dev>",
       maxAge: EMAIL_SIGN_IN_MAX_AGE_SECONDS,
       generateVerificationToken: generateEmailOtpToken,
       async sendVerificationRequest({ identifier, url, token, provider }) {
@@ -215,11 +214,19 @@ export async function requireAdmin() {
 // Page access (group-based)
 // ---------------------------------------------------------------------------
 
-export type PageId = "chords" | "progressions" | "charts" | "practice";
+export type PageId =
+  | "chords"
+  | "progressions"
+  | "charts"
+  | "practice"
+  | "licks";
 
-export async function getEffectiveEnabledPages(userId: string, role: UserRole): Promise<PageId[]> {
+export async function getEffectiveEnabledPages(
+  userId: string,
+  role: UserRole,
+): Promise<PageId[]> {
   if (role === "admin") {
-    return ["chords", "progressions", "charts", "practice"];
+    return ["chords", "progressions", "charts", "practice", "licks"];
   }
 
   const memberships = await prisma.groupMember.findMany({
@@ -234,8 +241,13 @@ export async function getEffectiveEnabledPages(userId: string, role: UserRole): 
     }
   }
 
-  return Array.from(union).filter((p): p is PageId =>
-    p === "chords" || p === "progressions" || p === "charts" || p === "practice",
+  return Array.from(union).filter(
+    (p): p is PageId =>
+      p === "chords" ||
+      p === "progressions" ||
+      p === "charts" ||
+      p === "practice" ||
+      p === "licks",
   );
 }
 

@@ -6,7 +6,7 @@
 
 /* Cyanotype / Ice Theme (Global) ☀️❄️ */
 :root,
-.dark {
+html[data-theme="thin-ice"] {
   /* Core Colors */
   --background: transparent;
   --foreground: #f0f9fa;
@@ -29,44 +29,170 @@
 
   /* Muted */
   --muted: rgba(255, 255, 255, 0.02);
-  --muted-foreground: #A1DCE3;
+  --muted-foreground: #a1dce3;
 
   /* Accent - Ice Blue/Cyan */
-  --accent: #A1DCE3;
-  --accent-bright: #B2EBF2;
+  --accent: #a1dce3;
+  --accent-bright: #b2ebf2;
   --accent-foreground: #011315;
 
   /* Sidebar */
   --sidebar-bg: rgba(2, 20, 23, 0.85);
 
   /* Destructive */
-  --destructive: #8A2C2C;
+  --destructive: #8a2c2c;
   --destructive-foreground: #f0f9fa;
 
   /* Borders and inputs */
   --border: rgba(255, 255, 255, 0.2);
   --input: rgba(255, 255, 255, 0.2);
-  --ring: #A1DCE3;
+  --ring: #a1dce3;
 
   /* Chart colors */
   --chart-1: #158391;
-  --chart-2: #A1DCE3;
+  --chart-2: #a1dce3;
   --chart-3: oklch(0.55 0.18 110);
-  --chart-4: oklch(0.50 0.18 310);
-  --chart-5: oklch(0.50 0.20 30);
+  --chart-4: oklch(0.5 0.18 310);
+  --chart-5: oklch(0.5 0.2 30);
 
   /* Radius */
   --radius: 0.625rem;
 
   /* Sidebar */
-  --sidebar: #032B30;
-  --sidebar-foreground: #F0F9FA;
+  --sidebar: #032b30;
+  --sidebar-foreground: #f0f9fa;
   --sidebar-primary: #158391;
-  --sidebar-primary-foreground: #F0F9FA;
-  --sidebar-accent: #A1DCE3;
-  --sidebar-accent-foreground: #032B30;
+  --sidebar-primary-foreground: #f0f9fa;
+  --sidebar-accent: #a1dce3;
+  --sidebar-accent-foreground: #032b30;
   --sidebar-border: rgba(161, 220, 227, 0.2);
-  --sidebar-ring: #A1DCE3;
+  --sidebar-ring: #a1dce3;
+
+  /* App shell */
+  --app-body-bg: #011315;
+  --app-background-image-opacity: 1;
+  --app-background-overlay: linear-gradient(
+    to bottom,
+    rgba(3, 43, 48, 0.4),
+    rgba(1, 26, 29, 0.8)
+  );
+  --select-option-bg: #f0f9fa;
+  --select-option-fg: #032b30;
+  --select-option-disabled: #4f7175;
+}
+
+html[data-theme="light"] {
+  --background: #f8fafc;
+  --foreground: #0f172a;
+
+  --card: #ffffff;
+  --card-foreground: #0f172a;
+
+  --popover: #ffffff;
+  --popover-foreground: #0f172a;
+
+  --primary: #2563eb;
+  --primary-foreground: #eff6ff;
+
+  --secondary: #e2e8f0;
+  --secondary-foreground: #0f172a;
+
+  --muted: #eef2f7;
+  --muted-foreground: #475569;
+
+  --accent: #bfdbfe;
+  --accent-bright: #dbeafe;
+  --accent-foreground: #0f172a;
+
+  --sidebar-bg: #ffffff;
+
+  --destructive: #dc2626;
+  --destructive-foreground: #ffffff;
+
+  --border: rgba(15, 23, 42, 0.12);
+  --input: rgba(15, 23, 42, 0.12);
+  --ring: #2563eb;
+
+  --chart-1: #2563eb;
+  --chart-2: #0f766e;
+  --chart-3: #7c3aed;
+  --chart-4: #ea580c;
+  --chart-5: #dc2626;
+
+  --radius: 0.625rem;
+
+  --sidebar: #ffffff;
+  --sidebar-foreground: #0f172a;
+  --sidebar-primary: #2563eb;
+  --sidebar-primary-foreground: #eff6ff;
+  --sidebar-accent: #dbeafe;
+  --sidebar-accent-foreground: #0f172a;
+  --sidebar-border: rgba(15, 23, 42, 0.12);
+  --sidebar-ring: #2563eb;
+
+  --app-body-bg: #f1f5f9;
+  --app-background-image-opacity: 0;
+  --app-background-overlay: linear-gradient(#f1f5f9, #f1f5f9);
+  --select-option-bg: #ffffff;
+  --select-option-fg: #0f172a;
+  --select-option-disabled: #64748b;
+}
+
+html[data-theme="dark"] {
+  --background: #020817;
+  --foreground: #f8fafc;
+
+  --card: #0f172a;
+  --card-foreground: #f8fafc;
+
+  --popover: #0f172a;
+  --popover-foreground: #f8fafc;
+
+  --primary: #38bdf8;
+  --primary-foreground: #082f49;
+
+  --secondary: #1e293b;
+  --secondary-foreground: #f8fafc;
+
+  --muted: #111827;
+  --muted-foreground: #94a3b8;
+
+  --accent: #1d4ed8;
+  --accent-bright: #60a5fa;
+  --accent-foreground: #eff6ff;
+
+  --sidebar-bg: #020817;
+
+  --destructive: #ef4444;
+  --destructive-foreground: #f8fafc;
+
+  --border: rgba(148, 163, 184, 0.2);
+  --input: rgba(148, 163, 184, 0.2);
+  --ring: #38bdf8;
+
+  --chart-1: #38bdf8;
+  --chart-2: #34d399;
+  --chart-3: #c084fc;
+  --chart-4: #fb7185;
+  --chart-5: #f59e0b;
+
+  --radius: 0.625rem;
+
+  --sidebar: #020817;
+  --sidebar-foreground: #f8fafc;
+  --sidebar-primary: #38bdf8;
+  --sidebar-primary-foreground: #082f49;
+  --sidebar-accent: #1e293b;
+  --sidebar-accent-foreground: #f8fafc;
+  --sidebar-border: rgba(148, 163, 184, 0.2);
+  --sidebar-ring: #38bdf8;
+
+  --app-body-bg: #020817;
+  --app-background-image-opacity: 0;
+  --app-background-overlay: linear-gradient(#020817, #020817);
+  --select-option-bg: #0f172a;
+  --select-option-fg: #f8fafc;
+  --select-option-disabled: #64748b;
 }
 
 /* Register theme colors with Tailwind v4 */
@@ -167,12 +293,12 @@
   }
 
   select option {
-    background-color: #f0f9fa;
-    color: #032b30;
+    background-color: var(--select-option-bg);
+    color: var(--select-option-fg);
   }
 
   select option:disabled {
-    color: #4f7175;
+    color: var(--select-option-disabled);
   }
 
   /* Keep pointer cursor for buttons */

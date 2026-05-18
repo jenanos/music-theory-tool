@@ -16,7 +16,7 @@ import { Navigation } from "./Navigation";
 const outfit = Outfit({ subsets: ["latin"] });
 
 export const metadata: Metadata = {
-  title: "Gitarist-støtteapp | Akkorder, grep og substitusjoner",
+  title: "Blekke | Akkorder, grep og substitusjoner",
   description:
     "Utforsk diatoniske akkorder, se grep/voicings på gitaren, og få substitusjonsforslag basert på funksjon og delte toner.",
 };

@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { useEffect, useState } from "react";
 import { useAuth, ALL_PAGES } from "./lib/auth-context";
+import { Logo } from "./components/Logo";
 
 export function Navigation() {
   const { user, isLoading, logout, isPageEnabled } = useAuth();
@@ -21,8 +22,9 @@ export function Navigation() {
     return (
       <nav className="border-b border-white/10 bg-card/60 backdrop-blur-xl shrink-0">
         <div className="mx-auto flex w-full max-w-[1920px] items-center justify-between px-4 py-2 md:px-6 md:py-3">
-          <span className="font-semibold text-foreground text-sm md:text-base">
-            🎸 Gitarist-støtteapp
+          <span className="flex items-center gap-2 font-semibold text-foreground text-sm md:text-base">
+            <Logo size={24} />
+            Blekke
           </span>
           <div className="h-4 w-16 animate-pulse rounded bg-muted" />
         </div>
@@ -47,9 +49,10 @@ export function Navigation() {
         <Link
           href={homeHref}
           onClick={closeMenu}
-          className="font-semibold text-foreground text-sm md:text-base truncate min-w-0"
+          className="flex items-center gap-2 font-semibold text-foreground text-sm md:text-base truncate min-w-0"
         >
-          🎸 Gitarist-støtteapp
+          <Logo size={24} className="shrink-0" />
+          Blekke
         </Link>
 
         {/* Desktop nav */}

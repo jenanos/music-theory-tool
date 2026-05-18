@@ -1,4 +1,4 @@
-# Gitarist-støtteapp (MVP)
+# Blekke (MVP)
 
 Dette turborepoet inneholder en enkel MVP som hjelper gitarister å utforske
 akkorder i en toneart/modus, se trinn-oversikt, og klikke seg inn på grep,

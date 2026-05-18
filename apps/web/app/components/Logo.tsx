@@ -6,15 +6,19 @@ type LogoProps = {
   title?: string;
 };
 
-export function Logo({ className, size = 24, title = "Blekke" }: LogoProps) {
+const TREBLE_CLEF_PATH =
+  "M364 -252c-245 0 -364 165 -364 339c0 202 153 345 297 464c12 10 11 12 9 24c-7 41 -14 106 -14 164c0 104 24 229 98 311c20 22 51 48 65 48c11 0 37 -28 52 -50c41 -60 65 -146 65 -233c0 -153 -82 -280 -190 -381c-6 -6 -8 -7 -6 -19l25 -145c3 -18 3 -18 29 -18c147 0 241 -113 241 -241c0 -113 -67 -198 -168 -238c-14 -6 -15 -5 -13 -17c11 -62 29 -157 29 -214c0 -170 -130 -200 -197 -200c-151 0 -190 98 -190 163c0 62 40 115 107 115c61 0 96 -47 96 -102c0 -58 -36 -85 -67 -94c-23 -7 -32 -10 -32 -17c0 -13 26 -29 80 -29c59 0 159 18 159 166c0 47 -15 134 -27 201c-2 12 -4 11 -15 9c-20 -4 -46 -6 -69 -6zM80 20c0 -139 113 -236 288 -236c20 0 40 2 56 5c15 3 16 3 14 14l-50 298c-2 11 -4 12 -20 8c-61 -17 -100 -60 -100 -117c0 -46 30 -89 72 -107c7 -3 15 -6 15 -13c0 -6 -4 -11 -12 -11c-7 0 -19 3 -27 6c-68 23 -115 87 -115 177c0 85 57 164 145 194c18 6 18 5 15 24l-21 128c-2 11 -4 12 -14 4c-47 -38 -93 -75 -153 -142c-83 -94 -93 -173 -93 -232zM470 943c-61 0 -133 -96 -133 -252c0 -32 2 -66 6 -92c2 -13 6 -14 13 -8c79 69 174 159 174 270c0 55 -27 82 -60 82zM441 117c-12 1 -13 -2 -11 -14l49 -285c2 -12 4 -12 16 -6c56 28 94 79 94 142c0 88 -67 156 -148 163z";
+
+export function Logo({ className, size = 28, title = "Blekke" }: LogoProps) {
   const gradientId = useId();
+  // The treble-clef glyph is ~1.8x taller than wide. `size` is the height.
+  const width = Math.round(size / 1.8);
   return (
     <svg
       xmlns="http://www.w3.org/2000/svg"
-      viewBox="0 0 256 256"
-      width={size}
+      viewBox="-40 -50 750 1350"
+      width={width}
       height={size}
-      fill="none"
       role="img"
       aria-label={title}
       className={className}
@@ -22,10 +26,10 @@ export function Logo({ className, size = 24, title = "Blekke" }: LogoProps) {
       <defs>
         <linearGradient
           id={gradientId}
-          x1="128"
-          y1="16"
-          x2="128"
-          y2="244"
+          x1="335"
+          y1="943"
+          x2="335"
+          y2="-252"
           gradientUnits="userSpaceOnUse"
         >
           <stop offset="0" stopColor="#ef4444" />
@@ -36,17 +40,13 @@ export function Logo({ className, size = 24, title = "Blekke" }: LogoProps) {
           <stop offset="1" stopColor="#a855f7" />
         </linearGradient>
       </defs>
-      <g
-        stroke={`url(#${gradientId})`}
-        strokeWidth="12"
-        strokeLinecap="round"
-        strokeLinejoin="round"
-      >
-        <path d="M 152 28 C 172 30 184 48 176 64 C 170 76 158 80 148 72" />
-        <path d="M 152 28 L 152 206 C 152 226 134 238 116 230 C 102 224 100 212 110 206" />
-        <path d="M 152 82 C 200 92 216 140 200 178 C 184 216 132 234 92 216 C 56 200 44 158 64 124 C 84 92 130 92 146 122 C 160 150 146 178 124 174 C 108 172 100 156 114 146" />
+      <g transform="translate(0, 1000) scale(1, -1)">
+        <path
+          fill={`url(#${gradientId})`}
+          fillRule="evenodd"
+          d={TREBLE_CLEF_PATH}
+        />
       </g>
-      <circle cx="110" cy="226" r="10" fill={`url(#${gradientId})`} />
     </svg>
   );
 }

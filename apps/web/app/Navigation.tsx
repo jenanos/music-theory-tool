@@ -23,7 +23,7 @@ export function Navigation() {
       <nav className="border-b border-white/10 bg-card/60 backdrop-blur-xl shrink-0">
         <div className="mx-auto flex w-full max-w-[1920px] items-center justify-between px-4 py-2 md:px-6 md:py-3">
           <span className="flex items-center gap-2 font-semibold text-foreground text-sm md:text-base">
-            <Logo size={24} />
+            <Logo size={28} />
             Blekke
           </span>
           <div className="h-4 w-16 animate-pulse rounded bg-muted" />
@@ -51,7 +51,7 @@ export function Navigation() {
           onClick={closeMenu}
           className="flex items-center gap-2 font-semibold text-foreground text-sm md:text-base truncate min-w-0"
         >
-          <Logo size={24} className="shrink-0" />
+          <Logo size={28} className="shrink-0" />
           Blekke
         </Link>
 

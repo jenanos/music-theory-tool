@@ -252,6 +252,17 @@ describe("chord progressions", () => {
             expect(second).toEqual(first);
         });
 
+        it("keeps the harmonic-minor tonic visible without spice", () => {
+            const suggestions = suggestNextChords(["V"], "A", "harmonic_minor");
+            const tonicSuggestion = suggestions.find((s) => s.roman === "i");
+
+            expect(tonicSuggestion?.chord).toBe("Am");
+            expect(tonicSuggestion?.isDiatonic).toBe(true);
+
+            const starts = getStartingChords("harmonic_minor", "A");
+            expect(starts.some((s) => s.roman === "i")).toBe(true);
+        });
+
         it("suggests common minor transitions as diatonic without spice", () => {
             const suggestions = suggestNextChords(["i"], "A", "aeolian");
             const vii = suggestions.find((s) => s.roman === "VII");

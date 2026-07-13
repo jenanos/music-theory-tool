@@ -1193,7 +1193,8 @@ function isDiatonic(roman: string, mode: ModeId): boolean {
 
     // Map expected 7th symbols to basic triad qualities
     const isExpectedMajor = expected.startsWith("maj") || expected === "7"; // Dominant is major triad
-    const isExpectedMinor = expected.startsWith("m") && !expected.includes("b5") && !expected.includes("maj");
+    // m(maj7) (harmonic minor tonic) is a minor triad, so only exclude leading "maj"
+    const isExpectedMinor = expected.startsWith("m") && !expected.includes("b5") && !expected.startsWith("maj");
     const isExpectedDim = expected.includes("dim") || expected.includes("b5");
 
     if (quality === "major" && !isExpectedMajor) return false;

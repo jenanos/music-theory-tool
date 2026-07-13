@@ -112,6 +112,94 @@ describe("chord progressions", () => {
         ])("maps $roman in $tonic $mode to $expected", ({ roman, tonic, mode, expected }) => {
             expect(romanToChord(roman, tonic, mode)).toBe(expected);
         });
+
+        it.each([
+            // Mode-relative degrees: no extra flatting of already-flat degrees
+            { roman: "VII", tonic: "A", mode: "aeolian" as const, expected: "G" },
+            { roman: "VI", tonic: "A", mode: "aeolian" as const, expected: "F" },
+            { roman: "III", tonic: "A", mode: "aeolian" as const, expected: "C" },
+            { roman: "VII", tonic: "C", mode: "mixolydian" as const, expected: "Bb" },
+            { roman: "III", tonic: "E", mode: "phrygian" as const, expected: "G" },
+            { roman: "II", tonic: "E", mode: "phrygian" as const, expected: "F" },
+            // Chromatic accidentals are relative to the mode's own degrees
+            { roman: "bVII", tonic: "C", mode: "ionian" as const, expected: "Bb" },
+            { roman: "bVI", tonic: "C", mode: "ionian" as const, expected: "Ab" },
+            { roman: "bII7", tonic: "C", mode: "ionian" as const, expected: "Db7" },
+            { roman: "bII", tonic: "A", mode: "aeolian" as const, expected: "Bb" },
+            { roman: "#iv°", tonic: "C", mode: "ionian" as const, expected: "F#dim" },
+            // Secondary chords
+            { roman: "vii°7/V", tonic: "C", mode: "ionian" as const, expected: "F#dim7" },
+            { roman: "V7/vi", tonic: "C", mode: "ionian" as const, expected: "E7" },
+            { roman: "V7/IV", tonic: "C", mode: "ionian" as const, expected: "C7" },
+            // Locrian tonic triad is diminished
+            { roman: "i°", tonic: "B", mode: "locrian" as const, expected: "Bdim" },
+        ])("maps $roman in $tonic $mode to $expected", ({ roman, tonic, mode, expected }) => {
+            expect(romanToChord(roman, tonic, mode)).toBe(expected);
+        });
+
+        it("transposes the andalusian cadence to Am-G-F-E in A aeolian", () => {
+            const prog = CHORD_PROGRESSIONS.find((p) => p.id === "min_tri_01")!;
+            expect(transposeProgression(prog, "A").chords).toEqual(["Am", "G", "F", "E"]);
+        });
+
+        it("transposes the phrygian andalusian cadence to Am-G-F-E in E phrygian", () => {
+            const prog = CHORD_PROGRESSIONS.find((p) => p.id === "user_andalusian_phrygian_dominant")!;
+            expect(transposeProgression(prog, "E").chords).toEqual(["Am", "G", "F", "E"]);
+        });
+
+        it("spells the Mario cadence with flats in C major", () => {
+            const prog = CHORD_PROGRESSIONS.find((p) => p.id === "user_mario_cadence")!;
+            expect(transposeProgression(prog, "C").chords).toEqual(["Ab", "Bb", "C"]);
+        });
+    });
+
+    describe("dataset integrity", () => {
+        it("has unique ids", () => {
+            const ids = new Set(CHORD_PROGRESSIONS.map((p) => p.id));
+            expect(ids.size).toBe(CHORD_PROGRESSIONS.length);
+        });
+
+        it("has no duplicate progressions (same mode, type and roman sequence)", () => {
+            const seen = new Map<string, string>();
+            for (const prog of CHORD_PROGRESSIONS) {
+                const key = `${prog.mode}|${prog.type}|${prog.roman.join(",")}`;
+                expect(seen.get(key), `${prog.id} duplicates ${seen.get(key)}`).toBeUndefined();
+                seen.set(key, prog.id);
+            }
+        });
+
+        it("does not flat degrees that are already flat in the progression's mode", () => {
+            const flatDegrees: Partial<Record<string, string[]>> = {
+                dorian: ["bIII", "bVII"],
+                phrygian: ["bII", "bIII", "bVI", "bVII"],
+                mixolydian: ["bVII"],
+                aeolian: ["bIII", "bVI", "bVII"],
+                locrian: ["bII", "bIII", "bV", "bVI", "bVII"],
+                harmonic_minor: ["bIII", "bVI"],
+            };
+            for (const prog of CHORD_PROGRESSIONS) {
+                const forbidden = flatDegrees[prog.mode] ?? [];
+                for (const roman of prog.roman) {
+                    const offending = forbidden.find((f) =>
+                        roman.toUpperCase().startsWith(f.toUpperCase())
+                    );
+                    expect(
+                        offending,
+                        `${prog.id}: "${roman}" double-flats degree ${offending} in ${prog.mode}`
+                    ).toBeUndefined();
+                }
+            }
+        });
+
+        it("every roman numeral in the dataset resolves to a chord symbol", () => {
+            for (const prog of CHORD_PROGRESSIONS) {
+                for (const roman of prog.roman) {
+                    const chord = romanToChord(roman, "C", prog.mode);
+                    expect(chord, `${prog.id}: "${roman}" did not resolve`).not.toBe(roman);
+                    expect(chord).toMatch(/^[A-G][b#]?/);
+                }
+            }
+        });
     });
 
     describe("roman normalization", () => {
@@ -164,6 +252,19 @@ describe("chord progressions", () => {
             expect(second).toEqual(first);
         });
 
+        it("suggests common minor transitions as diatonic without spice", () => {
+            const suggestions = suggestNextChords(["i"], "A", "aeolian");
+            const vii = suggestions.find((s) => s.roman === "VII");
+            const vi = suggestions.find((s) => s.roman === "VI");
+
+            // i -> VII / VI are the most common aeolian moves in the dataset
+            expect(vii?.chord).toBe("G");
+            expect(vii?.isDiatonic).toBe(true);
+            expect(vii!.fromProgressions.length).toBeGreaterThan(0);
+            expect(vi?.chord).toBe("F");
+            expect(vi?.isDiatonic).toBe(true);
+        });
+
         it("treats V, V7 and V13 as the same transition state", () => {
             const fromV = suggestNextChords(["V"], "C", "ionian", { useSpice: true }).map((entry) => entry.roman);
             const fromV7 = suggestNextChords(["V7"], "C", "ionian", { useSpice: true }).map((entry) => entry.roman);
@@ -191,6 +292,14 @@ describe("chord progressions", () => {
             // i should be a common starting chord
             const hasI = starts.some((s) => s.roman === "i");
             expect(hasI).toBe(true);
+        });
+
+        it("uses a diminished tonic for locrian", () => {
+            const starts = getStartingChords("locrian", "B");
+            const tonicStart = starts.find((s) => s.roman === "i°");
+
+            expect(tonicStart?.chord).toBe("Bdim");
+            expect(starts.some((s) => s.roman === "i")).toBe(false);
         });
 
     });
@@ -262,6 +371,14 @@ describe("chord progressions", () => {
             const matches = findMatchingProgressions(["vi", "V"], pool, 2);
             const match = matches.find(m => m.progression.id === "substring");
             expect(match).toBeUndefined();
+        });
+
+        it("matches on base harmony so V matches V7 and I matches Imaj7", () => {
+            const jazzPool = CHORD_PROGRESSIONS.filter((p) => p.id === "maj_jazz_02"); // ii7-V7-Imaj7
+            const matches = findMatchingProgressions(["ii", "V"], jazzPool, 2);
+
+            expect(matches).toHaveLength(1);
+            expect(matches[0]?.matchedIndices).toEqual([0, 1]);
         });
     });
 });

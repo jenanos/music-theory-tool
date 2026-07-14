@@ -112,7 +112,7 @@ export const CHORD_PROGRESSIONS: ChordProgression[] = [
         tags: ["pop", "melancholic", "emotional", "modal"],
         roman: ["i", "VI", "III", "VII"],
         description: "Fire‑akkords aeolisk sekvens (i–VI–III–VII) som ofte brukes i popballader. Den vandrer gjennom parallell durakkorder og skaper en sørgmodig, men håpefull stemning.",
-        usageExamples: "REM – Losing My Religion, Dido – Thank You"
+        usageExamples: "REM – Losing My Religion, Dido – Thank You, Simon & Garfunkel – The Sound of Silence, Dolly Parton – Jolene (variasjon)"
     },
     {
         id: "modal_locrian_tension",
@@ -125,18 +125,6 @@ export const CHORD_PROGRESSIONS: ChordProgression[] = [
         description: "Locrian er den mest dissonante modusen og kombinasjonen iø7–IImaj7 skaper et ustabilt, spenningsfylt landskap. Vanlig i eksperimentell jazz og metal.",
         usageExamples: "Eksempel: improviserte jazzstykker"
     },
-    {
-        id: "modal_ionian_jazz",
-        name: "Jazz ii-V-I (Ionian)",
-        mode: "ionian",
-        type: "seventh",
-        weight: 10,
-        tags: ["jazz", "cadence", "classical"],
-        roman: ["ii7", "V7", "Imaj7"],
-        description: "Dette er den klassiske ii–V–I‑kadensen i dur – en supertonika moll 7, etterfulgt av en dominant 7 som løses til maj7‑tonika. Den er grunnpilar i jazzharmonikk【500909646144683†L132-L147】.",
-        usageExamples: "Jazzstandarder som Autumn Leaves og Satin Doll【500909646144683†L132-L147】"
-    },
-
     // ==================== More Dorian ====================
     {
         id: "modal_dorian_shimmer",
@@ -259,11 +247,11 @@ export const CHORD_PROGRESSIONS: ChordProgression[] = [
         name: "Mixolydian Gospel",
         mode: "mixolydian",
         type: "triad",
-        weight: 7,
+        weight: 8,
         tags: ["gospel", "rock", "modal"],
         roman: ["I", "IV", "VII", "IV"],
-        description: "I–IV–VII–IV‑progresjonen gir en gospel‑aktig, men tøff mixolydisk lyd.",
-        usageExamples: "Toto – Hold the Line"
+        description: "I–IV–bVII–IV‑progresjonen gir en gospel‑aktig, men tøff mixolydisk lyd.",
+        usageExamples: "Toto – Hold the Line, Lynyrd Skynyrd – Sweet Home Alabama (refrenget)"
     },
 
     // ==================== More Aeolian ====================
@@ -323,7 +311,7 @@ export const CHORD_PROGRESSIONS: ChordProgression[] = [
         type: "triad",
         weight: 9,
         tags: ["rock", "pop", "bluesy", "mixolydian"],
-        roman: ["I", "V", "bVII", "IV"],
+        roman: ["I", "V", "VII", "IV"],
         description: "En variasjon av I–V–vi–IV der submedianten byttes ut med subtonika (bVII). Dette gir en bluesaktig touch og en harmonisk drive gjennom to I–V bevegelser (A–E og G–D).",
         usageExamples: "Lay Lady Lay, (You Make Me Feel Like) A Natural Woman, Turning Japanese, Waterfalls, Don't Tell Me, Cinnamon Girl, Brown Eyes, Rio, Sugar Hiccup, Sweet Jane, Cop Killer, And She Was, Let's Go Crazy, Like a Rock, Steady, As She Goes, American Idiot"
     },
@@ -669,7 +657,7 @@ export const CHORD_PROGRESSIONS: ChordProgression[] = [
         name: "ii-V-I (Jazz)",
         mode: "ionian",
         type: "seventh",
-        weight: 9,
+        weight: 10,
         tags: ["jazz", "common", "cadence"],
         roman: ["ii7", "V7", "Imaj7"],
         description: "Den klassiske ii–V–I progresjonen i jazz. Her går en mollakkord på supertonika (ii7) til en dominant syvende på kvinten (V7) før oppløsning til tonika med maj7 (Imaj7). Denne kadensen er grunnpilar i jazzharmonikk【500909646144683†L132-L147】.",
@@ -750,9 +738,9 @@ export const CHORD_PROGRESSIONS: ChordProgression[] = [
         type: "triad",
         weight: 10,
         tags: ["common", "aeolian", "loop"],
-        roman: ["i", "bVII", "bVI", "V"],
-        description: "Kjent som den andalusiske kadensen: en nedadgående sekvens i moll der i–bVII–bVI–V skaper en spansk/flamenco‑aktig stemning【280757061389462†L135-L150】. Progresjonen brukes ofte som vamp i pop og rock.",
-        usageExamples: "Del Shannon – Runaway, Ray Charles – Hit the Road Jack【280757061389462†L135-L150】"
+        roman: ["i", "VII", "VI", "V"],
+        description: "Kjent som den andalusiske kadensen: en nedadgående sekvens i moll der i–bVII–bVI–V skaper en spansk/flamenco‑aktig stemning【280757061389462†L135-L150】. Progresjonen brukes ofte som vamp i pop og rock, og kalles også den fallende basslinjen.",
+        usageExamples: "Del Shannon – Runaway, Ray Charles – Hit the Road Jack, Bob Dylan / Jimi Hendrix – All Along the Watchtower, Led Zeppelin – Stairway to Heaven, Gotye – Somebody That I Used to Know【280757061389462†L135-L150】"
     },
     {
         id: "min_tri_02",
@@ -766,35 +754,13 @@ export const CHORD_PROGRESSIONS: ChordProgression[] = [
         usageExamples: "Santana – Black Magic Woman, B.B. King – The Thrill Is Gone【597104395790003†L339-L352】"
     },
     {
-        id: "min_tri_03",
-        name: "Natural Minor Loop",
-        mode: "aeolian",
-        type: "triad",
-        weight: 8,
-        tags: ["common", "natural_minor"],
-        roman: ["i", "bVI", "bIII", "bVII"],
-        description: "En loop i naturlig moll der i går til bVI, bIII og bVII. Denne varianten gir en melankolsk, men oppløftende følelse og brukes i folk og rock【597104395790003†L394-L414】.",
-        usageExamples: "Simon & Garfunkel – The Sound of Silence, Dolly Parton – Jolene (variasjon med bIII og bVII)【597104395790003†L394-L414】【597104395790003†L378-L390】"
-    },
-    {
-        id: "min_tri_04",
-        name: "Fallende Linje",
-        mode: "aeolian",
-        type: "triad",
-        weight: 8,
-        tags: ["common", "minor", "color"],
-        roman: ["i", "bVII", "bVI", "V"],
-        description: "Nedadgående i–bVII–bVI–V, også kalt den fallende basslinjen. Denne sekvensen finnes i rock, pop og folk og gir en episk stigende følelse når den løser til V【597104395790003†L419-L444】.",
-        usageExamples: "Bob Dylan / Jimi Hendrix – All Along the Watchtower, Led Zeppelin – Stairway to Heaven, Gotye – Somebody That I Used to Know, Stray Cats – Stray Cat Strut【597104395790003†L419-L444】"
-    },
-    {
         id: "min_tri_05",
         name: "Pop Moll",
         mode: "aeolian",
         type: "triad",
         weight: 7,
         tags: ["common", "minor", "pop"],
-        roman: ["i", "iv", "bVII", "bIII"],
+        roman: ["i", "iv", "VII", "III"],
         description: "Variasjon i moll der subdominanten (iv) går til bVII og bIII. Denne kombinasjonen gir en mørk, men samtidig fengende karakter og brukes i rock og pop【597104395790003†L378-L390】.",
         usageExamples: "Dolly Parton – Jolene, Pink Floyd – Another Brick in the Wall (chorus)【597104395790003†L378-L390】"
     },
@@ -805,7 +771,7 @@ export const CHORD_PROGRESSIONS: ChordProgression[] = [
         type: "triad",
         weight: 7,
         tags: ["common", "minor", "dramatic"],
-        roman: ["i", "bVI", "iv", "V"],
+        roman: ["i", "VI", "iv", "V"],
         description: "Denne progresjonen kombinerer bVI fra parallell dur med moll-subdominanten (iv) og dominanten (V). Det gir et dramatisk uttrykk og beveger seg mellom lys og mørke【597104395790003†L394-L414】.",
         usageExamples: "The Beatles – Eleanor Rigby (i–bVI), Simon & Garfunkel – The Sound of Silence (i–bVI–bIII–bVII)【597104395790003†L394-L414】"
     },
@@ -816,7 +782,7 @@ export const CHORD_PROGRESSIONS: ChordProgression[] = [
         type: "triad",
         weight: 7,
         tags: ["common", "minor"],
-        roman: ["i", "bVI", "V", "i"],
+        roman: ["i", "VI", "V", "i"],
         description: "En enkel moll‑kadens der bVI leder til den sterke dominanten (V) før retur til i. Den gir en løftende, men mørk bevegelse【597104395790003†L394-L414】.",
         usageExamples: "Eleanor Rigby – refreng, Sound of Silence – bridge【597104395790003†L394-L414】"
     },
@@ -849,7 +815,7 @@ export const CHORD_PROGRESSIONS: ChordProgression[] = [
         type: "triad",
         weight: 6,
         tags: ["minor", "color"],
-        roman: ["i", "bIII", "bVII", "iv"],
+        roman: ["i", "III", "VII", "iv"],
         description: "Kombinerer bIII og bVII fra parallell dur før retur til iv. Denne sekvensen gir en moderne og rik klang som brukes i pop og rock【597104395790003†L378-L390】.",
         usageExamples: "Pink Floyd – Another Brick in the Wall (kor), Dolly Parton – Jolene (variasjon)【597104395790003†L378-L390】"
     },
@@ -884,7 +850,7 @@ export const CHORD_PROGRESSIONS: ChordProgression[] = [
         type: "triad",
         weight: 5,
         tags: ["sequence", "circle_of_fifths"],
-        roman: ["i", "iv", "bVII", "bIII", "bVI", "ii°", "V", "i"],
+        roman: ["i", "iv", "VII", "III", "VI", "ii°", "V", "i"],
         description: "En sirkel av kvinter i moll der akkordene følger fallende femter (i–iv–bVII–bIII–bVI–ii°–V–i). Denne sekvensen gir en følelse av modulering og er vanlig i barokk og jazz.",
         usageExamples: "Barokke variasjonsverk"
     },
@@ -930,7 +896,7 @@ export const CHORD_PROGRESSIONS: ChordProgression[] = [
         type: "seventh",
         weight: 7,
         tags: ["jazz", "backdoor"],
-        roman: ["i7", "iv7", "bVII7", "i7"],
+        roman: ["i7", "iv7", "VII7", "i7"],
         description: "Backdoor‑versjon i moll der iv7 går til bVII7 før oppløsning til i7. Denne subdominant‑erstatningen gir en mild overgang til tonika【712155671948666†L50-L54】.",
         usageExamples: "Jazzstandarder som Lady Bird og Misty【712155671948666†L50-L54】"
     },
@@ -948,17 +914,6 @@ export const CHORD_PROGRESSIONS: ChordProgression[] = [
 
     // ==================== NEW: User Added Progressions ====================
     {
-        id: "user_50s_prog",
-        name: "50s Progression (Heart and Soul)",
-        mode: "ionian",
-        type: "triad",
-        weight: 9,
-        tags: ["pop", "doo-wop", "classic", "50s"],
-        roman: ["I", "vi", "IV", "V"],
-        description: "Fire-akkords grunnform som preger tidlig pop og doo-wop.",
-        usageExamples: "The Penguins – 'Earth Angel', Ben E. King – 'Stand by Me'"
-    },
-    {
         id: "user_iv_v_i_vi",
         name: "IV–V–I–vi",
         mode: "ionian",
@@ -970,39 +925,6 @@ export const CHORD_PROGRESSIONS: ChordProgression[] = [
         usageExamples: "Ben E. King – Stand by Me (bro), The Beatles – Let It Be"
     },
 
-    {
-        id: "user_mixolydian_rock_ii",
-        name: "I–IV–bVII–IV",
-        mode: "mixolydian",
-        type: "triad",
-        weight: 8,
-        tags: ["rock", "modal", "mixolydian"],
-        roman: ["I", "IV", "VII", "IV"],
-        description: "I–IV–bVII–IV er en mixolydisk rockprogresjon der den hevede 7. trinnet gir en folk‑rock farge. Den minner om I–bVII–IV men starter på IV.",
-        usageExamples: "Lynyrd Skynyrd – Sweet Home Alabama (refrenget)"
-    },
-    {
-        id: "user_jazz_ii_v_i",
-        name: "ii–V–I (Standard Jazz)",
-        mode: "ionian",
-        type: "seventh",
-        weight: 10,
-        tags: ["jazz", "cadence", "theory"],
-        roman: ["ii7", "V7", "Imaj7"],
-        description: "Grunnleggende kadens i jazz og mye funksjonell harmonikk.",
-        usageExamples: "Standardlåter som 'Autumn Leaves'"
-    },
-    {
-        id: "user_tritone_sub_ii_bii_i",
-        name: "ii–bII7–I (ii–V–I med tritone-substitusjon)",
-        mode: "ionian",
-        type: "seventh",
-        weight: 8,
-        tags: ["jazz", "tritone_sub", "cadence"],
-        roman: ["ii7", "bII7", "Imaj7"],
-        description: "Bytter ut V7 med bII7 (tritone‑substitusjon) før oppløsning til I. bII7 deler viktige toner med V7 og gir en kromatisk glidebane【85222349922786†L111-L121】.",
-        usageExamples: "Jazzstandarder med tritone‑substitusjon"
-    },
     {
         id: "user_ragtime_cadence",
         name: "vii°7/V–V–I (vanlig i ragtime)",
@@ -1016,47 +938,16 @@ export const CHORD_PROGRESSIONS: ChordProgression[] = [
     },
     {
         id: "user_andalusian_phrygian_dominant",
-        name: "Andalusisk kadens",
-        mode: "phrygian", // Approximating Phrygian Dominant (major I) using Phrygian mode logic but ensuring major Tonic? 
-        // Note: Standard Phrygian has minor i. Andalusian often ends on Major I (Picardy) or is V of Harmonic Minor.
-        // User inputs: iv, III, bII, I. 
-        // In Phrygian: i is default. To get I, we use "I" (major).
-        // iv is normal in Phrygian (iv). 
-        // III (major) is bIII relative to major scale, but in Phrygian (1 b2 b3 4 5 b6 b7), degree 3 is b3. 
-        // Wait, Phrygian: 1 b2 b3 4 5 b6 b7.
-        // Andalusian in A minor (A G F E): i - bVII - bVI - V. 
-        // User wrote: iv - III - bII - I. This seems to be relative to the Phrygian Tonic as "I"? 
-        // E.g. in E Phrygian (E F G A B C D)
-        // iv = Am. III = G? No, III usually means Major 3rd. bIII means minor 3rd degree major chord.
-        // Let's assume standard Andalusian: Am G F E.
-        // If Tonic is E (Phrygian). 
-        // iv = Am.
-        // III = G? In Phrygian 3rd is G (b3). So bIII (G)? 
-        // bII = F.
-        // I = E major. 
-        // The user input says: ["iv", "III", "bII", "I"] for "Frygisk dominant".
-        // Let's stick to valid Roman numerals for our parser. 
-        // "I" = Major Tonic. "bII" = Major on b2. "III"? Major on 3? Or b3?
-        // In Phrygian mode context:
-        // i -> bVII -> bVI -> V (if seen as minor key). 
-        // If the user says "iv - III - bII - I", let's map it to what makes sense in Phrygian Dominant (5th mode of Harmonic Minor).
-        // Phrygian Dominant on E: E F G# A B C D.
-        // Chords: E(I), F(II?), G#dim, Am(iv), Bdim(v°), C(bVI), Dm(bvii). 
-        // Wait, phrygian dominant is 1 b2 3 4 5 b6 b7.
-        // I = E. II = F. iv = Am. bVII = Dm? No b7 is D. D minor? 
-        // User says: "iv - III - bII - I".
-        // Let's interpret "Ray Charles - Hit the Road Jack" (Am G F E).
-        // That is i - bVII - bVI - V in A minor.
-        // OR it is iv - bIII - bII - I in E Phrygian (if E is I).
-        // Am (iv), G (bIII), F (bII), E (I).
-        // So User's "III" probably means "bIII" (G major chord in E phrygian).
-        // And "bII" is F major.
-        // And "I" is E major.
-        // So we use Phrygian mode, but with specific chords.
+        name: "Andalusisk kadens (frygisk)",
+        // Andalusian cadence seen from the Phrygian tonic: in E Phrygian this is
+        // Am (iv) – G (III) – F (II) – E (I, Picardy-major finish).
+        // Degrees are mode-relative: Phrygian degree 3 is already b3 and degree 2
+        // is already b2, so III and II resolve to G and F without extra flats.
+        mode: "phrygian",
         type: "triad",
         weight: 9,
         tags: ["flamenco", "dramatic", "theory"],
-        roman: ["iv", "bIII", "bII", "I"], // Using bIII for clarity, I for major finish
+        roman: ["iv", "III", "II", "I"],
         description: "Nedadgående kadens som ofte gir en «spansk»/flamenco-preget farge.",
         usageExamples: "Ray Charles – 'Hit the Road Jack'"
     },
@@ -1085,17 +976,6 @@ export const CHORD_PROGRESSIONS: ChordProgression[] = [
         roman: ["vi7", "ii7", "V7", "Imaj7"],
         description: "Klassisk sirkelprogresjon (vi–ii–V–I) som følger kvintsirkelen og brukes i jazzturnarounds og popballader.",
         usageExamples: "Sweet Georgia Brown"
-    },
-    {
-        id: "user_rhythm_changes",
-        name: "Rhythm Changes (Variant)",
-        mode: "ionian",
-        type: "seventh",
-        weight: 8,
-        tags: ["jazz", "standard", "form"],
-        roman: ["Imaj7", "vi7", "ii7", "V7"], // Simplified standard turnaround part
-        description: "Harmoni basert på 'I Got Rhythm'.",
-        usageExamples: "Utallige bebop-låter"
     },
     {
         id: "user_pachelbel",
@@ -1137,7 +1017,7 @@ export const CHORD_PROGRESSIONS: ChordProgression[] = [
         type: "triad",
         weight: 6,
         tags: ["classical", "baroque", "historical"],
-        roman: ["i", "V", "i", "bVII", "bIII", "bVII", "i", "V"], // Shortened
+        roman: ["i", "V", "i", "VII", "III", "VII", "i", "V"], // Shortened
         description: "Folía er en historisk mollsekvens fra barokken som følger i–V–i–bVII–bIII–bVII–i–V. Den danner grunnlaget for mange variasjonsverk og folkesanger.",
         usageExamples: "Arcangelo Corelli – La Folia"
     },
@@ -1313,18 +1193,28 @@ function isDiatonic(roman: string, mode: ModeId): boolean {
 
     // Map expected 7th symbols to basic triad qualities
     const isExpectedMajor = expected.startsWith("maj") || expected === "7"; // Dominant is major triad
-    const isExpectedMinor = expected.startsWith("m") && !expected.includes("b5") && !expected.includes("maj");
+    // m(maj7) (harmonic minor tonic) is a minor triad, so only exclude leading "maj"
+    const isExpectedMinor = expected.startsWith("m") && !expected.includes("b5") && !expected.startsWith("maj");
     const isExpectedDim = expected.includes("dim") || expected.includes("b5");
 
     if (quality === "major" && !isExpectedMajor) return false;
     if (quality === "minor" && !isExpectedMinor) return false;
     if ((quality === "diminished" || quality === "half-diminished") && !isExpectedDim) return false;
-    if (quality === "augmented") return false; // Augmented usually non-diatonic (except Harmonic Minor IIIaug?)
-    // Harmonic minor III is augMaj7. So quality "augmented" is Diatonic for Harmonic Minor III.
-    if (quality === "augmented" && mode === "harmonic_minor" && degree === 3) return true;
-    if (quality === "augmented") return false;
+    if (quality === "augmented") {
+        // Harmonic minor III is an augmented triad (augMaj7)
+        return mode === "harmonic_minor" && degree === 3;
+    }
 
     return true;
+}
+
+/**
+ * The tonic chord's roman numeral in a given mode ("home base" for loops)
+ */
+function tonicRomanForMode(mode: ModeId): string {
+    if (mode === "ionian" || mode === "lydian" || mode === "mixolydian") return "I";
+    if (mode === "locrian") return "i°";
+    return "i";
 }
 
 /**
@@ -1337,24 +1227,38 @@ export function romanToChord(
 ): string {
     const useFlats = prefersFlatsForKey(tonic, mode);
 
-    // Handle secondary dominants
+    // Handle secondary chords (V7/x, vii°7/x, ...)
     if (roman.includes("/")) {
-        const parts = roman.split("/");
-        const targetRoman = parts[1];
+        const [headRoman, targetRoman] = roman.split("/");
+        const headParsed = parseRomanNumeral(headRoman ?? "");
         const targetParsed = parseRomanNumeral(targetRoman ?? "");
 
         // Get the scale to find the target note
         const scale = getScale(tonic, mode);
         let targetDegree = targetParsed.degree - 1;
         if (targetDegree < 0) targetDegree = 0;
-
-        // const targetNote = scale.noteNames[targetDegree % 7] ?? tonic;
-        // V7 of target = a major 7th chord a fifth above target
         const targetPc = scale.pcs[targetDegree % 7] ?? 0;
-        const dominantPc = (targetPc + 7) % 12; // Fifth above
-        const dominantNote = noteName(dominantPc, useFlats);
 
-        return `${dominantNote}7`;
+        // Treat the target as a temporary major-key tonic and place the head
+        // chord on the corresponding degree of that key.
+        const IONIAN_INTERVALS = [0, 2, 4, 5, 7, 9, 11];
+        const headInterval = headParsed.degree > 0
+            ? IONIAN_INTERVALS[(headParsed.degree - 1) % 7]!
+            : 7; // Unparseable head: fall back to secondary dominant
+        let rootPc = (targetPc + headInterval) % 12;
+        if (headParsed.accidental === "b") rootPc = (rootPc + 11) % 12;
+        else if (headParsed.accidental === "#") rootPc = (rootPc + 1) % 12;
+
+        const rootNote = noteName(rootPc, useFlats);
+
+        if (headParsed.quality === "diminished") {
+            return headParsed.extension ? `${rootNote}dim7` : `${rootNote}dim`;
+        }
+        if (headParsed.quality === "half-diminished") {
+            return `${rootNote}m7b5`;
+        }
+        // Secondary dominants are dominant-quality by convention
+        return `${rootNote}7`;
     }
 
     const { degree, quality, accidental, extension } = parseRomanNumeral(roman);
@@ -1368,14 +1272,18 @@ export function romanToChord(
     const scaleDegreeIndex = degree - 1;
     let rootPc = scale.pcs[scaleDegreeIndex % 7] ?? 0;
 
-    // Apply accidental
+    // Apply accidental. Chromatically lowered roots are spelled with flats and
+    // raised roots with sharps (bVII in C -> Bb, #iv in C -> F#).
+    let rootUseFlats = useFlats;
     if (accidental === "b") {
         rootPc = (rootPc - 1 + 12) % 12;
+        rootUseFlats = true;
     } else if (accidental === "#") {
         rootPc = (rootPc + 1) % 12;
+        rootUseFlats = false;
     }
 
-    const rootNote = noteName(rootPc, useFlats);
+    const rootNote = noteName(rootPc, rootUseFlats);
 
     // Build suffix
     let suffix = "";
@@ -1550,16 +1458,14 @@ export function suggestNextChords(
     }
 
     // Also ensure Tonic is present (Back to Home)
-    const tonicRoman = normalizeRomanForTransition(
-        (mode === "ionian" || mode === "lydian" || mode === "mixolydian") ? "I" : "i"
-    );
+    const tonicRoman = normalizeRomanForTransition(tonicRomanForMode(mode));
     if (!seenRomans.has(tonicRoman)) {
         suggestions.push({
             roman: tonicRoman,
             chord: romanToChord(tonicRoman, tonic, mode),
             frequency: 1,
             fromProgressions: [],
-            isDiatonic: true
+            isDiatonic: isDiatonic(tonicRoman, mode)
         });
     }
 
@@ -1632,9 +1538,7 @@ export function getStartingChords(
     }
 
     // 2. Ensure Tonic and Signatures are present
-    const tonicRoman = normalizeRomanForTransition(
-        (actualMode === "ionian" || actualMode === "lydian" || actualMode === "mixolydian") ? "I" : "i"
-    );
+    const tonicRoman = normalizeRomanForTransition(tonicRomanForMode(actualMode));
     if (!starters.has(tonicRoman)) starters.set(tonicRoman, 10);
 
     const signatures = (MODAL_SIGNATURES[actualMode] || []).map((roman) => normalizeRomanForTransition(roman));
@@ -1681,27 +1585,32 @@ export function findMatchingProgressions(
 ): ProgressionMatch[] {
     if (userSequence.length === 0) return [];
 
+    // Compare on base-harmony level so "V" matches "V7" and "I" matches "Imaj7"
+    const normalizedSequence = userSequence.map((roman) => normalizeRomanForTransition(roman));
+
     const matches: ProgressionMatch[] = [];
 
     for (const prog of pool) {
+        const normalizedProg = prog.roman.map((roman) => normalizeRomanForTransition(roman));
+
         // Check suffixes of userSequence, from longest to shortest (down to minMatchLength)
         // effectively: length = userSequence.length downTo minMatchLength
 
         // Optimization: The match length cannot be longer than the progression itself
-        const maxPossibleMatch = Math.min(userSequence.length, prog.roman.length);
+        const maxPossibleMatch = Math.min(normalizedSequence.length, normalizedProg.length);
 
         for (let len = maxPossibleMatch; len >= minMatchLength; len--) {
-            const suffix = userSequence.slice(-len);
+            const suffix = normalizedSequence.slice(-len);
 
             // Check if this suffix exists in prog.roman
             // We search for the sub-array 'suffix' inside 'prog.roman'
             let foundIndex = -1;
 
             // Naive search for sub-array
-            for (let i = 0; i <= prog.roman.length - len; i++) {
+            for (let i = 0; i <= normalizedProg.length - len; i++) {
                 let isMatch = true;
                 for (let j = 0; j < len; j++) {
-                    if (prog.roman[i + j] !== suffix[j]) {
+                    if (normalizedProg[i + j] !== suffix[j]) {
                         isMatch = false;
                         break;
                     }

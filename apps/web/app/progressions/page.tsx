@@ -248,6 +248,8 @@ export default function ProgressionsPage() {
 
         if (unknown.length > 0) {
             setChordInputError(`Forsto ikke: ${unknown.join(", ")}`);
+            // Keep only the unparsed tokens so a resubmit can't duplicate the added chords
+            setChordInput(unknown.join(" "));
         } else {
             setChordInputError(null);
             setChordInput("");

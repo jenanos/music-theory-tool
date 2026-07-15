@@ -30,6 +30,8 @@ export interface SequenceSuggestion {
     frequency: number;
     isDiatonic: boolean;
     secondaryLabel?: string;
+    matchLength: number;
+    sourceNames?: string[];
 }
 
 function parseChordRoot(chordSymbol: string): { root: string; letter: string; rootPc: number } | null {
@@ -283,6 +285,8 @@ export function getNextChordSuggestionsFromSequence(
             frequency: suggestion.frequency,
             isDiatonic: suggestion.isDiatonic,
             secondaryLabel: suggestion.secondaryLabel,
+            matchLength: suggestion.matchLength,
+            sourceNames: suggestion.sourceNames,
         };
     });
 }

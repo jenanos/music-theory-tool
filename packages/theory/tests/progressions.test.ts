@@ -284,6 +284,65 @@ describe("chord progressions", () => {
             expect(fromV7).toEqual(fromV);
             expect(fromV13).toEqual(fromV);
         });
+
+        it("uses sequence context, not only the last chord", () => {
+            // After I-V-vi the "4 chord" progression (I-V-vi-IV) should push IV to the top
+            const suggestions = suggestNextChords(["I", "V", "vi"], "C", "ionian");
+            expect(suggestions[0]?.roman).toBe("IV");
+
+            // The IV suggestion should know it matched three chords of context
+            const iv = suggestions.find((s) => s.roman === "IV");
+            expect(iv?.matchLength).toBe(3);
+            expect(iv?.sourceNames).toContain("4 chord");
+        });
+
+        it("ranks context continuations above generic last-chord follows", () => {
+            const contextual = suggestNextChords(["I", "V", "vi"], "C", "ionian");
+            const lastOnly = suggestNextChords(["vi"], "C", "ionian");
+
+            const contextualIv = contextual.find((s) => s.roman === "IV");
+            const lastOnlyIv = lastOnly.find((s) => s.roman === "IV");
+            expect(contextualIv!.frequency).toBeGreaterThan(lastOnlyIv!.frequency);
+        });
+
+        it("resolves ii-V strongly to I", () => {
+            const suggestions = suggestNextChords(["ii", "V"], "C", "ionian");
+            expect(suggestions[0]?.roman).toBe("I");
+            expect(suggestions[0]?.chord).toBe("C");
+        });
+
+        it("wraps around loop progressions back to the start", () => {
+            // The Andalusian cadence (i-VII-VI-V) is tagged "loop", so after
+            // VII-VI-V the top suggestion should return home to i
+            const suggestions = suggestNextChords(["VII", "VI", "V"], "A", "aeolian");
+            expect(suggestions[0]?.roman).toBe("i");
+            expect(suggestions[0]?.chord).toBe("Am");
+            expect(suggestions[0]?.matchLength).toBe(3);
+        });
+
+        it("wraps the 4-chord loop from IV back to I", () => {
+            const suggestions = suggestNextChords(["V", "vi", "IV"], "C", "ionian");
+            const tonic = suggestions.find((s) => s.roman === "I");
+            expect(tonic).toBeDefined();
+            expect(tonic!.matchLength).toBeGreaterThanOrEqual(3);
+        });
+
+        it("falls back to signature and tonic chords for unknown context", () => {
+            const suggestions = suggestNextChords(["bV"], "C", "ionian", { useSpice: true });
+            const romans = suggestions.map((s) => s.roman);
+            expect(romans).toContain("I");
+            expect(romans).toContain("IV");
+            expect(romans).toContain("V");
+        });
+
+        it("exposes source progression names sorted by best context", () => {
+            const suggestions = suggestNextChords(["I", "V", "vi"], "C", "ionian");
+            for (const s of suggestions) {
+                if (s.matchLength > 0) {
+                    expect(s.sourceNames && s.sourceNames.length).toBeGreaterThan(0);
+                }
+            }
+        });
     });
 
     describe("getStartingChords", () => {

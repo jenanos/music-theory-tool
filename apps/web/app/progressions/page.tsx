@@ -6,6 +6,7 @@ import {
     filterProgressions,
     transposeProgression,
     getNextChordSuggestionsFromSequence,
+    getChordDegree,
     romanToChord,
     toProfileBaseChordSymbol,
     DEFAULT_CHORD_RICHNESS_PROFILE,
@@ -138,6 +139,8 @@ export default function ProgressionsPage() {
 
     // Sequence builder state
     const [sequenceItems, setSequenceItems] = useState<{ id: string; roman: string }[]>([]);
+    const [chordInput, setChordInput] = useState("");
+    const [chordInputError, setChordInputError] = useState<string | null>(null);
 
     // Saved progressions state
     const [savedProgressions, setSavedProgressions] = useState<SavedProgression[]>([]);
@@ -219,6 +222,38 @@ export default function ProgressionsPage() {
 
     const addToSequence = (roman: string) => {
         setSequenceItems(prev => [...prev, { id: crypto.randomUUID(), roman }]);
+    };
+
+    // Parse free-text chord input (e.g. "Am F C G") and append to the sequence
+    const addTypedChords = () => {
+        const tokens = chordInput.split(/[\s,]+/).filter(Boolean);
+        if (tokens.length === 0) return;
+
+        const key = `${tonic} ${modeId}`;
+        const newItems: { id: string; roman: string }[] = [];
+        const unknown: string[] = [];
+
+        for (const token of tokens) {
+            const roman = getChordDegree(token, key);
+            if (roman) {
+                newItems.push({ id: crypto.randomUUID(), roman });
+            } else {
+                unknown.push(token);
+            }
+        }
+
+        if (newItems.length > 0) {
+            setSequenceItems(prev => [...prev, ...newItems]);
+        }
+
+        if (unknown.length > 0) {
+            setChordInputError(`Forsto ikke: ${unknown.join(", ")}`);
+            // Keep only the unparsed tokens so a resubmit can't duplicate the added chords
+            setChordInput(unknown.join(" "));
+        } else {
+            setChordInputError(null);
+            setChordInput("");
+        }
     };
 
     const removeSequenceItem = (id: string) => {
@@ -579,7 +614,7 @@ export default function ProgressionsPage() {
                                 {sequenceItems.length === 0 ? (
                                     <div className="flex h-full flex-col items-center justify-center text-muted-foreground">
                                         <p className="text-sm font-medium">Sekvensen er tom</p>
-                                        <p className="text-xs">Velg akkorder fra forslagene eller en progresjon.</p>
+                                        <p className="text-xs">Skriv inn akkorder under, eller velg fra forslagene.</p>
                                     </div>
                                 ) : (
                                     <DndContext
@@ -614,6 +649,43 @@ export default function ProgressionsPage() {
                                             </div>
                                         </SortableContext>
                                     </DndContext>
+                                )}
+                            </div>
+
+                            {/* Free-text chord input */}
+                            <div className="mt-2">
+                                <div className="flex gap-2">
+                                    <input
+                                        type="text"
+                                        value={chordInput}
+                                        onChange={(e) => {
+                                            setChordInput(e.target.value);
+                                            if (chordInputError) setChordInputError(null);
+                                        }}
+                                        onKeyDown={(e) => {
+                                            if (e.key === "Enter") {
+                                                e.preventDefault();
+                                                addTypedChords();
+                                            }
+                                        }}
+                                        placeholder="Skriv inn akkorder, f.eks. Am F C G"
+                                        className="flex-1 rounded-lg border border-border bg-card px-3 py-2 text-sm text-foreground placeholder:text-muted-foreground focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/40"
+                                        aria-label="Skriv inn akkorder"
+                                    />
+                                    <button
+                                        onClick={addTypedChords}
+                                        disabled={chordInput.trim().length === 0}
+                                        className="shrink-0 rounded-lg bg-primary px-4 py-2 text-sm font-medium text-primary-foreground hover:bg-primary/90 disabled:opacity-50"
+                                    >
+                                        Legg til
+                                    </button>
+                                </div>
+                                {chordInputError ? (
+                                    <p className="mt-1 text-xs text-destructive">{chordInputError}</p>
+                                ) : (
+                                    <p className="mt-1 text-xs text-muted-foreground">
+                                        Akkordene tolkes i {tonic} {SCALES.find(s => s.id === modeId)?.name} — også utenfor-diatoniske akkorder som Bb eller E7 forstås.
+                                    </p>
                                 )}
                             </div>
                         </div>
@@ -651,6 +723,14 @@ export default function ProgressionsPage() {
                                         {s.secondaryLabel && (
                                             <span className="mt-1 text-[9px] text-muted-foreground group-hover:text-foreground italic block leading-none">
                                                 {s.secondaryLabel}
+                                            </span>
+                                        )}
+                                        {s.matchLength >= 2 && s.sourceNames && s.sourceNames.length > 0 && (
+                                            <span
+                                                className="mt-1 max-w-full truncate text-[9px] font-medium text-primary/80 leading-tight"
+                                                title={`Fortsetter «${s.sourceNames[0]}» (matcher de siste ${s.matchLength} akkordene)`}
+                                            >
+                                                ↻ {s.sourceNames[0]}
                                             </span>
                                         )}
                                         {s.variants && s.variants.length > 0 && (

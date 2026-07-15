@@ -50,6 +50,8 @@ export interface NextChordSuggestion {
     fromProgressions: string[]; // IDs of progressions that contain this transition
     isDiatonic: boolean; // Is it diatonic in the current mode?
     secondaryLabel?: string; // e.g. "V (Rel. Ionian)"
+    matchLength: number; // How many trailing chords of the sequence support this suggestion (0 = signature/tonic backfill)
+    sourceNames?: string[]; // Names of the progressions that best support this suggestion
 }
 
 
@@ -1331,37 +1333,80 @@ export function transposeProgression(
 }
 
 /**
- * Build a transition map from the dataset
- * Maps "chord1 -> chord2" to count of occurrences
+ * Score multiplier for how much matched context supports a suggestion.
+ * Grows triangularly (1, 3, 6, 10, ...) so a chord that continues a known
+ * three-chord run clearly outranks one that merely follows the last chord.
  */
-function buildTransitionMap(): Map<string, Map<string, { count: number; progressionIds: string[] }>> {
-    const transitions = new Map<string, Map<string, { count: number; progressionIds: string[] }>>();
+function contextBoost(length: number): number {
+    return (length * (length + 1)) / 2;
+}
+
+interface NextChordCandidate {
+    score: number;
+    fromProgressions: string[];
+    matchLength: number;
+    sources: { id: string; name: string; matchLength: number; weight: number }[];
+}
+
+/**
+ * Collect next-chord candidates by matching the longest possible suffix of the
+ * user's sequence against every progression in the dataset. For each
+ * progression only the longest matching context counts. Progressions tagged
+ * "loop" are treated as circular, so the chord after the last is the first.
+ */
+function collectNextChordCandidates(sequence: string[]): Map<string, NextChordCandidate> {
+    const candidates = new Map<string, NextChordCandidate>();
 
     for (const prog of CHORD_PROGRESSIONS) {
-        for (let i = 0; i < prog.roman.length - 1; i++) {
-            const from = normalizeRomanForTransition(prog.roman[i] ?? "");
-            const to = normalizeRomanForTransition(prog.roman[i + 1] ?? "");
-            if (!from || !to) continue;
+        const base = prog.roman.map((roman) => normalizeRomanForTransition(roman));
+        if (base.length < 2) continue;
 
-            if (!transitions.has(from)) {
-                transitions.set(from, new Map());
+        const isLoop = prog.tags.includes("loop");
+        // Doubling a loop lets suffix matches and next-chord lookups wrap around
+        const search = isLoop ? [...base, ...base] : base;
+        const maxLen = Math.min(sequence.length, base.length);
+
+        for (let len = maxLen; len >= 1; len--) {
+            const suffix = sequence.slice(-len);
+            const nextRomans: string[] = [];
+
+            const lastStart = isLoop ? base.length - 1 : base.length - len - 1;
+            for (let i = 0; i <= lastStart; i++) {
+                let isMatch = true;
+                for (let j = 0; j < len; j++) {
+                    if (search[i + j] !== suffix[j]) {
+                        isMatch = false;
+                        break;
+                    }
+                }
+                if (isMatch) nextRomans.push(search[i + len]!);
             }
 
-            const fromMap = transitions.get(from)!;
-            if (!fromMap.has(to)) {
-                fromMap.set(to, { count: 0, progressionIds: [] });
+            if (nextRomans.length === 0) continue;
+
+            const boost = contextBoost(len);
+            for (const next of nextRomans) {
+                let entry = candidates.get(next);
+                if (!entry) {
+                    entry = { score: 0, fromProgressions: [], matchLength: 0, sources: [] };
+                    candidates.set(next, entry);
+                }
+                entry.score += prog.weight * boost;
+                if (!entry.fromProgressions.includes(prog.id)) {
+                    entry.fromProgressions.push(prog.id);
+                }
+                if (len > entry.matchLength) entry.matchLength = len;
+                if (!entry.sources.some((s) => s.id === prog.id)) {
+                    entry.sources.push({ id: prog.id, name: prog.name, matchLength: len, weight: prog.weight });
+                }
             }
 
-            const entry = fromMap.get(to)!;
-            entry.count += prog.weight; // Weight by popularity
-            entry.progressionIds.push(prog.id);
+            break; // Only the longest match per progression counts
         }
     }
 
-    return transitions;
+    return candidates;
 }
-
-const transitionMap = buildTransitionMap();
 
 /**
  * Get a secondary label explaining the chord function relative to Ionian (Major)
@@ -1417,28 +1462,33 @@ export function suggestNextChords(
         return [];
     }
 
-    // Get the last chord in the sequence
-    const lastChord = normalizeRomanForTransition(partialSequence[partialSequence.length - 1] ?? "");
-    if (!lastChord) return [];
+    const normalizedSequence = partialSequence
+        .map((roman) => normalizeRomanForTransition(roman))
+        .filter((roman) => Boolean(roman));
+    if (normalizedSequence.length === 0) return [];
 
-    // Look up transitions from this chord
-    const fromMap = transitionMap.get(lastChord);
+    // Match the sequence context against the dataset
+    const candidates = collectNextChordCandidates(normalizedSequence);
 
     // Convert to array
     const suggestions: NextChordSuggestion[] = [];
     const seenRomans = new Set<string>();
 
-    if (fromMap) {
-        for (const [roman, data] of fromMap) {
-            seenRomans.add(roman);
-            suggestions.push({
-                roman,
-                chord: romanToChord(roman, tonic, mode),
-                frequency: data.count,
-                fromProgressions: data.progressionIds,
-                isDiatonic: isDiatonic(roman, mode)
-            });
-        }
+    for (const [roman, data] of candidates) {
+        seenRomans.add(roman);
+        const sortedSources = [...data.sources].sort((a, b) => {
+            if (b.matchLength !== a.matchLength) return b.matchLength - a.matchLength;
+            return b.weight - a.weight;
+        });
+        suggestions.push({
+            roman,
+            chord: romanToChord(roman, tonic, mode),
+            frequency: data.score,
+            fromProgressions: data.fromProgressions,
+            isDiatonic: isDiatonic(roman, mode),
+            matchLength: data.matchLength,
+            sourceNames: sortedSources.slice(0, 3).map((s) => s.name),
+        });
     }
 
     // Ensure Signature Chords are present even if not in transition map
@@ -1451,7 +1501,8 @@ export function suggestNextChords(
                 chord: romanToChord(sig, tonic, mode),
                 frequency: 1, // Base weight
                 fromProgressions: [],
-                isDiatonic: isDiatonic(sig, mode)
+                isDiatonic: isDiatonic(sig, mode),
+                matchLength: 0
             });
             seenRomans.add(sig);
         }
@@ -1465,7 +1516,8 @@ export function suggestNextChords(
             chord: romanToChord(tonicRoman, tonic, mode),
             frequency: 1,
             fromProgressions: [],
-            isDiatonic: isDiatonic(tonicRoman, mode)
+            isDiatonic: isDiatonic(tonicRoman, mode),
+            matchLength: 0
         });
     }
 
@@ -1559,7 +1611,8 @@ export function getStartingChords(
             frequency: weight,
             fromProgressions: [],
             isDiatonic: diatonic,
-            secondaryLabel: getRelativeIonianLabel(roman, actualMode)
+            secondaryLabel: getRelativeIonianLabel(roman, actualMode),
+            matchLength: 0
         });
     }
 

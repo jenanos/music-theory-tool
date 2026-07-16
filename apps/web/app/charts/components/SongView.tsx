@@ -36,6 +36,13 @@ function generateId() {
   return Math.random().toString(36).substring(2, 9);
 }
 
+// Matches inline time signatures like 4/4, 6/8 — these are rendered by
+// ChordDisplay but do not count as chords, so every chord-index computation
+// here must skip them to stay aligned with ChordDisplay's chordIndex.
+function isTimeSignature(token: string): boolean {
+  return /^\d+\/\d+$/.test(token);
+}
+
 const HARMONY_SCALES = SCALES.filter((s) => s.isHarmony);
 
 export function SongView({ song, onChange, onBackToList }: SongViewProps) {
@@ -283,8 +290,14 @@ export function SongView({ song, onChange, onBackToList }: SongViewProps) {
       const chordLine = section?.chordLines[lineIndex] ?? "";
       const degreeLine = section?.degreeLines?.[lineIndex] ?? "";
 
-      const lineChords = chordLine.split(/[\s|-]+/).filter(Boolean);
-      const lineDegrees = degreeLine.split(/[\s|-]+/).filter(Boolean);
+      const lineChords = chordLine
+        .split(/[\s|-]+/)
+        .filter(Boolean)
+        .filter((token) => !isTimeSignature(token));
+      const lineDegrees = degreeLine
+        .split(/[\s|-]+/)
+        .filter(Boolean)
+        .filter((token) => !isTimeSignature(token));
 
       const nextChordSymbol = lineChords[chordIndex + 1];
       const nextChordDegree = lineDegrees[chordIndex + 1];
@@ -353,6 +366,7 @@ export function SongView({ song, onChange, onBackToList }: SongViewProps) {
       let found = false;
 
       while ((match = chordRegex.exec(line)) !== null) {
+        if (isTimeSignature(match[0])) continue;
         if (currentIndex === chordIndex) {
           // Found it!
           const start = match.index;
@@ -794,7 +808,7 @@ export function SongView({ song, onChange, onBackToList }: SongViewProps) {
               onUpdate={isReadonly ? undefined : updateSection}
               onAdd={isReadonly ? undefined : addSection}
               onDelete={isReadonly ? undefined : deleteSection}
-              onChordClick={handleChordClick}
+              onChordClick={isReadonly ? undefined : handleChordClick}
             />
           </div>
         </div>

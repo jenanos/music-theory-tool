@@ -24,6 +24,10 @@ export function SectionItem({ section, songKey, hideRepeats, showAsPercent, onUp
     const [isCustomLabel, setIsCustomLabel] = useState(() => {
         return !PRESET_SECTIONS.includes(section.label) && section.label !== "Ny Seksjon";
     });
+    // Only autofocus the custom-label input when the user just switched to
+    // custom mode — not when a section mounts with an existing custom label
+    // (that would steal focus and scroll the page on song load).
+    const [autoFocusCustomLabel, setAutoFocusCustomLabel] = useState(false);
 
     const chordText = section.chordLines.join("\n");
 
@@ -58,6 +62,7 @@ export function SectionItem({ section, songKey, hideRepeats, showAsPercent, onUp
                                                     onChange={(e) => {
                                                         if (e.target.value === "custom") {
                                                             setIsCustomLabel(true);
+                                                            setAutoFocusCustomLabel(true);
                                                             onUpdate(section.id, { label: "" });
                                                         } else {
                                                             onUpdate(section.id, { label: e.target.value });
@@ -82,7 +87,7 @@ export function SectionItem({ section, songKey, hideRepeats, showAsPercent, onUp
                                             <div className="flex w-full items-center gap-1">
                                                 <input
                                                     type="text"
-                                                    autoFocus
+                                                    autoFocus={autoFocusCustomLabel}
                                                     className="w-full rounded-md border border-input bg-card px-1.5 py-1 md:px-2 md:py-1.5 text-xs md:text-sm font-semibold text-foreground focus:border-primary focus:ring-1 focus:ring-primary placeholder:text-muted-foreground placeholder:font-normal"
                                                     value={section.label}
                                                     onChange={(e) => onUpdate(section.id, { label: e.target.value })}

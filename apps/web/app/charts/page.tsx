@@ -19,6 +19,7 @@ export default function ChartsPage() {
     const [isLoading, setIsLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
     const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
+    const [saveError, setSaveError] = useState<string | null>(null);
     const [visibilityFilter, setVisibilityFilter] = useState<VisibilityFilter>("all");
     const isMobile = useIsMobile();
     const [showMobileList, setShowMobileList] = useState(true);
@@ -66,10 +67,12 @@ export default function ChartsPage() {
     };
 
     const handleUpdateSong = async (updatedSong: Song) => {
-        // Optimistic update
-        setSongs((prevSongs) =>
-            prevSongs.map((s) => (s.id === updatedSong.id ? updatedSong : s))
-        );
+        // Optimistic update — keep the previous state so we can roll back
+        let previousSongs: Song[] = [];
+        setSongs((prevSongs) => {
+            previousSongs = prevSongs;
+            return prevSongs.map((s) => (s.id === updatedSong.id ? updatedSong : s));
+        });
 
         // Persist to database
         try {
@@ -80,10 +83,21 @@ export default function ChartsPage() {
             });
 
             if (!response.ok) {
-                throw new Error("Failed to update song");
+                throw new Error(
+                    response.status === 403
+                        ? "Du har ikke tilgang til å endre denne låten."
+                        : "Failed to update song"
+                );
             }
+            setSaveError(null);
         } catch (err) {
             console.error("Error updating song:", err);
+            setSongs(previousSongs);
+            setSaveError(
+                err instanceof Error && err.message.startsWith("Du har ikke")
+                    ? err.message
+                    : "Kunne ikke lagre endringene. Prøv igjen."
+            );
         }
     };
 
@@ -188,6 +202,20 @@ export default function ChartsPage() {
 
     return (
         <div className="flex h-full w-full overflow-hidden bg-background relative">
+            {saveError && (
+                <div className="absolute left-1/2 top-3 z-[60] flex max-w-[90%] -translate-x-1/2 items-center gap-3 rounded-md border border-destructive/40 bg-destructive/15 px-4 py-2 text-sm text-destructive shadow-md backdrop-blur-sm">
+                    <span>{saveError}</span>
+                    <button
+                        onClick={() => setSaveError(null)}
+                        className="rounded p-0.5 hover:bg-destructive/20"
+                        aria-label="Lukk feilmelding"
+                    >
+                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" className="h-4 w-4">
+                            <path d="M6.28 5.22a.75.75 0 00-1.06 1.06L8.94 10l-3.72 3.72a.75.75 0 101.06 1.06L10 11.06l3.72 3.72a.75.75 0 101.06-1.06L11.06 10l3.72-3.72a.75.75 0 00-1.06-1.06L10 8.94 6.28 5.22z" />
+                        </svg>
+                    </button>
+                </div>
+            )}
             <CreateSongModal
                 isOpen={isCreateModalOpen}
                 onClose={() => setIsCreateModalOpen(false)}

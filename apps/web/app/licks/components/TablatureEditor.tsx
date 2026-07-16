@@ -25,19 +25,21 @@ const DURATION_LABELS: Record<DurationToken, string> = {
   "32": "1/32",
 };
 
-const TECHNIQUES: { id: LickTechnique; label: string }[] = [
-  { id: "slide", label: "Slide" },
-  { id: "hammer", label: "Hammer" },
-  { id: "pull", label: "Pull-off" },
-  { id: "bend", label: "Bend" },
-  { id: "vibrato", label: "Vibrato" },
-  { id: "tie", label: "Bind" },
-  { id: "ghost", label: "Ghost" },
+const TECHNIQUES: { id: LickTechnique; label: string; key: string }[] = [
+  { id: "slide", label: "Slide", key: "s" },
+  { id: "hammer", label: "Hammer", key: "h" },
+  { id: "pull", label: "Pull-off", key: "p" },
+  { id: "bend", label: "Bend", key: "b" },
+  { id: "vibrato", label: "Vibrato", key: "v" },
+  { id: "tie", label: "Bind", key: "t" },
+  { id: "ghost", label: "Ghost", key: "g" },
 ];
 
 const TECHNIQUE_SET = new Set<string>(TECHNIQUES.map((t) => t.id));
+const TECHNIQUE_BY_KEY = new Map(TECHNIQUES.map((t) => [t.key, t.id]));
 const STRING_LABELS = ["e", "B", "G", "D", "A", "E"];
 const STRING_NUMBERS = [1, 2, 3, 4, 5, 6] as const;
+const MAX_HISTORY = 100;
 
 type SlotNote = {
   fret: number;
@@ -68,6 +70,26 @@ function isTechnique(value: unknown): value is LickTechnique {
 function durationToBeats(duration: DurationToken, triplet: boolean): number {
   const base = 4 / Number(duration);
   return triplet ? base * (2 / 3) : base;
+}
+
+export function beatsPerBarFromMeter(meter: string | undefined): number {
+  const match = meter?.trim().match(/^(\d+)\s*\/\s*(\d+)$/);
+  if (!match) return 4;
+  const numerator = Number(match[1]);
+  const denominator = Number(match[2]);
+  if (numerator <= 0 || denominator <= 0) return 4;
+  return numerator * (4 / denominator);
+}
+
+function barBeats(bar: Bar): number {
+  return bar.slots.reduce(
+    (sum, slot) => sum + durationToBeats(slot.duration, slot.triplet),
+    0,
+  );
+}
+
+function formatBeats(value: number): string {
+  return String(Math.round(value * 100) / 100);
 }
 
 function emptySlot(duration: DurationToken = "8", triplet = false): Slot {
@@ -205,15 +227,19 @@ export function slotsToLickData(model: SlotsModel, base: LickData): LickData {
   return next;
 }
 
+function cloneSlot(slot: Slot): Slot {
+  return {
+    ...slot,
+    notes: Object.fromEntries(
+      Object.entries(slot.notes).map(([k, v]) => [k, { ...v! }]),
+    ),
+  };
+}
+
 function cloneModel(model: SlotsModel): SlotsModel {
   return {
     bars: model.bars.map((bar) => ({
-      slots: bar.slots.map((slot) => ({
-        ...slot,
-        notes: Object.fromEntries(
-          Object.entries(slot.notes).map(([k, v]) => [k, { ...v! }]),
-        ),
-      })),
+      slots: bar.slots.map(cloneSlot),
     })),
   };
 }
@@ -228,12 +254,31 @@ function clampSelection(model: SlotsModel, sel: Selection | null): Selection {
   return { barIndex, slotIndex, string };
 }
 
+const SHORTCUTS: { keys: string; action: string }[] = [
+  { keys: "0–9", action: "Skriv fret-tall (to sifre for 10+)" },
+  { keys: "Piltaster", action: "Navigér mellom celler" },
+  { keys: "Backspace", action: "Slett note" },
+  { keys: "R", action: "Gjør slaget til pause (tøm alle strenger)" },
+  { keys: "Enter", action: "Nytt slag etter valgt" },
+  { keys: "Shift+Enter", action: "Ny takt etter valgt" },
+  { keys: "D", action: "Dupliser slag" },
+  { keys: "X", action: "Fjern slag" },
+  { keys: "+ / −", action: "Kortere / lengre varighet" },
+  { keys: ",", action: "Triolett av/på" },
+  { keys: "S H P B V T G", action: "Slide, hammer, pull, bend, vibrato, bind, ghost" },
+  { keys: "Ctrl+Z / Ctrl+Y", action: "Angre / gjør om" },
+  { keys: "Ctrl+C / Ctrl+V", action: "Kopier / lim inn slag" },
+];
+
 export function TablatureEditor({ data, onChange }: TablatureEditorProps) {
   const containerRef = useRef<HTMLDivElement | null>(null);
   const fretBuffer = useRef<{ digits: string; timer: number | null }>({
     digits: "",
     timer: null,
   });
+  const undoStack = useRef<LickData[]>([]);
+  const redoStack = useRef<LickData[]>([]);
+  const slotClipboard = useRef<Slot | null>(null);
 
   const model = useMemo(() => lickDataToSlots(data), [data]);
   const [rawSelection, setRawSelection] = useState<Selection>({
@@ -247,7 +292,33 @@ export function TablatureEditor({ data, onChange }: TablatureEditorProps) {
     setRawSelection((current) => clampSelection(model, current));
   }, [model]);
 
-  const update = (next: SlotsModel) => onChange(slotsToLickData(next, data));
+  const update = (next: SlotsModel, options?: { coalesce?: boolean }) => {
+    if (!options?.coalesce) {
+      undoStack.current.push(data);
+      if (undoStack.current.length > MAX_HISTORY) undoStack.current.shift();
+    }
+    redoStack.current = [];
+    onChange(slotsToLickData(next, data));
+  };
+
+  const undo = () => {
+    const previous = undoStack.current.pop();
+    if (!previous) return;
+    redoStack.current.push(data);
+    onChange(previous);
+  };
+
+  const redo = () => {
+    const next = redoStack.current.pop();
+    if (!next) return;
+    undoStack.current.push(data);
+    onChange(next);
+  };
+
+  const canUndo = undoStack.current.length > 0;
+  const canRedo = redoStack.current.length > 0;
+
+  const beatsPerBar = beatsPerBarFromMeter(data.meter);
 
   const selectedBar = model.bars[selected.barIndex];
   const selectedSlot = selectedBar?.slots[selected.slotIndex] ?? null;
@@ -260,13 +331,13 @@ export function TablatureEditor({ data, onChange }: TablatureEditorProps) {
     fretBuffer.current = { digits: "", timer: null };
   };
 
-  const setFret = (fret: number) => {
+  const setFret = (fret: number, options?: { coalesce?: boolean }) => {
     const next = cloneModel(model);
     const slot = next.bars[selected.barIndex]?.slots[selected.slotIndex];
     if (!slot) return;
     const existing = slot.notes[selected.string];
     slot.notes[selected.string] = { ...(existing ?? {}), fret };
-    update(next);
+    update(next, options);
   };
 
   const clearNote = () => {
@@ -277,12 +348,31 @@ export function TablatureEditor({ data, onChange }: TablatureEditorProps) {
     update(next);
   };
 
+  const clearSlot = () => {
+    const next = cloneModel(model);
+    const slot = next.bars[selected.barIndex]?.slots[selected.slotIndex];
+    if (!slot) return;
+    slot.notes = {};
+    update(next);
+  };
+
   const setDuration = (duration: DurationToken) => {
     const next = cloneModel(model);
     const slot = next.bars[selected.barIndex]?.slots[selected.slotIndex];
     if (!slot) return;
     slot.duration = duration;
     update(next);
+  };
+
+  const stepDuration = (direction: 1 | -1) => {
+    if (!selectedSlot) return;
+    const index = DURATIONS.indexOf(selectedSlot.duration);
+    const nextIndex = Math.min(
+      Math.max(index + direction, 0),
+      DURATIONS.length - 1,
+    );
+    if (nextIndex === index) return;
+    setDuration(DURATIONS[nextIndex]!);
   };
 
   const toggleTriplet = () => {
@@ -333,19 +423,41 @@ export function TablatureEditor({ data, onChange }: TablatureEditorProps) {
     update(next);
   };
 
-  const insertSlotAfter = () => {
+  const insertSlotAfter = (source?: Slot) => {
     const next = cloneModel(model);
     const bar = next.bars[selected.barIndex];
     if (!bar) return;
-    const source = bar.slots[selected.slotIndex];
+    const current = bar.slots[selected.slotIndex];
     const insertAt = selected.slotIndex + 1;
     bar.slots.splice(
       insertAt,
       0,
-      emptySlot(source?.duration ?? "8", source?.triplet ?? false),
+      source
+        ? cloneSlot(source)
+        : emptySlot(current?.duration ?? "8", current?.triplet ?? false),
     );
     update(next);
     setRawSelection({ ...selected, slotIndex: insertAt });
+  };
+
+  const duplicateSlot = () => {
+    if (!selectedSlot) return;
+    insertSlotAfter(selectedSlot);
+  };
+
+  const copySlot = () => {
+    if (!selectedSlot) return;
+    slotClipboard.current = cloneSlot(selectedSlot);
+  };
+
+  const pasteSlot = () => {
+    const clip = slotClipboard.current;
+    if (!clip) return;
+    const next = cloneModel(model);
+    const bar = next.bars[selected.barIndex];
+    if (!bar || !bar.slots[selected.slotIndex]) return;
+    bar.slots[selected.slotIndex] = cloneSlot(clip);
+    update(next);
   };
 
   const removeSlot = () => {
@@ -364,16 +476,27 @@ export function TablatureEditor({ data, onChange }: TablatureEditorProps) {
     });
   };
 
-  const insertBarAfter = () => {
+  const insertBarAfter = (source?: Bar) => {
     const next = cloneModel(model);
     const insertAt = selected.barIndex + 1;
-    next.bars.splice(insertAt, 0, { slots: [emptySlot()] });
+    next.bars.splice(
+      insertAt,
+      0,
+      source
+        ? { slots: source.slots.map(cloneSlot) }
+        : { slots: [emptySlot()] },
+    );
     update(next);
     setRawSelection({
       barIndex: insertAt,
       slotIndex: 0,
       string: selected.string,
     });
+  };
+
+  const duplicateBar = () => {
+    if (!selectedBar) return;
+    insertBarAfter(selectedBar);
   };
 
   const removeBar = () => {
@@ -421,9 +544,10 @@ export function TablatureEditor({ data, onChange }: TablatureEditorProps) {
 
   const handleDigit = (digit: string) => {
     const buf = fretBuffer.current;
+    const hadDigits = buf.digits.length > 0;
     buf.digits = (buf.digits + digit).slice(-2);
     const fret = Number(buf.digits);
-    if (Number.isFinite(fret)) setFret(fret);
+    if (Number.isFinite(fret)) setFret(fret, { coalesce: hadDigits });
     if (buf.timer !== null) window.clearTimeout(buf.timer);
     buf.timer = window.setTimeout(() => {
       fretBuffer.current = { digits: "", timer: null };
@@ -431,8 +555,34 @@ export function TablatureEditor({ data, onChange }: TablatureEditorProps) {
   };
 
   const handleKeyDown = (event: ReactKeyboardEvent<HTMLDivElement>) => {
-    if (event.metaKey || event.ctrlKey || event.altKey) return;
     const { key } = event;
+    const lower = key.toLowerCase();
+
+    if (event.metaKey || event.ctrlKey) {
+      if (lower === "z") {
+        event.preventDefault();
+        flushFretBuffer();
+        if (event.shiftKey) {
+          redo();
+        } else {
+          undo();
+        }
+      } else if (lower === "y") {
+        event.preventDefault();
+        flushFretBuffer();
+        redo();
+      } else if (lower === "c") {
+        event.preventDefault();
+        copySlot();
+      } else if (lower === "v") {
+        event.preventDefault();
+        flushFretBuffer();
+        pasteSlot();
+      }
+      return;
+    }
+    if (event.altKey) return;
+
     if (key === "ArrowUp") {
       event.preventDefault();
       flushFretBuffer();
@@ -456,13 +606,47 @@ export function TablatureEditor({ data, onChange }: TablatureEditorProps) {
     } else if (key === "Enter") {
       event.preventDefault();
       flushFretBuffer();
-      insertSlotAfter();
+      if (event.shiftKey) {
+        insertBarAfter();
+      } else {
+        insertSlotAfter();
+      }
     } else if (key === "Escape") {
       event.preventDefault();
       flushFretBuffer();
     } else if (/^\d$/.test(key)) {
       event.preventDefault();
       handleDigit(key);
+    } else if (event.repeat) {
+      return;
+    } else if (key === "+" || key === "=") {
+      event.preventDefault();
+      flushFretBuffer();
+      stepDuration(1);
+    } else if (key === "-") {
+      event.preventDefault();
+      flushFretBuffer();
+      stepDuration(-1);
+    } else if (key === ",") {
+      event.preventDefault();
+      flushFretBuffer();
+      toggleTriplet();
+    } else if (lower === "r") {
+      event.preventDefault();
+      flushFretBuffer();
+      clearSlot();
+    } else if (lower === "d") {
+      event.preventDefault();
+      flushFretBuffer();
+      duplicateSlot();
+    } else if (lower === "x") {
+      event.preventDefault();
+      flushFretBuffer();
+      removeSlot();
+    } else if (TECHNIQUE_BY_KEY.has(lower)) {
+      event.preventDefault();
+      flushFretBuffer();
+      toggleTechnique(TECHNIQUE_BY_KEY.get(lower)!);
     }
   };
 
@@ -474,6 +658,29 @@ export function TablatureEditor({ data, onChange }: TablatureEditorProps) {
   return (
     <div className="space-y-3">
       <div className="flex flex-wrap items-center gap-3 rounded-md border border-border bg-card/50 p-3">
+        <div className="flex flex-wrap items-center gap-1">
+          <Button
+            type="button"
+            size="sm"
+            variant="outline"
+            onClick={undo}
+            disabled={!canUndo}
+            title="Angre (Ctrl+Z)"
+          >
+            ↺ Angre
+          </Button>
+          <Button
+            type="button"
+            size="sm"
+            variant="outline"
+            onClick={redo}
+            disabled={!canRedo}
+            title="Gjør om (Ctrl+Y)"
+          >
+            ↻ Gjør om
+          </Button>
+        </div>
+
         <div className="flex flex-wrap items-center gap-1">
           <span className="mr-1 text-xs text-muted-foreground">Varighet</span>
           {DURATIONS.map((d) => (
@@ -512,6 +719,7 @@ export function TablatureEditor({ data, onChange }: TablatureEditorProps) {
                 variant={active ? "default" : "outline"}
                 onClick={() => toggleTechnique(t.id)}
                 disabled={!selectedNote}
+                title={`${t.label} (${t.key.toUpperCase()})`}
               >
                 {t.label}
               </Button>
@@ -524,7 +732,8 @@ export function TablatureEditor({ data, onChange }: TablatureEditorProps) {
             type="button"
             size="sm"
             variant="outline"
-            onClick={insertSlotAfter}
+            onClick={() => insertSlotAfter()}
+            title="Nytt slag (Enter)"
           >
             + Slag
           </Button>
@@ -532,7 +741,17 @@ export function TablatureEditor({ data, onChange }: TablatureEditorProps) {
             type="button"
             size="sm"
             variant="outline"
+            onClick={duplicateSlot}
+            title="Dupliser slag (D)"
+          >
+            ⧉ Slag
+          </Button>
+          <Button
+            type="button"
+            size="sm"
+            variant="outline"
             onClick={removeSlot}
+            title="Fjern slag (X)"
           >
             − Slag
           </Button>
@@ -540,7 +759,8 @@ export function TablatureEditor({ data, onChange }: TablatureEditorProps) {
             type="button"
             size="sm"
             variant="outline"
-            onClick={insertBarAfter}
+            onClick={() => insertBarAfter()}
+            title="Ny takt (Shift+Enter)"
           >
             + Takt
           </Button>
@@ -548,8 +768,18 @@ export function TablatureEditor({ data, onChange }: TablatureEditorProps) {
             type="button"
             size="sm"
             variant="outline"
+            onClick={duplicateBar}
+            title="Dupliser takt"
+          >
+            ⧉ Takt
+          </Button>
+          <Button
+            type="button"
+            size="sm"
+            variant="outline"
             onClick={removeBar}
             disabled={model.bars.length <= 1}
+            title="Fjern takt"
           >
             − Takt
           </Button>
@@ -594,93 +824,128 @@ export function TablatureEditor({ data, onChange }: TablatureEditorProps) {
             <div className="h-5" />
           </div>
 
-          {model.bars.map((bar, barIndex) => (
-            <div key={barIndex} className="flex flex-col">
-              <div className="mb-1 flex items-center justify-between text-xs text-muted-foreground">
-                <span>Takt {barIndex + 1}</span>
-              </div>
-              <div className="flex border-l-2 border-border bg-card/30">
-                {bar.slots.map((slot, slotIndex) => {
-                  const isSlotSelected =
-                    selected.barIndex === barIndex &&
-                    selected.slotIndex === slotIndex;
-                  return (
-                    <div
-                      key={slotIndex}
-                      className={`flex flex-col border-r border-border/60 ${
-                        isSlotSelected ? "bg-primary/5" : ""
-                      }`}
-                    >
-                      {STRING_NUMBERS.map((stringNumber) => {
-                        const note = slot.notes[stringNumber];
-                        const isCellSelected =
-                          isSlotSelected && selected.string === stringNumber;
-                        return (
-                          <button
-                            key={stringNumber}
-                            type="button"
-                            onClick={() => {
-                              flushFretBuffer();
-                              setRawSelection({
-                                barIndex,
-                                slotIndex,
-                                string: stringNumber,
-                              });
-                              containerRef.current?.focus();
-                            }}
-                            className={`relative flex h-9 w-12 items-center justify-center border-b border-border/40 font-mono text-sm transition-colors ${
-                              isCellSelected
-                                ? "bg-primary/25 text-foreground ring-2 ring-inset ring-primary/70"
-                                : note
-                                  ? "text-foreground hover:bg-muted/40"
-                                  : "text-muted-foreground/40 hover:bg-muted/30"
-                            }`}
-                          >
-                            {note ? (
-                              <span
-                                className={
-                                  note.ghost ? "italic opacity-70" : undefined
-                                }
-                              >
-                                {note.fret}
-                                {typeof note.toFret === "number"
-                                  ? `→${note.toFret}`
-                                  : ""}
-                              </span>
-                            ) : (
-                              "·"
-                            )}
-                            {note?.technique && (
-                              <span className="absolute right-0.5 top-0 text-[8px] font-semibold uppercase text-primary">
-                                {note.technique[0]}
-                              </span>
-                            )}
-                          </button>
-                        );
-                      })}
+          {model.bars.map((bar, barIndex) => {
+            const used = barBeats(bar);
+            const usedRounded = Math.round(used * 1000) / 1000;
+            const overfull = usedRounded > beatsPerBar;
+            const underfull = usedRounded < beatsPerBar;
+            return (
+              <div key={barIndex} className="flex flex-col">
+                <div className="mb-1 flex items-center justify-between gap-2 text-xs text-muted-foreground">
+                  <span>Takt {barIndex + 1}</span>
+                  <span
+                    className={
+                      overfull
+                        ? "font-medium text-destructive"
+                        : underfull
+                          ? "text-amber-600 dark:text-amber-500"
+                          : ""
+                    }
+                    title={
+                      overfull
+                        ? "Takten har flere slag enn taktarten tillater"
+                        : underfull
+                          ? "Takten er ikke full ennå"
+                          : "Takten er full"
+                    }
+                  >
+                    {formatBeats(used)}/{formatBeats(beatsPerBar)}
+                  </span>
+                </div>
+                <div className="flex border-l-2 border-border bg-card/30">
+                  {bar.slots.map((slot, slotIndex) => {
+                    const isSlotSelected =
+                      selected.barIndex === barIndex &&
+                      selected.slotIndex === slotIndex;
+                    return (
                       <div
-                        className={`border-t border-border/60 px-1 py-0.5 text-center text-[10px] ${
-                          isSlotSelected
-                            ? "text-primary"
-                            : "text-muted-foreground"
+                        key={slotIndex}
+                        className={`flex flex-col border-r border-border/60 ${
+                          isSlotSelected ? "bg-primary/5" : ""
                         }`}
                       >
-                        {DURATION_LABELS[slot.duration]}
-                        {slot.triplet ? "ᵗ" : ""}
+                        {STRING_NUMBERS.map((stringNumber) => {
+                          const note = slot.notes[stringNumber];
+                          const isCellSelected =
+                            isSlotSelected && selected.string === stringNumber;
+                          return (
+                            <button
+                              key={stringNumber}
+                              type="button"
+                              onClick={() => {
+                                flushFretBuffer();
+                                setRawSelection({
+                                  barIndex,
+                                  slotIndex,
+                                  string: stringNumber,
+                                });
+                                containerRef.current?.focus();
+                              }}
+                              className={`relative flex h-9 w-12 items-center justify-center border-b border-border/40 font-mono text-sm transition-colors ${
+                                isCellSelected
+                                  ? "bg-primary/25 text-foreground ring-2 ring-inset ring-primary/70"
+                                  : note
+                                    ? "text-foreground hover:bg-muted/40"
+                                    : "text-muted-foreground/40 hover:bg-muted/30"
+                              }`}
+                            >
+                              {note ? (
+                                <span
+                                  className={
+                                    note.ghost ? "italic opacity-70" : undefined
+                                  }
+                                >
+                                  {note.fret}
+                                  {typeof note.toFret === "number"
+                                    ? `→${note.toFret}`
+                                    : ""}
+                                </span>
+                              ) : (
+                                "·"
+                              )}
+                              {note?.technique && (
+                                <span className="absolute right-0.5 top-0 text-[8px] font-semibold uppercase text-primary">
+                                  {note.technique[0]}
+                                </span>
+                              )}
+                            </button>
+                          );
+                        })}
+                        <div
+                          className={`border-t border-border/60 px-1 py-0.5 text-center text-[10px] ${
+                            isSlotSelected
+                              ? "text-primary"
+                              : "text-muted-foreground"
+                          }`}
+                        >
+                          {DURATION_LABELS[slot.duration]}
+                          {slot.triplet ? "ᵗ" : ""}
+                        </div>
                       </div>
-                    </div>
-                  );
-                })}
+                    );
+                  })}
+                </div>
               </div>
-            </div>
-          ))}
+            );
+          })}
         </div>
       </div>
 
-      <p className="text-xs text-muted-foreground">
-        Klikk en celle og skriv fret-tall (0–99). Piltaster: navigér. Backspace:
-        slett note. Enter: nytt slag etter valgt.
-      </p>
+      <details className="text-xs text-muted-foreground">
+        <summary className="cursor-pointer select-none font-medium">
+          Hurtigtaster
+        </summary>
+        <ul className="mt-2 grid gap-x-6 gap-y-1 sm:grid-cols-2">
+          {SHORTCUTS.map((shortcut) => (
+            <li key={shortcut.keys} className="flex gap-2">
+              <span className="min-w-28 font-mono text-foreground/80">
+                {shortcut.keys}
+              </span>
+              <span>{shortcut.action}</span>
+            </li>
+          ))}
+        </ul>
+      </details>
     </div>
   );
 }

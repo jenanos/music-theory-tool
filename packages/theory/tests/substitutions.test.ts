@@ -351,6 +351,39 @@ describe("substitution engine", () => {
         expect(basic).toContain("G13");
     });
 
+    test("does not suggest a downgraded version of an already-rich source chord", () => {
+        const tonic = "C";
+        const mode: ModeId = "ionian";
+        const chords = buildDiatonicChords(tonic, mode, true);
+
+        const dominantSuggestions = suggestSubstitutions({
+            tonic,
+            mode,
+            chord: getChord(chords, 5),
+            allChords: chords,
+            sourceSymbol: "G9",
+            includeSpice: true,
+        });
+
+        expect(
+            dominantSuggestions.some((suggestion) => suggestion.substituteSymbol === "G7"),
+        ).toBe(false);
+
+        const triadSuggestions = suggestSubstitutions({
+            tonic,
+            mode,
+            chord: getChord(chords, 1),
+            allChords: chords,
+            sourceSymbol: "Cadd9",
+            profile: "triad",
+            includeSpice: true,
+        });
+
+        expect(
+            triadSuggestions.some((suggestion) => suggestion.substituteSymbol === "C"),
+        ).toBe(false);
+    });
+
     test("reasons are human-readable Norwegian sentences", () => {
         const tonic = "C";
         const mode: ModeId = "ionian";

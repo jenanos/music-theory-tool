@@ -406,8 +406,19 @@ export function suggestSubstitutions(
         }).map((variant) => variant.symbol)
     );
 
-    // The profiled version of the chord the user plays (e.g. C -> Cmaj7).
-    if (normalizeSymbol(sourceProfileSymbol) !== normalizeSymbol(sourceDisplaySymbol)) {
+    // The profiled version of the chord the user plays (e.g. C -> Cmaj7),
+    // but only when profiling actually adds richness — a source that is
+    // already richer than the profile (G9 under "seventh", Cadd9 under
+    // "triad") would otherwise get its own harmony back, downgraded.
+    const sourceSymbolInfo = parseChordSymbol(sourceDisplaySymbol);
+    const profiledSymbolInfo = parseChordSymbol(sourceProfileSymbol);
+    const profileAddsRichness =
+        sourceSymbolInfo !== null
+        && profiledSymbolInfo !== null
+        && sourceSymbolInfo.seventhType === "none"
+        && sourceSymbolInfo.extensions.length === 0
+        && profiledSymbolInfo.seventhType !== "none";
+    if (profileAddsRichness) {
         sameChordVariants.add(sourceProfileSymbol);
     }
 

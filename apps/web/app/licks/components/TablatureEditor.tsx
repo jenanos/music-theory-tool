@@ -279,6 +279,8 @@ export function TablatureEditor({ data, onChange }: TablatureEditorProps) {
   const undoStack = useRef<LickData[]>([]);
   const redoStack = useRef<LickData[]>([]);
   const slotClipboard = useRef<Slot | null>(null);
+  const internalChange = useRef(false);
+  const lastData = useRef(data);
 
   const model = useMemo(() => lickDataToSlots(data), [data]);
   const [rawSelection, setRawSelection] = useState<Selection>({
@@ -292,12 +294,29 @@ export function TablatureEditor({ data, onChange }: TablatureEditorProps) {
     setRawSelection((current) => clampSelection(model, current));
   }, [model]);
 
+  const pushUndo = (snapshot: LickData) => {
+    undoStack.current.push(snapshot);
+    if (undoStack.current.length > MAX_HISTORY) undoStack.current.shift();
+  };
+
+  // External data replacements (e.g. LLM-import) bypass update(); make them
+  // undoable instead of leaving a stale history behind.
+  useEffect(() => {
+    if (data === lastData.current) return;
+    if (!internalChange.current) {
+      pushUndo(lastData.current);
+      redoStack.current = [];
+    }
+    internalChange.current = false;
+    lastData.current = data;
+  });
+
   const update = (next: SlotsModel, options?: { coalesce?: boolean }) => {
     if (!options?.coalesce) {
-      undoStack.current.push(data);
-      if (undoStack.current.length > MAX_HISTORY) undoStack.current.shift();
+      pushUndo(data);
     }
     redoStack.current = [];
+    internalChange.current = true;
     onChange(slotsToLickData(next, data));
   };
 
@@ -305,6 +324,7 @@ export function TablatureEditor({ data, onChange }: TablatureEditorProps) {
     const previous = undoStack.current.pop();
     if (!previous) return;
     redoStack.current.push(data);
+    internalChange.current = true;
     onChange(previous);
   };
 
@@ -312,6 +332,7 @@ export function TablatureEditor({ data, onChange }: TablatureEditorProps) {
     const next = redoStack.current.pop();
     if (!next) return;
     undoStack.current.push(data);
+    internalChange.current = true;
     onChange(next);
   };
 

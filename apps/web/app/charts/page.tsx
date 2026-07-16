@@ -1,7 +1,7 @@
 
 "use client";
 
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { Song, SongVisibility, GroupInfo } from "./data";
 import { SongSelector } from "./components/SongSelector";
 import { SongView } from "./components/SongView";
@@ -10,6 +10,11 @@ import { useIsMobile } from "@repo/ui/use-mobile";
 import { useAuth } from "../lib/auth-context";
 
 type VisibilityFilter = "all" | SongVisibility;
+
+// How long to wait after the last change before persisting. Editing fields
+// fires one update per keystroke; without debouncing every keystroke becomes
+// a PUT that deletes and recreates all sections.
+const SAVE_DEBOUNCE_MS = 800;
 
 export default function ChartsPage() {
     const { user } = useAuth();
@@ -26,6 +31,15 @@ export default function ChartsPage() {
 
     const isAdmin = user?.role === "admin";
 
+    // Per-song bookkeeping for debounced persistence:
+    // - lastSaved: the last version the server confirmed (rollback target)
+    // - pending: the latest optimistic version awaiting a save
+    const lastSavedRef = useRef<Map<string, Song>>(new Map());
+    const pendingSavesRef = useRef<Map<string, Song>>(new Map());
+    const saveTimersRef = useRef<Map<string, ReturnType<typeof setTimeout>>>(
+        new Map()
+    );
+
     // Fetch songs and groups from API on mount
     useEffect(() => {
         async function fetchData() {
@@ -35,9 +49,12 @@ export default function ChartsPage() {
                     fetch("/api/groups"),
                 ]);
                 if (!songsRes.ok) throw new Error("Failed to fetch songs");
-                const songsData = await songsRes.json();
+                const songsData: Song[] = await songsRes.json();
                 setSongs(songsData);
                 setSelectedSongId((prev) => prev ?? songsData[0]?.id);
+                songsData.forEach((song) =>
+                    lastSavedRef.current.set(song.id, song)
+                );
 
                 if (groupsRes.ok) {
                     setGroups(await groupsRes.json());
@@ -51,6 +68,33 @@ export default function ChartsPage() {
         fetchData();
     }, []);
 
+    // Flush any pending saves when the page is being left (navigation, reload,
+    // tab close) or the component unmounts. keepalive lets the request outlive
+    // the page so mid-flight saves are not aborted and truncated.
+    useEffect(() => {
+        const flushPendingSaves = () => {
+            saveTimersRef.current.forEach((timer) => clearTimeout(timer));
+            saveTimersRef.current.clear();
+            for (const song of pendingSavesRef.current.values()) {
+                fetch(`/api/songs/${song.id}`, {
+                    method: "PUT",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify(song),
+                    keepalive: true,
+                }).catch(() => {
+                    // The page is going away; nothing sensible to do here.
+                });
+            }
+            pendingSavesRef.current.clear();
+        };
+
+        window.addEventListener("pagehide", flushPendingSaves);
+        return () => {
+            window.removeEventListener("pagehide", flushPendingSaves);
+            flushPendingSaves();
+        };
+    }, []);
+
     // Filter songs based on visibility
     const filteredSongs =
         visibilityFilter === "all"
@@ -59,6 +103,22 @@ export default function ChartsPage() {
 
     const selectedSong = songs.find((s) => s.id === selectedSongId);
 
+    // Mirrors the server's write rules (canAccessSong with requireWrite):
+    // admins and owners may edit everything; group songs may be edited by
+    // group members; shared songs are read-only for everyone else.
+    const canEditSong = (song: Song): boolean => {
+        if (!user) return false;
+        if (isAdmin) return true;
+        if (song.userId === user.id) return true;
+        if (song.visibility === "group" && song.groupId) {
+            const group = groups.find((g) => g.id === song.groupId);
+            return Boolean(
+                group?.members?.some((m) => m.userId === user.id)
+            );
+        }
+        return false;
+    };
+
     const handleSelectSong = (songId: string) => {
         setSelectedSongId(songId);
         if (isMobile) {
@@ -66,20 +126,14 @@ export default function ChartsPage() {
         }
     };
 
-    const handleUpdateSong = async (updatedSong: Song) => {
-        // Optimistic update — keep the previous state so we can roll back
-        let previousSongs: Song[] = [];
-        setSongs((prevSongs) => {
-            previousSongs = prevSongs;
-            return prevSongs.map((s) => (s.id === updatedSong.id ? updatedSong : s));
-        });
-
-        // Persist to database
+    const persistSong = useCallback(async (songToSave: Song) => {
+        pendingSavesRef.current.delete(songToSave.id);
         try {
-            const response = await fetch(`/api/songs/${updatedSong.id}`, {
+            const response = await fetch(`/api/songs/${songToSave.id}`, {
                 method: "PUT",
                 headers: { "Content-Type": "application/json" },
-                body: JSON.stringify(updatedSong),
+                body: JSON.stringify(songToSave),
+                keepalive: true,
             });
 
             if (!response.ok) {
@@ -89,19 +143,18 @@ export default function ChartsPage() {
                         : "Failed to update song"
                 );
             }
+            lastSavedRef.current.set(songToSave.id, songToSave);
             setSaveError(null);
         } catch (err) {
             console.error("Error updating song:", err);
-            // Roll back only if no newer edit has replaced our optimistic
-            // state. A later save is built on top of this state and sends the
-            // whole song document, so if it succeeded the server already has
-            // everything — reverting to our older snapshot would erase it.
+            // Roll back to the last server-confirmed version, but only if no
+            // newer edit has replaced our optimistic state. A later save is
+            // built on top of this state and sends the whole song document,
+            // so if it succeeded the server already has everything.
             setSongs((prev) =>
                 prev.map((s) => {
-                    if (s.id !== updatedSong.id || s !== updatedSong) return s;
-                    return (
-                        previousSongs.find((p) => p.id === updatedSong.id) ?? s
-                    );
+                    if (s.id !== songToSave.id || s !== songToSave) return s;
+                    return lastSavedRef.current.get(songToSave.id) ?? s;
                 })
             );
             setSaveError(
@@ -110,6 +163,26 @@ export default function ChartsPage() {
                     : "Kunne ikke lagre endringene. Prøv igjen."
             );
         }
+    }, []);
+
+    const handleUpdateSong = (updatedSong: Song) => {
+        // Optimistic update right away, debounced persistence afterwards.
+        setSongs((prevSongs) =>
+            prevSongs.map((s) => (s.id === updatedSong.id ? updatedSong : s))
+        );
+
+        pendingSavesRef.current.set(updatedSong.id, updatedSong);
+        const timers = saveTimersRef.current;
+        const existingTimer = timers.get(updatedSong.id);
+        if (existingTimer) clearTimeout(existingTimer);
+        timers.set(
+            updatedSong.id,
+            setTimeout(() => {
+                timers.delete(updatedSong.id);
+                const pending = pendingSavesRef.current.get(updatedSong.id);
+                if (pending) persistSong(pending);
+            }, SAVE_DEBOUNCE_MS)
+        );
     };
 
     const handleCreateSong = async (data: {
@@ -157,10 +230,17 @@ export default function ChartsPage() {
 
             setSongs((prev) => [...prev, newSong]);
             setSelectedSongId(result.id);
+            lastSavedRef.current.set(newSong.id, newSong);
         }
     };
 
     const handleDeleteSong = async (songId: string) => {
+        // Drop any pending save for the song being deleted.
+        const timer = saveTimersRef.current.get(songId);
+        if (timer) clearTimeout(timer);
+        saveTimersRef.current.delete(songId);
+        pendingSavesRef.current.delete(songId);
+
         const response = await fetch(`/api/songs/${songId}`, {
             method: "DELETE",
         });
@@ -168,6 +248,8 @@ export default function ChartsPage() {
         if (!response.ok) {
             throw new Error("Failed to delete song");
         }
+
+        lastSavedRef.current.delete(songId);
 
         setSongs((prevSongs) => {
             const updatedSongs = prevSongs.filter((song) => song.id !== songId);
@@ -255,6 +337,7 @@ export default function ChartsPage() {
                         <SongView
                             key={selectedSong.id}
                             song={selectedSong}
+                            canEdit={canEditSong(selectedSong)}
                             onChange={handleUpdateSong}
                             onBackToList={isMobile ? () => setShowMobileList(true) : undefined}
                         />

@@ -31,12 +31,14 @@ interface TimelineProps {
     sections: Section[]; // To look up labels
     onReorder: (newItems: TimelineItem[]) => void;
     onSelect?: (videoTime: number) => void; // Placeholder
+    disabled?: boolean; // Readonly view: no drag-and-drop
 }
 
 function SortableItem(props: {
     id: string;
     sectionId: string;
     label: string;
+    disabled?: boolean;
 }) {
     const {
         attributes,
@@ -45,7 +47,7 @@ function SortableItem(props: {
         transform,
         transition,
         isDragging,
-    } = useSortable({ id: props.id });
+    } = useSortable({ id: props.id, disabled: props.disabled });
 
     const style = {
         transform: CSS.Transform.toString(transform),
@@ -58,14 +60,14 @@ function SortableItem(props: {
             style={style}
             {...attributes}
             {...listeners}
-            className={`flex-shrink-0 cursor-grab rounded-md border border-border px-3 py-2 text-sm font-medium text-foreground shadow-sm hover:opacity-90 active:cursor-grabbing ${isDragging ? "opacity-50 z-50 ring-2 ring-primary" : ""} ${getSectionColorClass(props.label)}`}
+            className={`flex-shrink-0 rounded-md border border-border px-3 py-2 text-sm font-medium text-foreground shadow-sm ${props.disabled ? "cursor-default" : "cursor-grab hover:opacity-90 active:cursor-grabbing"} ${isDragging ? "opacity-50 z-50 ring-2 ring-primary" : ""} ${getSectionColorClass(props.label)}`}
         >
             {props.label}
         </div>
     );
 }
 
-export function Timeline({ items, sections, onReorder }: TimelineProps) {
+export function Timeline({ items, sections, onReorder, disabled }: TimelineProps) {
     const sensors = useSensors(
         useSensor(PointerSensor),
         useSensor(KeyboardSensor, {
@@ -98,7 +100,9 @@ export function Timeline({ items, sections, onReorder }: TimelineProps) {
                     Arrangement
                 </h3>
                 <div className="mt-1 text-xs text-muted-foreground">
-                    Dra og slipp for å endre rekkefølge.
+                    {disabled
+                        ? "Skrivebeskyttet visning."
+                        : "Dra og slipp for å endre rekkefølge."}
                 </div>
             </div>
 
@@ -119,6 +123,7 @@ export function Timeline({ items, sections, onReorder }: TimelineProps) {
                                     id={item.id}
                                     sectionId={item.sectionId}
                                     label={getLabel(item.sectionId)}
+                                    disabled={disabled}
                                 />
                             ))}
                         </div>

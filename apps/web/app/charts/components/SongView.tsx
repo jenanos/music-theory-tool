@@ -22,6 +22,8 @@ import { SubstitutionPanel } from "../../components/SubstitutionPanel";
 
 interface SongViewProps {
   song: Song;
+  /** Whether the current user may edit this song (mirrors server write rules). */
+  canEdit?: boolean;
   onChange: (updatedSong: Song) => void;
   onBackToList?: () => void;
 }
@@ -45,7 +47,12 @@ function isTimeSignature(token: string): boolean {
 
 const HARMONY_SCALES = SCALES.filter((s) => s.isHarmony);
 
-export function SongView({ song, onChange, onBackToList }: SongViewProps) {
+export function SongView({
+  song,
+  canEdit = true,
+  onChange,
+  onBackToList,
+}: SongViewProps) {
   // Initialize timeline items directly from song.arrangement.
   // Because "key={song.id}" is used in the parent, this component is
   // freshly mounted for each song, guaranteeing correct initialization.
@@ -194,7 +201,7 @@ export function SongView({ song, onChange, onBackToList }: SongViewProps) {
 
   // Use original or current song based on toggle
   const displaySong = showOriginal && originalSong ? originalSong : song;
-  const isReadonly = showOriginal;
+  const isReadonly = showOriginal || !canEdit;
 
   // Filter unique sections based on label and chord lines content
   const visibleSections = showUniqueSections
@@ -465,7 +472,9 @@ export function SongView({ song, onChange, onBackToList }: SongViewProps) {
                 {displaySong.artist || ""}
               </span>
               <span className="text-xs text-accent-foreground bg-accent/20 px-2 py-1 rounded-full border border-accent/40">
-                Originalversjon (skrivebeskyttet)
+                {showOriginal
+                  ? "Originalversjon (skrivebeskyttet)"
+                  : "Kun lesetilgang"}
               </span>
             </div>
           ) : (
@@ -723,6 +732,7 @@ export function SongView({ song, onChange, onBackToList }: SongViewProps) {
             items={timelineItems}
             sections={song.sections}
             onReorder={handleReorder}
+            disabled={isReadonly}
           />
           {!isReadonly && (
             <div className="mt-4 pt-4 border-t border-border">
@@ -820,6 +830,7 @@ export function SongView({ song, onChange, onBackToList }: SongViewProps) {
               items={timelineItems}
               sections={song.sections}
               onReorder={handleReorder}
+              disabled={isReadonly}
             />
 
             {!isReadonly && (

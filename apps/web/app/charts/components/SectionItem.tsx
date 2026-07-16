@@ -55,9 +55,9 @@ export function SectionItem({ section, songKey, hideRepeats, showAsPercent, onUp
                                 ) : (
                                     <div className="min-w-0 flex-1 flex flex-col gap-1">
                                         {!isCustomLabel ? (
-                                            <div className="flex items-center gap-1">
+                                            <div className="flex items-center gap-1 md:flex-col md:items-stretch">
                                                 <select
-                                                    className="flex-shrink-0 rounded-md border border-input bg-card px-1.5 py-1 md:px-2 md:py-1.5 text-xs md:text-sm font-semibold text-foreground focus:border-primary focus:ring-1 focus:ring-primary"
+                                                    className="flex-shrink-0 md:w-full rounded-md border border-input bg-card px-1.5 py-1 md:px-2 md:py-1.5 text-xs md:text-sm font-semibold text-foreground focus:border-primary focus:ring-1 focus:ring-primary"
                                                     value={PRESET_SECTIONS.includes(section.label) ? section.label : (section.label === "Ny Seksjon" ? "default" : "custom")}
                                                     onChange={(e) => {
                                                         if (e.target.value === "custom") {
@@ -77,7 +77,7 @@ export function SectionItem({ section, songKey, hideRepeats, showAsPercent, onUp
                                                 </select>
                                                 <input
                                                     type="text"
-                                                    className="min-w-0 flex-1 rounded-md border border-input bg-card px-1.5 py-1 md:px-2 md:py-1.5 text-xs md:text-sm text-foreground focus:border-primary focus:ring-1 focus:ring-primary placeholder:text-muted-foreground/50 placeholder:font-normal"
+                                                    className="min-w-0 flex-1 md:flex-none md:w-full rounded-md border border-input bg-card px-1.5 py-1 md:px-2 md:py-1.5 text-xs md:text-sm text-foreground focus:border-primary focus:ring-1 focus:ring-primary placeholder:text-muted-foreground/50 placeholder:font-normal"
                                                     value={section.description || ""}
                                                     onChange={(e) => onUpdate(section.id, { description: e.target.value || undefined })}
                                                     placeholder="beskrivelse..."

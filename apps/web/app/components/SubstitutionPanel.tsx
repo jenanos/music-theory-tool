@@ -30,6 +30,11 @@ export function SubstitutionPanel({ substitutions, onSelect }: SubstitutionPanel
 
   const filtered = substitutions.filter((s) => filters.includes(s.category));
 
+  const topScoreByCategory = substitutions.reduce<Record<string, number>>((acc, s) => {
+    acc[s.category] = Math.max(acc[s.category] ?? -Infinity, s.score);
+    return acc;
+  }, {});
+
   if (substitutions.length === 0) {
     return (
       <div className="rounded-xl border border-dashed border-border bg-card p-4 text-sm text-muted-foreground">
@@ -90,18 +95,13 @@ export function SubstitutionPanel({ substitutions, onSelect }: SubstitutionPanel
                       </span>
                     )}
                   </div>
-                  {item.score > 3 && (
+                  {item.score === topScoreByCategory[item.category] && (
                     <span className="text-[9px] font-medium px-1.5 py-0.5 rounded bg-accent/30 text-accent-foreground">Anbefalt</span>
                   )}
                 </div>
 
                 <div className="flex flex-col gap-1 text-muted-foreground mt-2">
                   <p>{item.reason}</p>
-                  {item.tags.length > 0 && (
-                    <p className="text-xs">
-                      {item.tags.join(" · ")}
-                    </p>
-                  )}
                   {item.variants && item.variants.length > 0 && (
                     <p className="text-xs">
                       Varianter: {item.variants.map((variant) => variant.symbol).join(" · ")}

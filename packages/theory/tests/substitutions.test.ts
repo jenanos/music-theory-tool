@@ -62,7 +62,7 @@ describe("substitution engine", () => {
 
         expect(basic.some((symbol) => symbol.startsWith("Am"))).toBe(true);
         expect(basic.some((symbol) => symbol.startsWith("Em"))).toBe(true);
-        expect(basic.some((symbol) => ["Cmaj7", "C6", "C/E"].includes(symbol))).toBe(true);
+        expect(basic.some((symbol) => ["Cmaj7", "Cmaj9", "Cmaj7/E"].includes(symbol))).toBe(true);
 
         expect(spice.some((symbol) => ["Fm", "Fm7", "Bb", "Ab"].includes(symbol))).toBe(true);
     });
@@ -223,14 +223,154 @@ describe("substitution engine", () => {
             mode,
             chord: getChord(chords, 5),
             allChords: chords,
-            sourceSymbol: "D7",
+            sourceSymbol: "Dm7",
             includeSpice: true,
             profile: "jazz",
         });
 
         const dominant = suggestions.find((entry) => entry.substituteSymbol === "D7");
+        expect(dominant).toBeDefined();
         const dominantVariants = dominant?.variants?.map((variant) => variant.symbol) ?? [];
         expect(dominantVariants).toContain("D7(b9)");
         expect(dominantVariants).toContain("D7(#9)");
+    });
+
+    test("never suggests the source chord as its own substitution", () => {
+        const tonic = "C";
+        const mode: ModeId = "ionian";
+        const chords = buildDiatonicChords(tonic, mode, true);
+
+        const dominantSuggestions = suggestSubstitutions({
+            tonic,
+            mode,
+            chord: getChord(chords, 5),
+            allChords: chords,
+            nextChord: getChord(chords, 1),
+            sourceSymbol: "G7",
+            includeSpice: true,
+            includeApproach: true,
+        });
+
+        expect(
+            dominantSuggestions.some((suggestion) => suggestion.substituteSymbol === "G7"),
+        ).toBe(false);
+
+        const tonicSuggestions = suggestSubstitutions({
+            tonic,
+            mode,
+            chord: getChord(chords, 1),
+            allChords: chords,
+            sourceSymbol: "Cmaj7",
+            includeSpice: true,
+        });
+
+        expect(
+            tonicSuggestions.some((suggestion) => suggestion.substituteSymbol === "Cmaj7"),
+        ).toBe(false);
+    });
+
+    test("dominant spice on vii chord derives from the functional dominant", () => {
+        const tonic = "C";
+        const mode: ModeId = "ionian";
+        const chords = buildDiatonicChords(tonic, mode, true);
+
+        const suggestions = suggestSubstitutions({
+            tonic,
+            mode,
+            chord: getChord(chords, 7),
+            allChords: chords,
+            sourceSymbol: "Bm7b5",
+            includeSpice: true,
+        });
+
+        const symbols = suggestions.map((suggestion) => suggestion.substituteSymbol);
+        // Tritone sub of the key's dominant (G7) is Db7 — never F7.
+        expect(symbols).toContain("Db7");
+        expect(symbols).not.toContain("F7");
+        // Leading-tone dim of C is Bdim — never D#dim/Ebdim.
+        expect(symbols).toContain("Bdim7");
+        expect(symbols).not.toContain("D#dim7");
+        expect(symbols).not.toContain("Ebdim7");
+    });
+
+    test("raised leading tone is spelled sharp in flat minor keys", () => {
+        const tonic = "G";
+        const mode: ModeId = "aeolian";
+        const chords = buildDiatonicChords(tonic, mode, true);
+
+        const suggestions = suggestSubstitutions({
+            tonic,
+            mode,
+            chord: getChord(chords, 5),
+            allChords: chords,
+            sourceSymbol: "Dm7",
+            includeSpice: true,
+        });
+
+        const symbols = suggestions.map((suggestion) => suggestion.substituteSymbol);
+        expect(symbols).toContain("F#dim7");
+        expect(symbols.some((symbol) => symbol.startsWith("Gbdim"))).toBe(false);
+    });
+
+    test("inversion suggestion keeps the chord quality", () => {
+        const tonic = "C";
+        const mode: ModeId = "ionian";
+        const chords = buildDiatonicChords(tonic, mode, true);
+
+        const suggestions = suggestSubstitutions({
+            tonic,
+            mode,
+            chord: getChord(chords, 2),
+            allChords: chords,
+            sourceSymbol: "Dm7",
+            includeSpice: true,
+        });
+
+        const symbols = suggestions.map((suggestion) => suggestion.substituteSymbol);
+        expect(symbols).toContain("Dm7/F");
+        expect(symbols).not.toContain("Dmaj7/F");
+        expect(symbols).not.toContain("D/F");
+    });
+
+    test("richer voicings survive the richness profile instead of collapsing", () => {
+        const tonic = "C";
+        const mode: ModeId = "ionian";
+        const chords = buildDiatonicChords(tonic, mode, true);
+
+        const suggestions = suggestSubstitutions({
+            tonic,
+            mode,
+            chord: getChord(chords, 5),
+            allChords: chords,
+            sourceSymbol: "G7",
+            includeSpice: true,
+        });
+
+        const basic = symbolsOfCategory(suggestions, "basic");
+        expect(basic).toContain("G9");
+        expect(basic).toContain("G13");
+    });
+
+    test("reasons are human-readable Norwegian sentences", () => {
+        const tonic = "C";
+        const mode: ModeId = "ionian";
+        const chords = buildDiatonicChords(tonic, mode, true);
+
+        const suggestions = suggestSubstitutions({
+            tonic,
+            mode,
+            chord: getChord(chords, 1),
+            allChords: chords,
+            sourceSymbol: "C",
+            includeSpice: true,
+        });
+
+        expect(suggestions.length).toBeGreaterThan(0);
+        for (const suggestion of suggestions) {
+            expect(suggestion.reason.endsWith(".")).toBe(true);
+        }
+
+        const commonTone = suggestions.find((suggestion) => suggestion.tags.includes("common tones"));
+        expect(commonTone?.reason.toLowerCase()).toContain("deler akkordtoner");
     });
 });

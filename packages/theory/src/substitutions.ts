@@ -1,4 +1,4 @@
-import { FUNCTION_GROUPS } from "./data";
+import { FUNCTION_GROUPS, MODES } from "./data";
 import {
     DEFAULT_CHORD_RICHNESS_PROFILE,
     generateChordVariants,
@@ -36,6 +36,7 @@ type SuggestionDraft = {
     score: number;
     sharedTones: number;
     requiresContext: boolean;
+    skipProfiling: boolean;
 };
 
 const CATEGORY_BASE_SCORE: Record<SubstitutionCategory, number> = {
@@ -148,11 +149,40 @@ function getFunctionGroup(
     return undefined;
 }
 
+const TAG_LABELS: Record<string, string> = {
+    "common tones": "deler akkordtoner",
+    "tonic family": "samme funksjon (tonika)",
+    "predominant family": "samme funksjon (subdominant)",
+    "dominant family": "samme funksjon (dominant)",
+    "cross-function voice-leading": "annen funksjon med god stemmeføring",
+    "same harmony richer voicing": "rikere farge på samme harmoni",
+    "modal borrow": "lånt fra parallelltoneart",
+    "predominant color": "subdominantfarge",
+    "backdoor color": "backdoor-farge",
+    "neapolitan color": "napolitansk farge",
+    "borrowed from parallel major": "lånt fra parallell dur",
+    "harmonic minor dominant": "dominant fra harmonisk moll",
+    "leading-tone diminished": "ledetonedim",
+    "dominant substitute": "dominantsubstitutt",
+    "tritone sub": "tritonussubstitusjon",
+    "secondary dominant": "sekundærdominant",
+    "diminished approach": "kromatisk dim-approach",
+    "resolves to target": "leder til neste akkord",
+    "backdoor dominant": "backdoor-dominant",
+    "inversion preserved": "beholder basstonen",
+    "stepwise bass": "trinnvis bassbevegelse",
+    "non-chord bass": "basstone utenfor akkorden",
+    "upper structure": "overbygningsakkord",
+    "sus dominant interpretation": "kan tolkes som sus-dominant",
+};
+
 function buildReason(tags: string[]): string {
     if (tags.length === 0) return "Foreslått substitusjon.";
-    if (tags.length === 1) return tags[0]!;
-    if (tags.length === 2) return `${tags[0]}, ${tags[1]}.`;
-    return `${tags[0]}, ${tags[1]}, ${tags[2]}.`;
+    const sentence = tags
+        .slice(0, 3)
+        .map((tag) => TAG_LABELS[tag] ?? tag)
+        .join(", ");
+    return `${sentence.charAt(0).toUpperCase()}${sentence.slice(1)}.`;
 }
 
 function inferSharedTones(symbol: string, sourceTones: number[]): number {
@@ -219,6 +249,7 @@ function addSuggestion(
         sameFunction?: boolean;
         crossFunction?: boolean;
         resolvesToTarget?: boolean;
+        skipProfiling?: boolean;
         slash: SlashInfo;
         preserveBass: boolean;
     },
@@ -253,6 +284,7 @@ function addSuggestion(
             score,
             sharedTones,
             requiresContext: params.requiresContext ?? false,
+            skipProfiling: params.skipProfiling ?? false,
         });
         return;
     }
@@ -268,6 +300,7 @@ function addSuggestion(
     existing.score = Math.max(existing.score, score);
     existing.sharedTones = Math.max(existing.sharedTones, sharedTones);
     existing.requiresContext = existing.requiresContext || Boolean(params.requiresContext);
+    existing.skipProfiling = existing.skipProfiling || Boolean(params.skipProfiling);
 }
 
 export function suggestSubstitutions(
@@ -361,7 +394,8 @@ export function suggestSubstitutions(
     }
 
     // === BASIC: richer versions of same harmony ===
-    const rootName = noteName(rootPc, useFlats);
+    // These are generated profile-aware already, so they skip the final
+    // profiling pass — otherwise e.g. Cmaj9 would collapse back to Cmaj7.
     const sameChordVariants = new Set(
         generateChordVariants({
             baseSymbol: sourceProfileSymbol,
@@ -372,14 +406,17 @@ export function suggestSubstitutions(
         }).map((variant) => variant.symbol)
     );
 
+    // The profiled version of the chord the user plays (e.g. C -> Cmaj7).
+    if (normalizeSymbol(sourceProfileSymbol) !== normalizeSymbol(sourceDisplaySymbol)) {
+        sameChordVariants.add(sourceProfileSymbol);
+    }
+
     const thirdPc = chord.tones[1];
-    if (thirdPc !== undefined) {
-        sameChordVariants.add(`${rootName}/${noteName(thirdPc, useFlats)}`);
+    if (thirdPc !== undefined && !sourceProfileSymbol.includes("/")) {
+        sameChordVariants.add(`${sourceProfileSymbol}/${noteName(thirdPc, useFlats)}`);
     }
 
     for (const variant of sameChordVariants) {
-        if (normalizeSymbol(variant) === normalizeSymbol(sourceProfileSymbol)) continue;
-
         addSuggestion(drafts, {
             symbol: variant,
             roman: chord.roman,
@@ -388,6 +425,7 @@ export function suggestSubstitutions(
             sourceTones,
             scoreOffset: 7,
             sameFunction: true,
+            skipProfiling: true,
             slash,
             preserveBass,
         });
@@ -398,7 +436,7 @@ export function suggestSubstitutions(
         if (isMajorContext(mode)) {
             addSuggestion(drafts, {
                 symbol: makeSymbol((tonicPc + 5) % 12, "m7", useFlats),
-                roman: "iv7",
+                roman: "iv",
                 category: "spice",
                 tags: ["modal borrow", "predominant color"],
                 sourceTones,
@@ -488,8 +526,16 @@ export function suggestSubstitutions(
         }
 
         if (functionGroup === "dominant") {
+            // Derive from the functional dominant of the key, not the chord's
+            // own root — a vii-chord would otherwise get nonsense subs.
+            const leadingTonePc = (tonicPc + 11) % 12;
+            // A raised leading tone (minor modes) must be spelled sharp even
+            // in flat keys: F#dim in G minor, never Gbdim.
+            const modeIntervals = MODES[mode]?.intervals ?? MODES.ionian!.intervals;
+            const leadingToneUseFlats = modeIntervals.includes(11) ? useFlats : false;
+
             addSuggestion(drafts, {
-                symbol: makeSymbol((rootPc + 4) % 12, "dim", useFlats),
+                symbol: makeSymbol(leadingTonePc, "dim", leadingToneUseFlats),
                 roman: undefined,
                 category: "spice",
                 tags: ["leading-tone diminished", "dominant substitute"],
@@ -500,7 +546,7 @@ export function suggestSubstitutions(
             });
 
             addSuggestion(drafts, {
-                symbol: makeSymbol((rootPc + 6) % 12, "7", useFlats, true),
+                symbol: makeSymbol((tonicPc + 1) % 12, "7", useFlats, true),
                 roman: "bII7",
                 category: "spice",
                 tags: ["tritone sub"],
@@ -592,10 +638,22 @@ export function suggestSubstitutions(
         }
     }
 
+    const normalizedSourceDisplay = normalizeSymbol(sourceDisplaySymbol);
+    const normalizedSourceProfile = normalizeSymbol(sourceProfileSymbol);
+
     const profiledDrafts = new Map<string, SuggestionDraft>();
     for (const draft of drafts.values()) {
-        const profiledSymbol = toProfileBaseChordSymbol(draft.symbol, profile, { roman: draft.roman });
+        const profiledSymbol = draft.skipProfiling
+            ? draft.symbol
+            : toProfileBaseChordSymbol(draft.symbol, profile, { roman: draft.roman });
         const normalizedSymbol = normalizeSymbol(profiledSymbol);
+
+        // Never suggest the chord the user already plays as its own substitution.
+        if (normalizedSymbol === normalizedSourceDisplay) continue;
+        // Non-voicing drafts that collapse onto the profiled source are no-ops too
+        // (e.g. suggesting V7 as approach chord when the source already is V7).
+        if (!draft.skipProfiling && normalizedSymbol === normalizedSourceProfile) continue;
+
         const key = `${draft.category}:${normalizedSymbol}`;
         const sharedTones = inferSharedTones(profiledSymbol, sourceTones);
 

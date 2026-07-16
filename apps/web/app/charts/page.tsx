@@ -92,7 +92,18 @@ export default function ChartsPage() {
             setSaveError(null);
         } catch (err) {
             console.error("Error updating song:", err);
-            setSongs(previousSongs);
+            // Roll back only if no newer edit has replaced our optimistic
+            // state. A later save is built on top of this state and sends the
+            // whole song document, so if it succeeded the server already has
+            // everything — reverting to our older snapshot would erase it.
+            setSongs((prev) =>
+                prev.map((s) => {
+                    if (s.id !== updatedSong.id || s !== updatedSong) return s;
+                    return (
+                        previousSongs.find((p) => p.id === updatedSong.id) ?? s
+                    );
+                })
+            );
             setSaveError(
                 err instanceof Error && err.message.startsWith("Du har ikke")
                     ? err.message

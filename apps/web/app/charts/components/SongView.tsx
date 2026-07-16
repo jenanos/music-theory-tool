@@ -22,6 +22,8 @@ import { SubstitutionPanel } from "../../components/SubstitutionPanel";
 
 interface SongViewProps {
   song: Song;
+  /** Whether the current user may edit this song (mirrors server write rules). */
+  canEdit?: boolean;
   onChange: (updatedSong: Song) => void;
   onBackToList?: () => void;
 }
@@ -36,9 +38,21 @@ function generateId() {
   return Math.random().toString(36).substring(2, 9);
 }
 
+// Matches inline time signatures like 4/4, 6/8 — these are rendered by
+// ChordDisplay but do not count as chords, so every chord-index computation
+// here must skip them to stay aligned with ChordDisplay's chordIndex.
+function isTimeSignature(token: string): boolean {
+  return /^\d+\/\d+$/.test(token);
+}
+
 const HARMONY_SCALES = SCALES.filter((s) => s.isHarmony);
 
-export function SongView({ song, onChange, onBackToList }: SongViewProps) {
+export function SongView({
+  song,
+  canEdit = true,
+  onChange,
+  onBackToList,
+}: SongViewProps) {
   // Initialize timeline items directly from song.arrangement.
   // Because "key={song.id}" is used in the parent, this component is
   // freshly mounted for each song, guaranteeing correct initialization.
@@ -187,7 +201,7 @@ export function SongView({ song, onChange, onBackToList }: SongViewProps) {
 
   // Use original or current song based on toggle
   const displaySong = showOriginal && originalSong ? originalSong : song;
-  const isReadonly = showOriginal;
+  const isReadonly = showOriginal || !canEdit;
 
   // Filter unique sections based on label and chord lines content
   const visibleSections = showUniqueSections
@@ -283,8 +297,14 @@ export function SongView({ song, onChange, onBackToList }: SongViewProps) {
       const chordLine = section?.chordLines[lineIndex] ?? "";
       const degreeLine = section?.degreeLines?.[lineIndex] ?? "";
 
-      const lineChords = chordLine.split(/[\s|-]+/).filter(Boolean);
-      const lineDegrees = degreeLine.split(/[\s|-]+/).filter(Boolean);
+      const lineChords = chordLine
+        .split(/[\s|-]+/)
+        .filter(Boolean)
+        .filter((token) => !isTimeSignature(token));
+      const lineDegrees = degreeLine
+        .split(/[\s|-]+/)
+        .filter(Boolean)
+        .filter((token) => !isTimeSignature(token));
 
       const nextChordSymbol = lineChords[chordIndex + 1];
       const nextChordDegree = lineDegrees[chordIndex + 1];
@@ -353,6 +373,7 @@ export function SongView({ song, onChange, onBackToList }: SongViewProps) {
       let found = false;
 
       while ((match = chordRegex.exec(line)) !== null) {
+        if (isTimeSignature(match[0])) continue;
         if (currentIndex === chordIndex) {
           // Found it!
           const start = match.index;
@@ -451,7 +472,9 @@ export function SongView({ song, onChange, onBackToList }: SongViewProps) {
                 {displaySong.artist || ""}
               </span>
               <span className="text-xs text-accent-foreground bg-accent/20 px-2 py-1 rounded-full border border-accent/40">
-                Originalversjon (skrivebeskyttet)
+                {showOriginal
+                  ? "Originalversjon (skrivebeskyttet)"
+                  : "Kun lesetilgang"}
               </span>
             </div>
           ) : (
@@ -709,6 +732,7 @@ export function SongView({ song, onChange, onBackToList }: SongViewProps) {
             items={timelineItems}
             sections={song.sections}
             onReorder={handleReorder}
+            disabled={isReadonly}
           />
           {!isReadonly && (
             <div className="mt-4 pt-4 border-t border-border">
@@ -794,7 +818,7 @@ export function SongView({ song, onChange, onBackToList }: SongViewProps) {
               onUpdate={isReadonly ? undefined : updateSection}
               onAdd={isReadonly ? undefined : addSection}
               onDelete={isReadonly ? undefined : deleteSection}
-              onChordClick={handleChordClick}
+              onChordClick={isReadonly ? undefined : handleChordClick}
             />
           </div>
         </div>
@@ -806,6 +830,7 @@ export function SongView({ song, onChange, onBackToList }: SongViewProps) {
               items={timelineItems}
               sections={song.sections}
               onReorder={handleReorder}
+              disabled={isReadonly}
             />
 
             {!isReadonly && (
